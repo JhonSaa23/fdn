@@ -72,20 +72,25 @@ function Header() {
         
         <div className="flex flex-1 items-center justify-end px-4 md:px-6">
           <div className="ml-4 flex items-center">
-            <span className="text-sm font-medium text-gray-700">
-              Sistema de Importación FDN
-            </span>
+            {notification.show ? (
+              <div className={`flex items-center text-sm font-medium px-3 py-1 rounded-md ${
+                notification.type === 'success' ? 'bg-green-100 text-green-700' :
+                notification.type === 'danger' ? 'bg-red-100 text-red-700' :
+                notification.type === 'warning' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-blue-100 text-blue-700'
+              }`}>
+                <span>{notification.text}</span>
+                <button 
+                  onClick={hideNotification}
+                  className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:outline-none"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </header>
-
-      {notification.show && (
-        <Notification 
-          type={notification.type} 
-          message={notification.text} 
-          onClose={hideNotification} 
-        />
-      )}
     </>
   );
 }

@@ -13,13 +13,18 @@ export const getMedifarmaData = async () => {
   }
 };
 
-export const importMedifarmaFile = async (formData) => {
+export const importMedifarmaFile = async (file) => {
   try {
-    const response = await axios.post(`${BASE_URL}/medifarma/import`, formData, {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await axios.post('/api/medifarma/import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      timeout: 300000 // 5 minutos para importación completa
     });
+    
     return response.data;
   } catch (error) {
     console.error('Error importando archivo Medifarma:', error);
@@ -345,6 +350,19 @@ export const consultarMovimientos = async (filtros) => {
     return {
       success: false,
       error: error.response?.data?.error || error.message || 'Error desconocido al consultar'
+    };
+  }
+};
+
+export const eliminarMovimientos = async (filtros) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/movimientos/eliminar`, filtros);
+    return response.data;
+  } catch (error) {
+    console.error('Error eliminando movimientos:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message || 'Error desconocido al eliminar registros'
     };
   }
 };

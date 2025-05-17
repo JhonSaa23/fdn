@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import ImportForm from '../components/ImportForm';
-import Alert from '../components/Alert';
 import Button from '../components/Button';
+import { useNotification } from '../App';
 
 function BBVA() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ show: false, type: '', text: '' });
+  const { showNotification } = useNotification();
 
   // Esta función se implementará cuando creemos las rutas del backend
   const fetchData = async () => {
@@ -14,11 +14,7 @@ function BBVA() {
       setLoading(true);
       setData([]); // Por ahora lo dejamos vacío
     } catch (error) {
-      setMessage({
-        show: true,
-        type: 'danger',
-        text: 'Error al cargar datos: ' + (error.message || 'Error desconocido')
-      });
+      showNotification('danger', 'Error al cargar datos: ' + (error.message || 'Error desconocido'));
     } finally {
       setLoading(false);
     }
@@ -32,16 +28,6 @@ function BBVA() {
   return (
     <div>
       <h3 className="text-xl font-semibold mb-4">Importar archivo XLSX - BBVA</h3>
-      
-      {message.show && (
-        <Alert 
-          variant={message.type} 
-          onClose={() => setMessage({ ...message, show: false })} 
-          dismissible
-        >
-          {message.text}
-        </Alert>
-      )}
       
       <div className="flex space-x-4 mb-6">
         <Button variant="danger">Vaciar</Button>

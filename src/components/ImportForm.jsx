@@ -3,7 +3,7 @@ import Alert from './Alert';
 import Button from './Button';
 import Card from './Card';
 
-function ImportForm({ onImportClick, title, isLoading }) {
+function ImportForm({ onImportClick, title, isLoading, acceptedFormats = ".xls,.xlsx,.csv", helpText }) {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState({ show: false, type: '', text: '' });
 
@@ -83,7 +83,7 @@ function ImportForm({ onImportClick, title, isLoading }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="form-group">
             <label htmlFor="formFile" className="block text-sm font-medium text-gray-700 mb-1">
-              Elija Archivo Excel
+              Elija Archivo
             </label>
             <input 
               type="file" 
@@ -95,9 +95,14 @@ function ImportForm({ onImportClick, title, isLoading }) {
                 file:bg-blue-50 file:text-blue-700
                 hover:file:bg-blue-100"
               onChange={handleFileChange}
-              accept=".xls,.xlsx,.csv"
+              accept={acceptedFormats}
               disabled={isLoading}
             />
+            {helpText && (
+              <div className="mt-2 text-sm text-gray-600">
+                {helpText}
+              </div>
+            )}
           </div>
           
           <div className="mt-4">
@@ -109,7 +114,6 @@ function ImportForm({ onImportClick, title, isLoading }) {
             >
               {isLoading ? (
                 <>
-                  <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
                   Importando...
                 </>
               ) : 'Importar Registros'}

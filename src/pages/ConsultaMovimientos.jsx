@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useNotification } from '../App';
 import Button from '../components/Button';
 import Card from '../components/Card';
-import { consultarMovimientos } from '../services/api';
+import { consultarMovimientos, eliminarMovimientos } from '../services/api';
 
 function ConsultaMovimientos({ onBack, showBackButton = false }) {
   const { showNotification } = useNotification();
   const [loading, setLoading] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
   const [resultados, setResultados] = useState([]);
   const [filtros, setFiltros] = useState({
     banco: '',
@@ -73,6 +74,48 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
     }
   };
 
+  const handleEliminar = async () => {
+    // Verificar si hay resultados para eliminar
+    if (resultados.length === 0) {
+      showNotification('warning', 'No hay registros para eliminar. Realice una consulta primero.');
+      return;
+    }
+
+    // Pedir confirmación al usuario
+    if (!confirm(`¿Está seguro de eliminar ${resultados.length} registro(s)? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      setEliminando(true);
+
+      // Filtrar campos vacíos para no incluirlos en la consulta
+      const filtrosValidos = Object.entries(filtros)
+        .filter(([_, value]) => value !== '')
+        .reduce((obj, [key, value]) => {
+          obj[key] = value;
+          return obj;
+        }, {});
+
+      const resultado = await eliminarMovimientos(filtrosValidos);
+
+      if (!resultado.success) {
+        throw new Error(resultado.error || 'Error al eliminar movimientos');
+      }
+
+      showNotification('success', `Se eliminaron ${resultado.afectados || 0} registro(s) correctamente`);
+      
+      // Actualizar la lista después de eliminar
+      setResultados([]);
+      
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      showNotification('danger', error.message || 'Error desconocido al eliminar');
+    } finally {
+      setEliminando(false);
+    }
+  };
+
   const handleLimpiar = () => {
     setFiltros({
       banco: '',
@@ -106,6 +149,49 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
                 </Button>
                 <h1 className="text-xl font-bold ml-4">Consulta de Movimientos</h1>
               </div>
+              <div className="flex justify-end space-x-3 mb-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleLimpiar}
+                >
+                  Limpiar
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleConsultar}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                      Consultando...
+                    </>
+                  ) : 'Consultar'}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={handleEliminar}
+                  disabled={eliminando || resultados.length === 0}
+                >
+                  {eliminando ? (
+                    <>
+                      <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                      Eliminando...
+                    </>
+                  ) : 'Eliminar'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!showBackButton && (
+            <div className='flex justify-between items-center mb-4'>
+              <h1 className="text-xl font-bold">Consulta de Movimientos</h1>
               <div className="flex justify-end space-x-3">
                 <Button
                   type="button"
@@ -127,6 +213,20 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
                       Consultando...
                     </>
                   ) : 'Consultar'}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={handleEliminar}
+                  disabled={eliminando || resultados.length === 0}
+                >
+                  {eliminando ? (
+                    <>
+                      <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                      Eliminando...
+                    </>
+                  ) : 'Eliminar'}
                 </Button>
               </div>
             </div>
