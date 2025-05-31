@@ -1,6 +1,8 @@
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useLocation } from 'react-router-dom';
-import { useSidebar, useNotification } from '../App';
+import { useSidebar, useNotification, useDatabaseConnection } from '../App';
+import { useEffect } from 'react';
+import { checkDatabaseConnection } from '../utils/databaseConnection';
 
 // Mapa de títulos para cada ruta
 const pageTitles = {
@@ -13,6 +15,8 @@ const pageTitles = {
   '/letras': 'Letras',
   '/tipificaciones': 'Tipificaciones',
   '/consulta-movimientos': 'Consultar Movimientos',
+  '/reporte-codpro': 'Reporte CodPro',
+  '/reportes/picking-procter': 'Reporte Picking Procter - Cobertura General',
 };
 
 // Componente de notificación
@@ -40,8 +44,22 @@ function Notification({ type, message, onClose }) {
 function Header() {
   const { toggleSidebar, isSidebarCollapsed, toggleSidebarCollapse } = useSidebar();
   const { notification, hideNotification } = useNotification();
+  const { isDbConnected, setIsDbConnected } = useDatabaseConnection();
   const location = useLocation();
   const currentTitle = pageTitles[location.pathname] || 'Sistema de Importación';
+  
+  useEffect(() => {
+    // Verificar la conexión inicial
+    checkDatabaseConnection().then(setIsDbConnected);
+
+    // Configurar verificación periódica cada 10 segundos
+    const interval = setInterval(() => {
+      checkDatabaseConnection().then(setIsDbConnected);
+    }, 10000);
+
+    // Limpiar el intervalo cuando el componente se desmonte
+    return () => clearInterval(interval);
+  }, [setIsDbConnected]);
   
   const handleMenuClick = () => {
     // En móvil, abre/cierra el sidebar
@@ -71,7 +89,15 @@ function Header() {
         </div>
         
         <div className="flex flex-1 items-center justify-end px-4 md:px-6">
-          <div className="ml-4 flex items-center">
+          <div className="ml-4 flex items-center space-x-4">
+            {/* Indicador de conexión a la base de datos */}
+            <div className={`flex items-center ${isDbConnected ? 'animate-pulse text-green-500' : 'text-red-500'}`}>
+              <div className={`h-3 w-3 rounded-full ${isDbConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="ml-2 text-sm font-medium">
+                {isDbConnected ? 'Conectado' : 'Desconectado'}
+              </span>
+            </div>
+
             {notification.show ? (
               <div className={`flex items-center text-sm font-medium px-3 py-1 rounded-md ${
                 notification.type === 'success' ? 'bg-green-100 text-green-700' :

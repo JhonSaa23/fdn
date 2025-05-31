@@ -380,3 +380,67 @@ export const consultarReporteCodPro = async (filtros) => {
     };
   }
 }; 
+
+// Picking Procter
+export const actualizarVistaPickingProcter = async (anio, mes) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/reportes/picking-procter/view`, {
+      anio,
+      mes
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar vista de Picking Procter:', error);
+    throw error;
+  }
+};
+
+export const consultarReportePickingProcter = async (anio, mes) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/reportes/picking-procter`, {
+      params: { anio, mes }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error consultando reporte de Picking Procter:', error);
+    throw error;
+  }
+};
+
+export const descargarExcelPickingProcter = async (anio, mes) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/reportes/picking-procter/excel`, {
+      params: { anio, mes },
+      responseType: 'blob'
+    });
+    
+    // Crear y descargar el archivo
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Picking_Procter_${anio}_${mes}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error descargando Excel de Picking Procter:', error);
+    throw error;
+  }
+};
+
+// Concurso
+export const actualizarVistasConcurso = async (anio, mes, dia) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/reportes/concurso/actualizar`, {
+      anio,
+      mes,
+      dia
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar vistas de Concurso:', error);
+    throw error;
+  }
+}; 

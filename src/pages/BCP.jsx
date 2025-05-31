@@ -5,6 +5,64 @@ import Card from '../components/Card';
 import ConsultaMovimientos from './ConsultaMovimientos';
 import { importBCPFile, uploadBCPToProd, getBCPData, clearBCP } from '../services/api';
 
+// Función para asegurar que las fechas se muestran en formato YYYYMMDD
+const normalizarFecha = (fecha) => {
+  if (!fecha) return '';
+  
+  // Si ya está en formato YYYYMMDD, devolverlo tal cual
+  if (/^\d{8}$/.test(fecha)) {
+    return fecha;
+  }
+  
+  // Si es un formato ISO o con T (2025-05-17T00:00:00.000Z)
+  if (typeof fecha === 'string' && fecha.includes('T')) {
+    // Extraer directamente del string para evitar problemas de zona horaria
+    const match = fecha.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      return `${match[1]}${match[2]}${match[3]}`;
+    }
+  }
+  
+  // Si es un formato largo como "Fri May 16 2025 19:00:00"
+  if (typeof fecha === 'string' && fecha.includes('GMT')) {
+    try {
+      // Extraer componentes directamente del string
+      const match = fecha.match(/\w+\s+\w+\s+(\d+)\s+(\d{4})/);
+      if (match) {
+        const día = match[1].padStart(2, '0');
+        const año = match[2];
+        
+        // Mapeamos el mes a su número
+        const mesesMap = {
+          'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+          'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+        };
+        
+        // Obtener el mes del string
+        let mes = '01';
+        Object.keys(mesesMap).forEach(nombreMes => {
+          if (fecha.includes(nombreMes)) {
+            mes = mesesMap[nombreMes];
+          }
+        });
+        
+        return `${año}${mes}${día}`;
+      }
+      
+      // Como último recurso, usar Date con métodos UTC
+      const date = new Date(fecha);
+      const año = date.getUTCFullYear();
+      const mes = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const dia = String(date.getUTCDate()).padStart(2, '0');
+      return `${año}${mes}${dia}`;
+    } catch (error) {
+      console.error('Error parseando fecha:', error);
+    }
+  }
+  
+  return fecha;
+};
+
 function BCP() {
   const { showNotification } = useNotification();
   const [data, setData] = useState([]);
@@ -240,8 +298,8 @@ function BCP() {
               {data.length > 0 ? (
                 data.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.Fecha}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.Fecha_valuta}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{normalizarFecha(item.Fecha)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{normalizarFecha(item.Fecha_valuta)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.Descripcion}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.Monto}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.Sucursal}</td>
