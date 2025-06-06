@@ -107,7 +107,7 @@ function ReportePickingProcter() {
           <form onSubmit={handleConsultar} className="space-y-4">
             <div className="flex flex-wrap items-end gap-4">
               <div className="w-full sm:w-auto">
-                <label htmlFor="anio" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="anio" className="block text-sm font-medium text-gray-700 mb-2">
                   Año
                 </label>
                 <input
@@ -116,14 +116,14 @@ function ReportePickingProcter() {
                   name="anio"
                   value={filtros.anio}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                   min="2000"
                   max="2100"
                 />
               </div>
               
               <div className="w-full sm:w-auto">
-                <label htmlFor="mes" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="mes" className="block text-sm font-medium text-gray-700 mb-2">
                   Mes
                 </label>
                 <select
@@ -131,7 +131,7 @@ function ReportePickingProcter() {
                   name="mes"
                   value={filtros.mes}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 >
                   <option value="1">Enero</option>
                   <option value="2">Febrero</option>

@@ -1,11 +1,14 @@
-import axios from 'axios';
+import axiosClient from './axiosClient';
 
-const BASE_URL = '/api';
+// Aplica el header especial a TODAS las peticiones axios
+axiosClient.defaults.headers.common['ngrok-skip-browser-warning'] = 'true';
+
+const BASE_URL = '';
 
 // Medifarma
 export const getMedifarmaData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/medifarma`);
+    const response = await axiosClient.get('/medifarma');
     return response.data;
   } catch (error) {
     console.error('Error obteniendo datos de Medifarma:', error);
@@ -18,7 +21,7 @@ export const importMedifarmaFile = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await axios.post('/api/medifarma/import', formData, {
+    const response = await axiosClient.post('/medifarma/import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
@@ -34,7 +37,7 @@ export const importMedifarmaFile = async (file) => {
 
 export const clearMedifarma = async () => {
   try {
-    const response = await axios.delete(`${BASE_URL}/medifarma/clear`);
+    const response = await axiosClient.delete('/medifarma/clear');
     return response.data;
   } catch (error) {
     console.error('Error al vaciar tabla Medifarma:', error);
@@ -44,7 +47,7 @@ export const clearMedifarma = async () => {
 
 export const uploadMedifarmaToProd = async () => {
   try {
-    const response = await axios.post(`${BASE_URL}/medifarma/upload-to-prod`);
+    const response = await axiosClient.post('/medifarma/upload-to-prod');
     return response.data;
   } catch (error) {
     console.error('Error al subir a producción Medifarma:', error);
@@ -55,7 +58,7 @@ export const uploadMedifarmaToProd = async () => {
 // BCP
 export const getBCPData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/bcp`);
+    const response = await axiosClient.get('/bcp');
     return response.data;
   } catch (error) {
     console.error('Error obteniendo datos de BCP:', error);
@@ -68,7 +71,7 @@ export const getBCPData = async () => {
 
 export const importBCPFile = async (formData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/bcp/import`, formData, {
+    const response = await axiosClient.post('/bcp/import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
@@ -101,7 +104,7 @@ export const importBCPFile = async (formData) => {
 
 export const clearBCP = async () => {
   try {
-    const response = await axios.delete(`${BASE_URL}/bcp/clear`);
+    const response = await axiosClient.delete('/bcp/clear');
     return response.data;
   } catch (error) {
     console.error('Error al vaciar tabla BCP:', error);
@@ -114,7 +117,7 @@ export const clearBCP = async () => {
 
 export const uploadBCPToProd = async () => {
   try {
-    const response = await axios.post(`${BASE_URL}/bcp/upload-to-prod`);
+    const response = await axiosClient.post('/bcp/upload-to-prod');
     return response.data;
   } catch (error) {
     console.error('Error al subir a producción BCP:', error);
@@ -128,7 +131,7 @@ export const uploadBCPToProd = async () => {
 // BBVA
 export const getBBVAData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/bbva`);
+    const response = await axiosClient.get('/bbva');
     return response.data;
   } catch (error) {
     console.error('Error obteniendo datos de BBVA:', error);
@@ -138,7 +141,7 @@ export const getBBVAData = async () => {
 
 export const importBBVAFile = async (formData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/bbva/import`, formData, {
+    const response = await axiosClient.post('/bbva/import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -152,7 +155,7 @@ export const importBBVAFile = async (formData) => {
 
 export const clearBBVA = async () => {
   try {
-    const response = await axios.delete(`${BASE_URL}/bbva/clear`);
+    const response = await axiosClient.delete('/bbva/clear');
     return response.data;
   } catch (error) {
     console.error('Error al vaciar tabla BBVA:', error);
@@ -162,7 +165,7 @@ export const clearBBVA = async () => {
 
 export const uploadBBVAToProd = async () => {
   try {
-    const response = await axios.post(`${BASE_URL}/bbva/upload-to-prod`);
+    const response = await axiosClient.post('/bbva/upload-to-prod');
     return response.data;
   } catch (error) {
     console.error('Error al subir a producción BBVA:', error);
@@ -173,7 +176,7 @@ export const uploadBBVAToProd = async () => {
 // Descuento por Cliente
 export const getDesclienteData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/descliente`);
+    const response = await axiosClient.get('/descliente');
     return response.data;
   } catch (error) {
     console.error('Error obteniendo datos de Descuento por Cliente:', error);
@@ -183,7 +186,7 @@ export const getDesclienteData = async () => {
 
 export const importDesclienteFile = async (formData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/descliente/import`, formData, {
+    const response = await axiosClient.post('/descliente/import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -197,7 +200,7 @@ export const importDesclienteFile = async (formData) => {
 
 export const clearDescliente = async () => {
   try {
-    const response = await axios.delete(`${BASE_URL}/descliente/clear`);
+    const response = await axiosClient.delete('/descliente/clear');
     return response.data;
   } catch (error) {
     console.error('Error al vaciar tabla Descuento por Cliente:', error);
@@ -207,7 +210,7 @@ export const clearDescliente = async () => {
 
 export const uploadDesclienteToProd = async () => {
   try {
-    const response = await axios.post(`${BASE_URL}/descliente/upload-to-prod`);
+    const response = await axiosClient.post('/descliente/upload-to-prod');
     return response.data;
   } catch (error) {
     console.error('Error al subir a producción Descuento por Cliente:', error);
@@ -218,7 +221,7 @@ export const uploadDesclienteToProd = async () => {
 // Letras
 export const getLetrasData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/letras`);
+    const response = await axiosClient.get('/letras');
     return response.data;
   } catch (error) {
     console.error('Error obteniendo datos de Letras:', error);
@@ -228,7 +231,7 @@ export const getLetrasData = async () => {
 
 export const getLetraDetail = async (numero) => {
   try {
-    const response = await axios.get(`${BASE_URL}/letras/${numero}`);
+    const response = await axiosClient.get(`/letras/${numero}`);
     return response.data;
   } catch (error) {
     console.error('Error obteniendo detalle de Letra:', error);
@@ -238,7 +241,7 @@ export const getLetraDetail = async (numero) => {
 
 export const searchLetras = async (criterio, valor) => {
   try {
-    const response = await axios.get(`${BASE_URL}/letras/buscar/${criterio}/${valor}`);
+    const response = await axiosClient.get(`/letras/buscar/${criterio}/${valor}`);
     return response.data;
   } catch (error) {
     console.error('Error buscando Letras:', error);
@@ -249,7 +252,7 @@ export const searchLetras = async (criterio, valor) => {
 // Tipificaciones
 export const getTipificacionesData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/tipificaciones`);
+    const response = await axiosClient.get('/tipificaciones');
     return response.data;
   } catch (error) {
     console.error('Error obteniendo datos de Tipificaciones:', error);
@@ -259,7 +262,7 @@ export const getTipificacionesData = async () => {
 
 export const getDescuentosLaboratorio = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/tipificaciones/descuentos`);
+    const response = await axiosClient.get('/tipificaciones/descuentos');
     return response.data;
   } catch (error) {
     console.error('Error obteniendo descuentos por laboratorio:', error);
@@ -269,7 +272,7 @@ export const getDescuentosLaboratorio = async () => {
 
 export const importTipificacionesClientes = async (formData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/tipificaciones/import-clientes`, formData, {
+    const response = await axiosClient.post('/tipificaciones/import-clientes', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -283,7 +286,7 @@ export const importTipificacionesClientes = async (formData) => {
 
 export const importDescuentosLaboratorio = async (formData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/tipificaciones/import-descuentos`, formData, {
+    const response = await axiosClient.post('/tipificaciones/import-descuentos', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -297,7 +300,7 @@ export const importDescuentosLaboratorio = async (formData) => {
 
 export const procesarTipificacion = async (laboratorio) => {
   try {
-    const response = await axios.post(`${BASE_URL}/tipificaciones/procesar`, { laboratorio });
+    const response = await axiosClient.post('/tipificaciones/procesar', { laboratorio });
     return response.data;
   } catch (error) {
     console.error('Error procesando tipificación:', error);
@@ -307,7 +310,7 @@ export const procesarTipificacion = async (laboratorio) => {
 
 export const resetTipificaciones = async () => {
   try {
-    const response = await axios.delete(`${BASE_URL}/tipificaciones/reset`);
+    const response = await axiosClient.delete('/tipificaciones/reset');
     return response.data;
   } catch (error) {
     console.error('Error al resetear tipificaciones:', error);
@@ -318,7 +321,7 @@ export const resetTipificaciones = async () => {
 // Exportaciones
 export const downloadFile = async (params) => {
   try {
-    const response = await axios.post(`${BASE_URL}/export/download`, params, {
+    const response = await axiosClient.post('/export/download', params, {
       responseType: 'blob'
     });
     return response.data;
@@ -330,7 +333,7 @@ export const downloadFile = async (params) => {
 
 export const downloadDbf = async (params) => {
   try {
-    const response = await axios.post(`${BASE_URL}/export/download-dbf`, params, {
+    const response = await axiosClient.post('/export/download-dbf', params, {
       responseType: 'blob'
     });
     return response.data;
@@ -343,7 +346,7 @@ export const downloadDbf = async (params) => {
 // Consultas
 export const consultarMovimientos = async (filtros) => {
   try {
-    const response = await axios.post(`${BASE_URL}/movimientos/consultar`, filtros);
+    const response = await axiosClient.post('/movimientos/consultar', filtros);
     return response.data;
   } catch (error) {
     console.error('Error consultando movimientos:', error);
@@ -356,7 +359,7 @@ export const consultarMovimientos = async (filtros) => {
 
 export const eliminarMovimientos = async (filtros) => {
   try {
-    const response = await axios.post(`${BASE_URL}/movimientos/eliminar`, filtros);
+    const response = await axiosClient.post('/movimientos/eliminar', filtros);
     return response.data;
   } catch (error) {
     console.error('Error eliminando movimientos:', error);
@@ -370,7 +373,7 @@ export const eliminarMovimientos = async (filtros) => {
 // Reportes
 export const consultarReporteCodPro = async (filtros) => {
   try {
-    const response = await axios.post(`${BASE_URL}/reportes/codpro`, filtros);
+    const response = await axiosClient.post('/reportes/codpro', filtros);
     return response.data;
   } catch (error) {
     console.error('Error consultando reporte CodPro:', error);
@@ -384,7 +387,7 @@ export const consultarReporteCodPro = async (filtros) => {
 // Picking Procter
 export const actualizarVistaPickingProcter = async (anio, mes) => {
   try {
-    const response = await axios.post(`${BASE_URL}/reportes/picking-procter/view`, {
+    const response = await axiosClient.post('/reportes/picking-procter/view', {
       anio,
       mes
     });
@@ -397,7 +400,7 @@ export const actualizarVistaPickingProcter = async (anio, mes) => {
 
 export const consultarReportePickingProcter = async (anio, mes) => {
   try {
-    const response = await axios.get(`${BASE_URL}/reportes/picking-procter`, {
+    const response = await axiosClient.get('/reportes/picking-procter', {
       params: { anio, mes }
     });
     return response.data;
@@ -409,7 +412,7 @@ export const consultarReportePickingProcter = async (anio, mes) => {
 
 export const descargarExcelPickingProcter = async (anio, mes) => {
   try {
-    const response = await axios.get(`${BASE_URL}/reportes/picking-procter/excel`, {
+    const response = await axiosClient.get('/reportes/picking-procter/excel', {
       params: { anio, mes },
       responseType: 'blob'
     });
@@ -433,7 +436,7 @@ export const descargarExcelPickingProcter = async (anio, mes) => {
 // Concurso
 export const actualizarVistasConcurso = async (anio, mes, dia) => {
   try {
-    const response = await axios.post(`${BASE_URL}/reportes/concurso/actualizar`, {
+    const response = await axiosClient.post('/reportes/concurso/actualizar', {
       anio,
       mes,
       dia
@@ -441,6 +444,52 @@ export const actualizarVistasConcurso = async (anio, mes, dia) => {
     return response.data;
   } catch (error) {
     console.error('Error al actualizar vistas de Concurso:', error);
+    throw error;
+  }
+};
+
+// Escalas
+export const consultarEscalas = async (filtros = {}) => {
+  try {
+    const params = new URLSearchParams();
+    if (filtros.tipificacion) params.append('tipificacion', filtros.tipificacion);
+    if (filtros.codpro) params.append('codpro', filtros.codpro);
+    if (filtros.desde) params.append('desde', filtros.desde);
+    if (filtros.porcentaje) params.append('porcentaje', filtros.porcentaje);
+    const response = await axiosClient.get(`/escalas?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al consultar escalas:', error);
+    throw error;
+  }
+};
+
+export const crearEscala = async (data) => {
+  try {
+    const response = await axiosClient.post('/escalas', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error al crear escala:', error);
+    throw error;
+  }
+};
+
+export const actualizarEscala = async (data) => {
+  try {
+    const response = await axiosClient.put('/escalas', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar escala:', error);
+    throw error;
+  }
+};
+
+export const eliminarEscala = async (data) => {
+  try {
+    const response = await axiosClient.delete('/escalas', { data });
+    return response.data;
+  } catch (error) {
+    console.error('Error al eliminar escala:', error);
     throw error;
   }
 }; 

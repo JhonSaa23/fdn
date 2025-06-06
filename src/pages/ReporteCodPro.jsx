@@ -72,7 +72,7 @@ function ReporteCodPro() {
           <form onSubmit={handleConsultar} className="space-y-4">
             <div className="flex flex-wrap items-end gap-4">
               <div className="w-full sm:w-64">
-                <label htmlFor="codProducto" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="codProducto" className="block text-sm font-medium text-gray-700 mb-2">
                   Código de Producto
                 </label>
                 <input
@@ -81,13 +81,13 @@ function ReporteCodPro() {
                   name="codProducto"
                   value={filtros.codProducto}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                   placeholder="Ej: 01053"
                 />
               </div>
               
               <div className="w-full sm:w-auto">
-                <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700 mb-2">
                   Fecha Inicio
                 </label>
                 <input
@@ -96,12 +96,12 @@ function ReporteCodPro() {
                   name="fechaInicio"
                   value={filtros.fechaInicio}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 />
               </div>
               
               <div className="w-full sm:w-auto">
-                <label htmlFor="fechaFin" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="fechaFin" className="block text-sm font-medium text-gray-700 mb-2">
                   Fecha Fin
                 </label>
                 <input
@@ -110,7 +110,7 @@ function ReporteCodPro() {
                   name="fechaFin"
                   value={filtros.fechaFin}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 />
               </div>
               

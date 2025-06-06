@@ -233,9 +233,9 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
           )}
 
           <form className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-4 gap-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-4 gap-y-4">
               <div>
-                <label htmlFor="banco" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="banco" className="block text-sm font-medium text-gray-700 mb-2">
                   Banco
                 </label>
                 <select
@@ -243,16 +243,15 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
                   name="banco"
                   value={filtros.banco}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 >
                   <option value="">Todos</option>
                   <option value="1">BCP</option>
                   <option value="2">BBVA</option>
                 </select>
               </div>
-
               <div>
-                <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-2">
                   Fecha
                 </label>
                 <input
@@ -261,12 +260,11 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
                   name="fecha"
                   value={filtros.fecha}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 />
               </div>
-
               <div>
-                <label htmlFor="sucursal" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="sucursal" className="block text-sm font-medium text-gray-700 mb-2">
                   Sucursal
                 </label>
                 <input
@@ -275,13 +273,12 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
                   name="sucursal"
                   value={filtros.sucursal}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                   placeholder="Ej: 000-000"
                 />
               </div>
-
               <div>
-                <label htmlFor="operacion" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="operacion" className="block text-sm font-medium text-gray-700 mb-2">
                   Operación
                 </label>
                 <input
@@ -290,12 +287,11 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
                   name="operacion"
                   value={filtros.operacion}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 />
               </div>
-
               <div>
-                <label htmlFor="hora" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="hora" className="block text-sm font-medium text-gray-700 mb-2">
                   Hora
                 </label>
                 <input
@@ -304,12 +300,11 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
                   name="hora"
                   value={filtros.hora}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 />
               </div>
-
               <div>
-                <label htmlFor="vendedor" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="vendedor" className="block text-sm font-medium text-gray-700 mb-2">
                   Vendedor
                 </label>
                 <input
@@ -318,12 +313,11 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
                   name="vendedor"
                   value={filtros.vendedor}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 />
               </div>
-
               <div>
-                <label htmlFor="procesado" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="procesado" className="block text-sm font-medium text-gray-700 mb-2">
                   Procesado
                 </label>
                 <select
@@ -331,7 +325,7 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
                   name="procesado"
                   value={filtros.procesado}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 >
                   <option value="">Todos</option>
                   <option value="1">Sí</option>
@@ -344,7 +338,7 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
       </Card>
 
       <Card>
-        <div className="overflow-x-auto max-h-[calc(100vh-282px)]">
+        <div className="overflow-x-auto max-h-[calc(100vh-300px)]">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>

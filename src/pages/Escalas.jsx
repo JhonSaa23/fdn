@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNotification } from '../App';
-import { axiosConfig } from '../config';
+import { consultarEscalas, crearEscala, actualizarEscala } from '../services/api';
 import { 
   ArrowLeftIcon,
   PencilIcon, 
@@ -10,17 +9,21 @@ import {
   FunnelIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import Card from '../components/Card';
+import Button from '../components/Button';
 
-// Configurar axios con la URL base
-const api = axios.create(axiosConfig);
-
-// Mapeo de tipificaciones
+// Nueva lista de tipificaciones/negocios
 const TIPIFICACIONES = {
   "1": "Farmacia Independiente",
-  "2": "Clínica o Institución",
+  "2": "Mayorista",
   "3": "Minicadenas",
-  "4": "Mayorista",
-  "5": "Otros"
+  "4": "Sub-Distribuidores",
+  "5": "Institución",
+  "6": "Cadena Regional",
+  "7": "Farmacias Regulares",
+  "8": "Clinicas",
+  "9": "Mayorista",
+  "10": "Farmacias Tops"
 };
 
 // Función auxiliar para manejar strings de manera segura
@@ -51,35 +54,24 @@ const Escalas = () => {
     porcentaje: ''
   });
 
+  // Estados para el filtro de nombre de producto
+  const [filtroNombreProducto, setFiltroNombreProducto] = useState('');
+
   // Cargar escalas
   const cargarEscalas = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      
-      // Solo agregar los filtros que tengan valor
-      if (filtros.tipificacion) {
-        params.append('tipificacion', filtros.tipificacion);
-      }
-      if (filtros.codpro) {
-        params.append('codpro', filtros.codpro);
-      }
-      if (filtros.desde) {
-        params.append('desde', filtros.desde);
-      }
-      if (filtros.porcentaje) {
-        params.append('porcentaje', filtros.porcentaje);
-      }
-      
-      const response = await api.get(`/api/escalas?${params.toString()}`);
-      setEscalas(response.data);
+      const data = await consultarEscalas(filtros);
+      // Asegurarnos de que data sea un array
+      setEscalas(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error al cargar las escalas:', error);
+      console.error('Error al cargar escalas:', error);
       let mensaje = 'Error al cargar las escalas';
       if (error.response) {
-        mensaje = error.response.data.error || mensaje;
+        mensaje = error.response.data?.error || mensaje;
       }
       showNotification('error', mensaje);
+      setEscalas([]); // En caso de error, establecer un array vacío
     } finally {
       setLoading(false);
     }
@@ -121,72 +113,52 @@ const Escalas = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Validación básica
       if (!formData.tipificacion || !formData.codpro || !formData.desde || !formData.porcentaje) {
         showNotification('error', 'Todos los campos son obligatorios');
         return;
       }
-
-      // Validar números
       const desde = parseFloat(formData.desde);
       const porcentaje = parseFloat(formData.porcentaje);
-      
       if (isNaN(desde) || isNaN(porcentaje)) {
         showNotification('error', 'Los campos "desde" y "porcentaje" deben ser números válidos');
         return;
       }
-
       if (editingEscala) {
-        await api.put('/api/escalas', {
+        await actualizarEscala({
           tipificacionOld: editingEscala.tipificacion,
           codproOld: editingEscala.codpro,
           desdeOld: editingEscala.desde,
           porcentajeOld: editingEscala.porcentaje,
-          tipificacionNew: safeString(formData.tipificacion),
-          codproNew: safeString(formData.codpro),
+          tipificacionNew: formData.tipificacion.trim(),
+          codproNew: formData.codpro.trim(),
           desdeNew: desde,
           porcentajeNew: porcentaje
         });
         showNotification('success', 'Escala actualizada exitosamente');
       } else {
-        await api.post('/api/escalas', {
-          tipificacion: safeString(formData.tipificacion),
-          codpro: safeString(formData.codpro),
-          desde: desde,
-          porcentaje: porcentaje
+        await crearEscala({
+          tipificacion: formData.tipificacion.trim(),
+          codpro: formData.codpro.trim(),
+          desde,
+          porcentaje
         });
         showNotification('success', 'Escala creada exitosamente');
       }
-      
       setShowForm(false);
       setEditingEscala(null);
-      setFormData({
-        tipificacion: '',
-        codpro: '',
-        desde: '',
-        porcentaje: ''
-      });
+      setFormData({ tipificacion: '', codpro: '', desde: '', porcentaje: '' });
       cargarEscalas();
     } catch (error) {
-      console.error('Error detallado:', error);
       let mensaje = 'Error al guardar la escala';
-      
       if (error.response) {
         const { status, data } = error.response;
-        
         if (status === 409) {
-          mensaje = 'Ya existe una escala con estos valores';
-          if (data.details) {
-            mensaje = data.details;
-          }
+          mensaje = data.details || 'Ya existe una escala con estos valores';
         } else if (data.error) {
           mensaje = data.error;
-          if (data.details) {
-            mensaje += `: ${data.details}`;
-          }
+          if (data.details) mensaje += `: ${data.details}`;
         }
       }
-      
       showNotification('error', mensaje);
     }
   };
@@ -205,13 +177,11 @@ const Escalas = () => {
   const handleDelete = async (escala) => {
     if (window.confirm('¿Está seguro de eliminar esta escala?')) {
       try {
-        await api.delete('/api/escalas', { 
-          data: {
-            tipificacion: safeString(escala.tipificacion),
-            codpro: safeString(escala.codpro),
-            desde: escala.desde,
-            porcentaje: escala.porcentaje
-          }
+        await actualizarEscala({
+          tipificacion: safeString(escala.tipificacion),
+          codpro: safeString(escala.codpro),
+          desde: escala.desde,
+          porcentaje: escala.porcentaje
         });
         showNotification('success', 'Escala eliminada exitosamente');
         cargarEscalas();
@@ -226,105 +196,200 @@ const Escalas = () => {
     }
   };
 
-  return (
-    <div className="container mx-auto p-4">
-      {/* Encabezado */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">Consulta </h1>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleLimpiar}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg"
-          >
-            Limpiar
-          </button>
-          <button
-            onClick={handleConsultar}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-          >
-            Consultar
-          </button>
-          <button
-            onClick={() => {
-              setEditingEscala(null);
-              setFormData({
-                tipificacion: '',
-                codpro: '',
-                desde: '',
-                porcentaje: ''
-              });
-              setShowForm(true);
-            }}
-            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            Agregar
-          </button>
-        </div>
-      </div>
+  // Filtrar escalas en tiempo real por nombre de producto
+  const escalasFiltradas = Array.isArray(escalas) 
+    ? (filtroNombreProducto
+        ? escalas.filter(e => (e.nombreProducto || '').toLowerCase().includes(filtroNombreProducto.toLowerCase()))
+        : escalas)
+    : [];
 
-      {/* Filtros */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Negocio
-            </label>
-            <select
-              name="tipificacion"
-              value={filtros.tipificacion}
-              onChange={handleFilterChange}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="">Todos</option>
-              {Object.entries(TIPIFICACIONES).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+  return (
+    <>
+      {/* Bloque principal: Título, botones y filtros juntos en un solo Card */}
+      <Card className="mb-6">
+        <Card.Body>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-xl font-bold">Consulta</h1>
+            <div className="flex space-x-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleLimpiar}
+              >
+                Limpiar
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleConsultar}
+                disabled={loading}
+              >
+                {loading ? 'Consultando...' : 'Consultar'}
+              </Button>
+              <Button
+                type="button"
+                variant="success"
+                onClick={() => {
+                  setEditingEscala(null);
+                  setFormData({
+                    tipificacion: '',
+                    codpro: '',
+                    desde: '',
+                    porcentaje: ''
+                  });
+                  setShowForm(true);
+                }}
+              >
+                Agregar
+              </Button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              CodPro
-            </label>
-            <input
-              type="text"
-              name="codpro"
-              value={filtros.codpro}
-              onChange={handleFilterChange}
-              className="w-full p-2 border rounded-md"
-              placeholder="Ej: 000-000"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Desde
-            </label>
-            <input
-              type="number"
-              name="desde"
-              value={filtros.desde}
-              onChange={handleFilterChange}
-              className="w-full p-2 border rounded-md"
-              step="0"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Porcentaje
-            </label>
-            <input
-              type="number"
-              name="porcentaje"
-              value={filtros.porcentaje}
-              onChange={handleFilterChange}
-              className="w-full p-2 border rounded-md"
-              step="0"
-            />
-          </div>
+          <form className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Negocio
+                </label>
+                <select
+                  name="tipificacion"
+                  value={filtros.tipificacion}
+                  onChange={handleFilterChange}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                >
+                  <option value="">Todos</option>
+                  {Object.entries(TIPIFICACIONES).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  CodPro
+                </label>
+                <input
+                  type="text"
+                  name="codpro"
+                  value={filtros.codpro}
+                  onChange={handleFilterChange}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Ej: 000-000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Desde
+                </label>
+                <input
+                  type="number"
+                  name="desde"
+                  value={filtros.desde}
+                  onChange={handleFilterChange}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  step="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Porcentaje
+                </label>
+                <input
+                  type="number"
+                  name="porcentaje"
+                  value={filtros.porcentaje}
+                  onChange={handleFilterChange}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  step="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre de producto
+                </label>
+                <input
+                  type="text"
+                  value={filtroNombreProducto}
+                  onChange={e => setFiltroNombreProducto(e.target.value)}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Escriba el nombre del producto..."
+                />
+              </div>
+            </div>
+          </form>
+        </Card.Body>
+      </Card>
+
+      {/* Tabla en un Card aparte */}
+      <Card>
+        <div className="overflow-x-auto max-h-[calc(100vh-300px)]">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 sticky top-0 z-10">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipi</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CodPro</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre del Producto</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Negocio</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Porcentaje</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center">
+                    Cargando...
+                  </td>
+                </tr>
+              ) : escalasFiltradas.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center">
+                    No hay datos disponibles
+                  </td>
+                </tr>
+              ) : (
+                escalasFiltradas.map((escala, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {escala.tipificacion}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {escala.codpro}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {escala.nombreProducto || ''}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {TIPIFICACIONES[escala.tipificacion] || escala.tipificacion}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {escala.desde}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {escala.porcentaje}%
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(escala)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          <PencilIcon className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(escala)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <TrashIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
+      </Card>
 
       {/* Formulario Modal */}
       {showForm && (
@@ -347,7 +412,7 @@ const Escalas = () => {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Tipo de Negocio
                   </label>
                   <select
@@ -364,7 +429,7 @@ const Escalas = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Código de Producto
                   </label>
                   <input
@@ -377,7 +442,7 @@ const Escalas = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Desde
                   </label>
                   <input
@@ -391,7 +456,7 @@ const Escalas = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Porcentaje
                   </label>
                   <input
@@ -427,86 +492,7 @@ const Escalas = () => {
           </div>
         </div>
       )}
-
-      {/* Tabla */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tipi
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tipo de Negocio
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                CodPro
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Desde
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Porcentaje
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {loading ? (
-              <tr>
-                <td colSpan="6" className="px-6 py-4 text-center">
-                  Cargando...
-                </td>
-              </tr>
-            ) : escalas.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="px-6 py-4 text-center">
-                  No hay datos disponibles
-                </td>
-              </tr>
-            ) : (
-              escalas.map((escala, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {escala.tipificacion}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {TIPIFICACIONES[escala.tipificacion] || escala.tipificacion}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {escala.codpro}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {escala.desde}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {escala.porcentaje}%
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(escala)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        <PencilIcon className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(escala)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <TrashIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </>
   );
 };
 

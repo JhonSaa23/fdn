@@ -122,7 +122,7 @@ function MultiAccion() {
               value={numeroPedido}
               onChange={(e) => setNumeroPedido(e.target.value)}
               placeholder="Número de pedido"
-              className="form-input flex-1"
+              className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
             />
             <button
               onClick={buscarPedido}
@@ -146,7 +146,7 @@ function MultiAccion() {
               value={numeroGuia}
               onChange={(e) => setNumeroGuia(e.target.value)}
               placeholder="Número de guía (T001-XXXXX)"
-              className="form-input flex-1"
+              className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
             />
             <button
               onClick={buscarGuia}
@@ -170,7 +170,7 @@ function MultiAccion() {
               value={codigoAutorizar}
               onChange={(e) => setCodigoAutorizar(e.target.value)}
               placeholder="Código a autorizar"
-              className="form-input flex-1"
+              className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
             />
             <button
               onClick={autorizarCodigo}
