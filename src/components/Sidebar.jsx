@@ -32,7 +32,7 @@ const menuItems = [
     ]
   },
   { name: 'Exportaciones', path: '/exportaciones', icon: <ArrowDownTrayIcon className="w-6 h-6" /> },
-  { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-6 h-6" /> },
+  { name: 'Promociones', path: '/promociones', icon: <ChartBarIcon className="w-6 h-6" /> },
   { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-6 h-6" /> },
   { 
     name: 'Reportes', 
@@ -43,6 +43,12 @@ const menuItems = [
         name: 'Procter',
         submenu: [
           { name: 'Picking Cobertura General', path: '/reportes/picking-procter' }
+        ]
+      },
+      {
+        name: 'Loreal',
+        submenu: [
+          { name: 'Notas de Crédito', path: '/reportes/loreal-notas' }
         ]
       },
       { name: 'Concurso', path: '/reportes/concurso' }

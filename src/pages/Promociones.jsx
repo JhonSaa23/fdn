@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../App';
-import { consultarEscalas, crearEscala, actualizarEscala } from '../services/api';
+import { consultarPromociones, crearPromocion, actualizarPromocion, eliminarPromocion } from '../services/api';
 import { 
   ArrowLeftIcon,
   PencilIcon, 
@@ -31,12 +31,12 @@ const safeString = (value) => {
   return value ? String(value).trim() : '';
 };
 
-const Escalas = () => {
+const Promociones = () => {
   const { showNotification } = useNotification();
-  const [escalas, setEscalas] = useState([]);
+  const [promociones, setPromociones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingEscala, setEditingEscala] = useState(null);
+  const [editingPromocion, setEditingPromocion] = useState(null);
 
   // Estados para filtros
   const [filtros, setFiltros] = useState({
@@ -57,28 +57,27 @@ const Escalas = () => {
   // Estados para el filtro de nombre de producto
   const [filtroNombreProducto, setFiltroNombreProducto] = useState('');
 
-  // Cargar escalas
-  const cargarEscalas = async () => {
+  // Cargar promociones
+  const cargarPromociones = async () => {
     try {
       setLoading(true);
-      const data = await consultarEscalas(filtros);
-      // Asegurarnos de que data sea un array
-      setEscalas(Array.isArray(data) ? data : []);
+      const data = await consultarPromociones(filtros);
+      setPromociones(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error al cargar escalas:', error);
-      let mensaje = 'Error al cargar las escalas';
+      console.error('Error al cargar promociones:', error);
+      let mensaje = 'Error al cargar las promociones';
       if (error.response) {
         mensaje = error.response.data?.error || mensaje;
       }
       showNotification('error', mensaje);
-      setEscalas([]); // En caso de error, establecer un array vacío
+      setPromociones([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    cargarEscalas();
+    cargarPromociones();
   }, []);
 
   const handleFilterChange = (e) => {
@@ -98,7 +97,7 @@ const Escalas = () => {
   };
 
   const handleConsultar = () => {
-    cargarEscalas();
+    cargarPromociones();
   };
 
   const handleLimpiar = () => {
@@ -123,37 +122,37 @@ const Escalas = () => {
         showNotification('error', 'Los campos "desde" y "porcentaje" deben ser números válidos');
         return;
       }
-      if (editingEscala) {
-        await actualizarEscala({
-          tipificacionOld: editingEscala.tipificacion,
-          codproOld: editingEscala.codpro,
-          desdeOld: editingEscala.desde,
-          porcentajeOld: editingEscala.porcentaje,
+      if (editingPromocion) {
+        await actualizarPromocion({
+          tipificacionOld: editingPromocion.tipificacion,
+          codproOld: editingPromocion.codpro,
+          desdeOld: editingPromocion.desde,
+          porcentajeOld: editingPromocion.porcentaje,
           tipificacionNew: formData.tipificacion.trim(),
           codproNew: formData.codpro.trim(),
           desdeNew: desde,
           porcentajeNew: porcentaje
         });
-        showNotification('success', 'Escala actualizada exitosamente');
+        showNotification('success', 'Promoción actualizada exitosamente');
       } else {
-        await crearEscala({
+        await crearPromocion({
           tipificacion: formData.tipificacion.trim(),
           codpro: formData.codpro.trim(),
           desde,
           porcentaje
         });
-        showNotification('success', 'Escala creada exitosamente');
+        showNotification('success', 'Promoción creada exitosamente');
       }
       setShowForm(false);
-      setEditingEscala(null);
+      setEditingPromocion(null);
       setFormData({ tipificacion: '', codpro: '', desde: '', porcentaje: '' });
-      cargarEscalas();
+      cargarPromociones();
     } catch (error) {
-      let mensaje = 'Error al guardar la escala';
+      let mensaje = 'Error al guardar la promoción';
       if (error.response) {
         const { status, data } = error.response;
         if (status === 409) {
-          mensaje = data.details || 'Ya existe una escala con estos valores';
+          mensaje = data.details || 'Ya existe una promoción con estos valores';
         } else if (data.error) {
           mensaje = data.error;
           if (data.details) mensaje += `: ${data.details}`;
@@ -163,31 +162,31 @@ const Escalas = () => {
     }
   };
 
-  const handleEdit = (escala) => {
-    setEditingEscala(escala);
+  const handleEdit = (promocion) => {
+    setEditingPromocion(promocion);
     setFormData({
-      tipificacion: escala.tipificacion || '',
-      codpro: escala.codpro || '',
-      desde: escala.desde?.toString() || '',
-      porcentaje: escala.porcentaje?.toString() || ''
+      tipificacion: promocion.tipificacion || '',
+      codpro: promocion.codpro || '',
+      desde: promocion.desde?.toString() || '',
+      porcentaje: promocion.porcentaje?.toString() || ''
     });
     setShowForm(true);
   };
 
-  const handleDelete = async (escala) => {
-    if (window.confirm('¿Está seguro de eliminar esta escala?')) {
+  const handleDelete = async (promocion) => {
+    if (window.confirm('¿Está seguro de eliminar esta promoción?')) {
       try {
-        await actualizarEscala({
-          tipificacion: safeString(escala.tipificacion),
-          codpro: safeString(escala.codpro),
-          desde: escala.desde,
-          porcentaje: escala.porcentaje
+        await eliminarPromocion({
+          tipificacion: safeString(promocion.tipificacion),
+          codpro: safeString(promocion.codpro),
+          desde: promocion.desde,
+          porcentaje: promocion.porcentaje
         });
-        showNotification('success', 'Escala eliminada exitosamente');
-        cargarEscalas();
+        showNotification('success', 'Promoción eliminada exitosamente');
+        cargarPromociones();
       } catch (error) {
-        console.error('Error al eliminar la escala:', error);
-        let mensaje = 'Error al eliminar la escala';
+        console.error('Error al eliminar la promoción:', error);
+        let mensaje = 'Error al eliminar la promoción';
         if (error.response) {
           mensaje = error.response.data.error || mensaje;
         }
@@ -196,11 +195,11 @@ const Escalas = () => {
     }
   };
 
-  // Filtrar escalas en tiempo real por nombre de producto
-  const escalasFiltradas = Array.isArray(escalas) 
+  // Filtrar promociones en tiempo real por nombre de producto
+  const promocionesFiltradas = Array.isArray(promociones)
     ? (filtroNombreProducto
-        ? escalas.filter(e => (e.nombreProducto || '').toLowerCase().includes(filtroNombreProducto.toLowerCase()))
-        : escalas)
+        ? promociones.filter(e => (e.nombreProducto || '').toLowerCase().includes(filtroNombreProducto.toLowerCase()))
+        : promociones)
     : [];
 
   return (
@@ -230,7 +229,7 @@ const Escalas = () => {
                 type="button"
                 variant="success"
                 onClick={() => {
-                  setEditingEscala(null);
+                  setEditingPromocion(null);
                   setFormData({
                     tipificacion: '',
                     codpro: '',
@@ -321,73 +320,77 @@ const Escalas = () => {
       {/* Tabla en un Card aparte */}
       <Card>
         <div className="overflow-x-auto max-h-[calc(100vh-300px)]">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0 z-10">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipi</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CodPro</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre del Producto</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Negocio</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Porcentaje</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center">
-                    Cargando...
-                  </td>
-                </tr>
-              ) : escalasFiltradas.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center">
-                    No hay datos disponibles
-                  </td>
-                </tr>
-              ) : (
-                escalasFiltradas.map((escala, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {escala.tipificacion}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {escala.codpro}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {escala.nombreProducto || ''}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {TIPIFICACIONES[escala.tipificacion] || escala.tipificacion}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {escala.desde}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {escala.porcentaje}%
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEdit(escala)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          <PencilIcon className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(escala)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <TrashIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
+          <div className="min-w-full inline-block align-middle">
+            <div className="overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipi</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CodPro</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre del Producto</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Negocio</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Porcentaje</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="7" className="px-6 py-4 text-center">
+                        Cargando...
+                      </td>
+                    </tr>
+                  ) : promocionesFiltradas.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="px-6 py-4 text-center">
+                        No hay datos disponibles
+                      </td>
+                    </tr>
+                  ) : (
+                    promocionesFiltradas.map((promocion, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {promocion.tipificacion}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {promocion.codpro}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {promocion.nombreProducto || ''}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {TIPIFICACIONES[promocion.tipificacion] || promocion.tipificacion}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {promocion.desde}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {promocion.porcentaje}%
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleEdit(promocion)}
+                              className="text-indigo-600 hover:text-indigo-900"
+                            >
+                              <PencilIcon className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(promocion)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              <TrashIcon className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </Card>
 
@@ -397,12 +400,12 @@ const Escalas = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">
-                {editingEscala ? 'Editar Escala' : 'Nueva Escala'}
+                {editingPromocion ? 'Editar Promoción' : 'Nueva Promoción'}
               </h2>
               <button
                 onClick={() => {
                   setShowForm(false);
-                  setEditingEscala(null);
+                  setEditingPromocion(null);
                 }}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -475,7 +478,7 @@ const Escalas = () => {
                   type="button"
                   onClick={() => {
                     setShowForm(false);
-                    setEditingEscala(null);
+                    setEditingPromocion(null);
                   }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
@@ -485,7 +488,7 @@ const Escalas = () => {
                   type="submit"
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                 >
-                  {editingEscala ? 'Actualizar' : 'Guardar'}
+                  {editingPromocion ? 'Actualizar' : 'Guardar'}
                 </button>
               </div>
             </form>
@@ -496,4 +499,4 @@ const Escalas = () => {
   );
 };
 
-export default Escalas; 
+export default Promociones; 

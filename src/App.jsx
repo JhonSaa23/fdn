@@ -9,10 +9,11 @@ import BCP from './pages/BCP';
 import Exportaciones from './pages/Exportaciones';
 import ConsultaMovimientos from './pages/ConsultaMovimientos';
 import ReporteCodPro from './pages/ReporteCodPro';
-import Escalas from './pages/Escalas';
+import Promociones from './pages/Promociones';
 import MultiAccion from './pages/MultiAccion';
 import ReportePickingProcter from './pages/ReportePickingProcter';
 import ReporteConcurso from './pages/ReporteConcurso';
+import ReporteNotasLoreal from './pages/ReporteNotasLoreal';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
@@ -109,10 +110,11 @@ function App() {
                     <Route path="/exportaciones" element={<Exportaciones />} />
                     <Route path="/consulta-movimientos" element={<ConsultaMovimientos />} />
                     <Route path="/reporte-codpro" element={<ReporteCodPro />} />
-                    <Route path="/escalas" element={<Escalas />} />
+                    <Route path="/promociones" element={<Promociones />} />
                     <Route path="/multi-accion" element={<MultiAccion />} />
                     <Route path="/reportes/picking-procter" element={<ReportePickingProcter />} />
                     <Route path="/reportes/concurso" element={<ReporteConcurso />} />
+                    <Route path="/reportes/loreal-notas" element={<ReporteNotasLoreal />} />
                   </Routes>
                 </div>
               </main>

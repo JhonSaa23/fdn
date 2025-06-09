@@ -17,6 +17,7 @@ const pageTitles = {
   '/consulta-movimientos': 'Consultar Movimientos',
   '/reporte-codpro': 'Reporte CodPro',
   '/reportes/picking-procter': 'Reporte Picking Procter - Cobertura General',
+  '/reportes/loreal-notas': 'Reporte Notas de Crédito Loreal',
 };
 
 // Componente de notificación

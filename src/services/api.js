@@ -448,48 +448,92 @@ export const actualizarVistasConcurso = async (anio, mes, dia) => {
   }
 };
 
-// Escalas
-export const consultarEscalas = async (filtros = {}) => {
+// Promociones (antes Escalas)
+export const consultarPromociones = async (filtros = {}) => {
   try {
-    const params = new URLSearchParams();
-    if (filtros.tipificacion) params.append('tipificacion', filtros.tipificacion);
-    if (filtros.codpro) params.append('codpro', filtros.codpro);
-    if (filtros.desde) params.append('desde', filtros.desde);
-    if (filtros.porcentaje) params.append('porcentaje', filtros.porcentaje);
-    const response = await axiosClient.get(`/escalas?${params.toString()}`);
+    const params = new URLSearchParams(filtros);
+    const response = await axiosClient.get(`/promociones?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error('Error al consultar escalas:', error);
+    console.error('Error al consultar promociones:', error);
     throw error;
   }
 };
 
-export const crearEscala = async (data) => {
+export const crearPromocion = async (data) => {
   try {
-    const response = await axiosClient.post('/escalas', data);
+    const response = await axiosClient.post('/promociones', data);
     return response.data;
   } catch (error) {
-    console.error('Error al crear escala:', error);
     throw error;
   }
 };
 
-export const actualizarEscala = async (data) => {
+export const actualizarPromocion = async (data) => {
   try {
-    const response = await axiosClient.put('/escalas', data);
+    const response = await axiosClient.put('/promociones', data);
     return response.data;
   } catch (error) {
-    console.error('Error al actualizar escala:', error);
     throw error;
   }
 };
 
-export const eliminarEscala = async (data) => {
+export const eliminarPromocion = async (data) => {
   try {
-    const response = await axiosClient.delete('/escalas', { data });
+    const response = await axiosClient.delete('/promociones', { data });
     return response.data;
   } catch (error) {
-    console.error('Error al eliminar escala:', error);
     throw error;
   }
-}; 
+};
+
+// Loreal Notas de Crédito
+export const actualizarVistaNotasLoreal = async (anio, mes) => {
+  try {
+    const response = await axiosClient.post('/reportes/loreal-notas/view', {
+      anio,
+      mes
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar vista de Notas Loreal:', error);
+    throw error;
+  }
+};
+
+export const consultarReporteNotasLoreal = async (anio, mes) => {
+  try {
+    const response = await axiosClient.get('/reportes/loreal-notas', {
+      params: { anio, mes }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error consultando reporte de Notas Loreal:', error);
+    throw error;
+  }
+};
+
+export async function descargarExcelNotasLoreal() {
+  try {
+    const response = await axiosClient.get('/reportes/loreal-notas/excel', {
+      responseType: 'blob'
+    });
+    // Obtener el nombre del archivo del header
+    let filename = 'Notas_Credito_Loreal.xlsx';
+    const disposition = response.headers['content-disposition'];
+    if (disposition && disposition.indexOf('filename=') !== -1) {
+      filename = disposition.split('filename=')[1].replace(/['"]/g, '');
+    }
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    return { success: true };
+  } catch (error) {
+    console.error('Error al descargar Excel:', error);
+    return { success: false, error: error.message };
+  }
+} 
