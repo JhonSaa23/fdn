@@ -1,5 +1,5 @@
-import { useState, createContext, useContext } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { useState, createContext, useContext, useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
@@ -10,6 +10,7 @@ import Exportaciones from './pages/Exportaciones';
 import ConsultaMovimientos from './pages/ConsultaMovimientos';
 import ReporteCodPro from './pages/ReporteCodPro';
 import Promociones from './pages/Promociones';
+import Escalas from './pages/Escalas';
 import MultiAccion from './pages/MultiAccion';
 import ReportePickingProcter from './pages/ReportePickingProcter';
 import ReporteConcurso from './pages/ReporteConcurso';
@@ -29,12 +30,7 @@ export function useNotification() {
   return useContext(NotificationContext);
 }
 
-// Crear contexto para el estado de conexión a la base de datos
-export const DatabaseConnectionContext = createContext();
 
-export function useDatabaseConnection() {
-  return useContext(DatabaseConnectionContext);
-}
 
 function App() {
   // Estado para el sidebar
@@ -48,8 +44,14 @@ function App() {
     text: '' 
   });
 
-  // Estado para la conexión a la base de datos
-  const [isDbConnected, setIsDbConnected] = useState(true);
+  const location = useLocation();
+
+  // Ocultar notificaciones al cambiar de ruta
+  useEffect(() => {
+    if (notification.show) {
+      setNotification({ ...notification, show: false });
+    }
+  }, [location.pathname]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -86,41 +88,37 @@ function App() {
     hideNotification
   };
 
-  const dbConnectionContextValue = {
-    isDbConnected,
-    setIsDbConnected
-  };
+
 
   return (
     <SidebarContext.Provider value={sidebarContextValue}>
       <NotificationContext.Provider value={notificationContextValue}>
-        <DatabaseConnectionContext.Provider value={dbConnectionContextValue}>
-          <div className="flex h-screen bg-gray-50">
-            <Sidebar />
+        <div className="flex h-screen bg-gray-50">
+          <Sidebar />
+          
+          <div className={`w-full flex flex-col flex-1 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
+            <Header />
             
-            <div className={`w-full flex flex-col flex-1 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
-              <Header />
-              
-              <main className="flex-1 p-4 overflow-auto">
-                <div className="container mx-auto">
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/medifarma" element={<Medifarma />} />
-                    <Route path="/bcp" element={<BCP />} />
-                    <Route path="/exportaciones" element={<Exportaciones />} />
-                    <Route path="/consulta-movimientos" element={<ConsultaMovimientos />} />
-                    <Route path="/reporte-codpro" element={<ReporteCodPro />} />
-                    <Route path="/promociones" element={<Promociones />} />
-                    <Route path="/multi-accion" element={<MultiAccion />} />
-                    <Route path="/reportes/picking-procter" element={<ReportePickingProcter />} />
-                    <Route path="/reportes/concurso" element={<ReporteConcurso />} />
-                    <Route path="/reportes/loreal-notas" element={<ReporteNotasLoreal />} />
-                  </Routes>
-                </div>
-              </main>
-            </div>
+            <main className="flex-1 p-4 overflow-auto">
+              <div className="container mx-auto">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/medifarma" element={<Medifarma />} />
+                  <Route path="/bcp" element={<BCP />} />
+                  <Route path="/exportaciones" element={<Exportaciones />} />
+                  <Route path="/consulta-movimientos" element={<ConsultaMovimientos />} />
+                  <Route path="/reporte-codpro" element={<ReporteCodPro />} />
+                  <Route path="/promociones" element={<Promociones />} />
+                  <Route path="/escalas" element={<Escalas />} />
+                  <Route path="/multi-accion" element={<MultiAccion />} />
+                  <Route path="/reportes/picking-procter" element={<ReportePickingProcter />} />
+                  <Route path="/reportes/concurso" element={<ReporteConcurso />} />
+                  <Route path="/reportes/loreal-notas" element={<ReporteNotasLoreal />} />
+                </Routes>
+              </div>
+            </main>
           </div>
-        </DatabaseConnectionContext.Provider>
+        </div>
       </NotificationContext.Provider>
     </SidebarContext.Provider>
   );

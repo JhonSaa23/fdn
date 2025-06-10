@@ -18,18 +18,26 @@ function MultiAccion() {
 
   // Función para buscar pedido
   const buscarPedido = async () => {
+    if (!numeroPedido.trim()) {
+      showNotification('warning', 'Por favor ingresa un número de pedido');
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/multi-accion/pedido/${numeroPedido}`);
-      const data = await response.json();
+      const response = await fetch(`/api/multi-accion/pedido/${encodeURIComponent(numeroPedido.trim())}`);
       
-      if (data) {
+      if (response.ok) {
+        const data = await response.json();
         setResultadoPedido(data);
         setShowPedidoModal(true);
-      } else {
+      } else if (response.status === 404) {
         showNotification('warning', 'No se encontró el pedido');
+      } else {
+        showNotification('danger', 'Error al buscar el pedido');
       }
     } catch (error) {
-      showNotification('danger', 'Error al buscar el pedido');
+      console.error('Error al buscar pedido:', error);
+      showNotification('danger', 'Error de conexión al buscar el pedido');
     }
   };
 

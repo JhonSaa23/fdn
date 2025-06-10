@@ -32,11 +32,12 @@ const menuItems = [
     ]
   },
   { name: 'Exportaciones', path: '/exportaciones', icon: <ArrowDownTrayIcon className="w-6 h-6" /> },
-  { name: 'Promociones', path: '/promociones', icon: <ChartBarIcon className="w-6 h-6" /> },
+  { name: 'Promociones', path: '/promociones', icon: <TagIcon className="w-6 h-6" /> },
+  { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-6 h-6" /> },
   { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-6 h-6" /> },
   { 
     name: 'Reportes', 
-    icon: <ChartBarIcon className="w-6 h-6" />,
+    icon: <DocumentTextIcon className="w-6 h-6" />,
     submenu: [
       { name: 'Reporte CodPro', path: '/reporte-codpro' },
       { 
@@ -121,20 +122,20 @@ function Sidebar() {
           <button
             onClick={(e) => toggleMenu(currentPath, e)}
             className={clsx(
-              "w-full flex items-center px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100",
+              "w-full flex items-center px-4 py-2.5 text-slate-700 rounded-lg hover:bg-slate-200/60 transition-all duration-200 border border-transparent hover:border-slate-300/40 hover:shadow-sm group",
               (location.pathname === item.path || 
                item.submenu?.some(subItem => location.pathname === subItem.path)) && 
-               "bg-primary-50 text-primary-700",
+               "bg-slate-200/80 text-slate-800 border-slate-300/50 shadow-sm",
               isSidebarCollapsed && "justify-center"
             )}
           >
-            {item.icon && <span className="flex-shrink-0">{item.icon}</span>}
+            {item.icon && <span className="flex-shrink-0 text-slate-600 group-hover:text-slate-700">{item.icon}</span>}
             {!isSidebarCollapsed && (
               <>
-                <span className="ml-3 flex-grow">{item.name}</span>
+                <span className="ml-3 flex-grow text-left font-medium">{item.name}</span>
                 <ChevronDownIcon 
                   className={clsx(
-                    "w-5 h-5 transform transition-transform",
+                    "w-4 h-4 transform transition-transform duration-200 text-slate-500",
                     isMenuOpen(currentPath) ? "rotate-180" : ""
                   )}
                 />
@@ -143,24 +144,35 @@ function Sidebar() {
           </button>
           
           {!isSidebarCollapsed && isMenuOpen(currentPath) && (
-            <ul className="pl-12 mt-2 space-y-1">
-              {item.submenu.map(subItem => (
-                <li key={subItem.name}>
+            <div className="ml-4 mt-1 space-y-1 relative">
+              {/* Línea conectora principal */}
+              <div className="absolute left-4 top-0 w-0.5 bg-slate-400 rounded-full opacity-60" style={{ height: `${item.submenu.length * 40}px` }}></div>
+              
+              {item.submenu.map((subItem, index) => (
+                <div key={subItem.name} className="relative">
+                  {/* Línea horizontal conectora */}
+                  <div className="absolute left-4 top-4 w-3 h-0.5 bg-slate-400 rounded-full opacity-60"></div>
+                  
+                  {/* Punto de conexión */}
+                  <div className="absolute left-3.5 top-3.5 w-1.5 h-1.5 bg-slate-500 rounded-full shadow-sm"></div>
+                  
                   {subItem.submenu ? 
-                    renderMenuItem(subItem, currentPath) :
+                    <div className="ml-6">
+                      {renderMenuItem(subItem, currentPath)}
+                    </div> :
                     <Link
                       to={subItem.path}
                       className={clsx(
-                        "block px-2 py-1 text-sm text-gray-700 rounded-md hover:bg-gray-100",
-                        location.pathname === subItem.path && "text-primary-700 font-medium"
+                        "block px-3 py-2 ml-6 text-sm text-slate-600 rounded-md hover:bg-slate-100 transition-all duration-200 hover:text-slate-700 border border-transparent hover:border-slate-200 text-left",
+                        location.pathname === subItem.path && "text-slate-700 font-medium bg-slate-100/80 border-slate-200/60"
                       )}
                     >
                       {subItem.name}
                     </Link>
                   }
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
       );
@@ -171,14 +183,14 @@ function Sidebar() {
         key={item.name}
         to={item.path}
         className={clsx(
-          "flex items-center px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100",
-          location.pathname === item.path && "bg-primary-50 text-primary-700",
+          "flex items-center px-4 py-2.5 text-slate-700 rounded-lg hover:bg-slate-200/60 transition-all duration-200 border border-transparent hover:border-slate-300/40 hover:shadow-sm group",
+          location.pathname === item.path && "bg-slate-200/80 text-slate-800 border-slate-300/50 shadow-sm",
           isSidebarCollapsed && "justify-center"
         )}
         title={isSidebarCollapsed ? item.name : ""}
       >
-        {item.icon && <span className="flex-shrink-0">{item.icon}</span>}
-        {!isSidebarCollapsed && <span className="ml-3">{item.name}</span>}
+        {item.icon && <span className="flex-shrink-0 text-slate-600 group-hover:text-slate-700">{item.icon}</span>}
+        {!isSidebarCollapsed && <span className="ml-3 font-medium text-left">{item.name}</span>}
       </Link>
     );
   };
@@ -195,18 +207,22 @@ function Sidebar() {
       
       {/* Sidebar */}
       <aside className={clsx(
-        "sidebar fixed bg-white border-r border-gray-200 transition-all duration-300 ease-in-out z-40",
+        "sidebar fixed bg-gradient-to-b from-slate-50 to-slate-100 border-r border-slate-300/60 transition-all duration-300 ease-in-out z-40 shadow-xl",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         "md:translate-x-0",
         isSidebarCollapsed ? "md:w-20" : "md:w-64",
         "overflow-hidden"  // Evita el scroll horizontal
       )}>
-        <div className="sidebar-header border-b border-gray-200 flex justify-between items-center h-16 px-4">
+        <div className="sidebar-header border-b border-slate-300/60 flex justify-between items-center h-16 px-4 bg-gradient-to-r from-slate-100/80 to-slate-200/80">
           {!isSidebarCollapsed && (
-            <h1 className="text-xl font-bold text-primary-600">FDN</h1>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent">
+              FDN
+            </h1>
           )}
           {isSidebarCollapsed && (
-            <span className="text-xl font-bold text-primary-600 w-full text-center">FDN</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent w-full text-center">
+              FDN
+            </span>
           )}
         </div>
         
@@ -228,7 +244,7 @@ function Sidebar() {
       {/* Portal para renderizar el submenú flotante fuera del flujo normal del DOM */}
       {isSidebarCollapsed && hoveredItem !== null && menuItems[hoveredItem]?.submenu && createPortal(
         <div 
-          className="fixed bg-white rounded-md shadow-lg border border-gray-200 z-[9999] w-48"
+          className="fixed bg-slate-50/95 backdrop-blur-md rounded-lg shadow-xl border border-slate-300/60 z-[9999] w-56"
           style={{
             top: `${submenuPosition.top}px`,
             left: `${submenuPosition.left}px`,
@@ -236,46 +252,71 @@ function Sidebar() {
           onMouseEnter={() => clearTimeout(submenuTimerRef.current)}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="py-2">
-            <div className="px-4 py-2 text-sm font-medium text-gray-700 border-b border-gray-200">
+          <div className="p-3">
+            <div className="px-4 py-3 text-sm font-semibold text-slate-700 border-b border-slate-200/60 rounded-t-lg bg-slate-100/60">
               {menuItems[hoveredItem].name}
             </div>
-            <ul className="mt-1">
-              {menuItems[hoveredItem].submenu.map(subItem => (
-                <li key={subItem.name}>
+            <div className="mt-2 space-y-1 relative">
+              {/* Línea conectora principal para el menú flotante */}
+              <div className="absolute left-4 top-0 w-0.5 bg-slate-400 rounded-full opacity-60" style={{ height: `${menuItems[hoveredItem].submenu.length * 40 - 8}px` }}></div>
+              
+              {menuItems[hoveredItem].submenu.map((subItem, index) => (
+                <div key={subItem.name} className="relative">
                   {subItem.submenu ? (
-                    <div className="px-4 py-2">
-                      <div className="font-medium text-sm">{subItem.name}</div>
-                      <ul className="pl-4 mt-1">
-                        {subItem.submenu.map(subSubItem => (
-                          <li key={subSubItem.name}>
+                    <div className="px-2 py-1">
+                      {/* Línea horizontal conectora */}
+                      <div className="absolute left-4 top-4 w-3 h-0.5 bg-slate-400 rounded-full opacity-60"></div>
+                      {/* Punto de conexión */}
+                      <div className="absolute left-3.5 top-3.5 w-1.5 h-1.5 bg-slate-500 rounded-full shadow-sm"></div>
+                      
+                      <div className="font-medium text-sm text-slate-700 ml-6 mb-1 px-2 py-1 rounded-md bg-slate-100/60">
+                        {subItem.name}
+                      </div>
+                      <div className="ml-8 space-y-1 relative">
+                        {/* Línea conectora secundaria */}
+                        <div className="absolute left-2 top-0 w-0.5 bg-slate-400 rounded-full opacity-50" style={{ height: `${subItem.submenu.length * 32 - 4}px` }}></div>
+                        
+                        {subItem.submenu.map((subSubItem, subIndex) => (
+                          <div key={subSubItem.name} className="relative">
+                            {/* Línea horizontal secundaria */}
+                            <div className="absolute left-2 top-3 w-2.5 h-0.5 bg-slate-400 rounded-full opacity-50"></div>
+                            {/* Punto de conexión secundario */}
+                            <div className="absolute left-1.5 top-2.5 w-1 h-1 bg-slate-500 rounded-full shadow-sm"></div>
+                            
                             <Link
                               to={subSubItem.path}
                               className={clsx(
-                                "block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100",
-                                location.pathname === subSubItem.path && "text-primary-700 font-medium"
+                                "block px-3 py-1.5 ml-5 text-sm text-slate-600 hover:bg-slate-200/60 transition-all duration-200 hover:text-slate-700 border border-transparent hover:border-slate-200 rounded-md",
+                                location.pathname === subSubItem.path && "text-slate-700 font-medium bg-slate-200/80 border-slate-200/60"
                               )}
                             >
                               {subSubItem.name}
                             </Link>
-                          </li>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   ) : (
-                  <Link
-                    to={subItem.path}
-                    className={clsx(
-                      "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100",
-                      location.pathname === subItem.path && "bg-primary-50 text-primary-700 font-medium"
-                    )}
-                  >
-                    {subItem.name}
-                  </Link>
+                    <div className="relative">
+                      {/* Línea horizontal conectora */}
+                      <div className="absolute left-4 top-4 w-3 h-0.5 bg-slate-400 rounded-full opacity-60"></div>
+                      {/* Punto de conexión */}
+                      <div className="absolute left-3.5 top-3.5 w-1.5 h-1.5 bg-slate-500 rounded-full shadow-sm"></div>
+                      
+                      <Link
+                        to={subItem.path}
+                        className={clsx(
+                          "block px-3 py-2 ml-6 text-sm text-slate-600 hover:bg-slate-200/60 transition-all duration-200 hover:text-slate-700 border border-transparent hover:border-slate-300/40 rounded-md",
+                          location.pathname === subItem.path && "bg-slate-200/80 text-slate-700 border-slate-300/50 font-medium"
+                        )}
+                      >
+                        {subItem.name}
+                      </Link>
+                    </div>
                   )}
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>,
         document.body

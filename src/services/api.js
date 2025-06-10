@@ -536,4 +536,52 @@ export async function descargarExcelNotasLoreal() {
     console.error('Error al descargar Excel:', error);
     return { success: false, error: error.message };
   }
-} 
+}
+
+// Escalas
+export const consultarEscalas = async (filtros = {}) => {
+  try {
+    const params = new URLSearchParams();
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key]) {
+        params.append(key, filtros[key]);
+      }
+    });
+    
+    const response = await axiosClient.get(`/escalas?${params}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al consultar escalas:', error);
+    throw error;
+  }
+};
+
+export const obtenerLaboratorios = async () => {
+  try {
+    const response = await axiosClient.get('/escalas/laboratorios');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener laboratorios:', error);
+    throw error;
+  }
+};
+
+export const actualizarEscala = async (codpro, data) => {
+  try {
+    const response = await axiosClient.put(`/escalas/${codpro}`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar escala:', error);
+    throw error;
+  }
+};
+
+export const eliminarEscala = async (codpro) => {
+  try {
+    const response = await axiosClient.delete(`/escalas/${codpro}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al eliminar escala:', error);
+    throw error;
+  }
+}; 

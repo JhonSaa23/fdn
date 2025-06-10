@@ -331,7 +331,7 @@ const Promociones = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Negocio</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Porcentaje</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -368,17 +368,19 @@ const Promociones = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {promocion.porcentaje}%
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex space-x-2">
+                        <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white">
+                          <div className="flex justify-end space-x-2">
                             <button
                               onClick={() => handleEdit(promocion)}
-                              className="text-indigo-600 hover:text-indigo-900"
+                              className="text-sky-600 hover:text-sky-800 hover:bg-sky-50 p-1 rounded transition-colors"
+                              title="Editar"
                             >
                               <PencilIcon className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleDelete(promocion)}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition-colors"
+                              title="Eliminar"
                             >
                               <TrashIcon className="w-5 h-5" />
                             </button>
