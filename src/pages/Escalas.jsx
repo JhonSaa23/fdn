@@ -318,7 +318,7 @@ const Escalas = () => {
                     <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 3</th>
                     <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 4</th>
                     <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 5</th>
-                    <th className="px-4 py-0 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50">Acciones</th>
+                    <th className="px-4 py-0 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -443,7 +443,7 @@ const Escalas = () => {
                         </td>
 
                         {/* Acciones pegadas a la derecha */}
-                        <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white">
+                        <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">
                           <div className="flex justify-end space-x-2">
                             <button
                               onClick={() => handleEdit(escala)}

@@ -122,22 +122,38 @@ const Promociones = () => {
         showNotification('error', 'Los campos "desde" y "porcentaje" deben ser números válidos');
         return;
       }
+      
+      // Asegurar que sean strings antes de hacer trim
+      const tipificacionStr = String(formData.tipificacion || '').trim();
+      const codproStr = String(formData.codpro || '').trim();
+      
       if (editingPromocion) {
+        console.log('Actualizando promoción:', {
+          tipificacionOld: editingPromocion.tipificacion,
+          codproOld: editingPromocion.codpro,
+          desdeOld: editingPromocion.desde,
+          porcentajeOld: editingPromocion.porcentaje,
+          tipificacionNew: tipificacionStr,
+          codproNew: codproStr,
+          desdeNew: desde,
+          porcentajeNew: porcentaje
+        });
+        
         await actualizarPromocion({
           tipificacionOld: editingPromocion.tipificacion,
           codproOld: editingPromocion.codpro,
           desdeOld: editingPromocion.desde,
           porcentajeOld: editingPromocion.porcentaje,
-          tipificacionNew: formData.tipificacion.trim(),
-          codproNew: formData.codpro.trim(),
+          tipificacionNew: tipificacionStr,
+          codproNew: codproStr,
           desdeNew: desde,
           porcentajeNew: porcentaje
         });
         showNotification('success', 'Promoción actualizada exitosamente');
       } else {
         await crearPromocion({
-          tipificacion: formData.tipificacion.trim(),
-          codpro: formData.codpro.trim(),
+          tipificacion: tipificacionStr,
+          codpro: codproStr,
           desde,
           porcentaje
         });
@@ -148,12 +164,16 @@ const Promociones = () => {
       setFormData({ tipificacion: '', codpro: '', desde: '', porcentaje: '' });
       cargarPromociones();
     } catch (error) {
+      console.error('Error completo:', error);
+      console.error('Error response:', error.response);
+      
       let mensaje = 'Error al guardar la promoción';
       if (error.response) {
         const { status, data } = error.response;
+        console.error('Status:', status, 'Data:', data);
         if (status === 409) {
           mensaje = data.details || 'Ya existe una promoción con estos valores';
-        } else if (data.error) {
+        } else if (data && data.error) {
           mensaje = data.error;
           if (data.details) mensaje += `: ${data.details}`;
         }
@@ -331,7 +351,7 @@ const Promociones = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Negocio</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Porcentaje</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50">Acciones</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -368,7 +388,7 @@ const Promociones = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {promocion.porcentaje}%
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white">
+                        <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">
                           <div className="flex justify-end space-x-2">
                             <button
                               onClick={() => handleEdit(promocion)}
