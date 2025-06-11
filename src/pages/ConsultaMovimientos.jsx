@@ -233,23 +233,8 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
           )}
 
           <form className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-4 gap-y-4">
-              <div>
-                <label htmlFor="banco" className="block text-sm font-medium text-gray-700 mb-2">
-                  Banco
-                </label>
-                <select
-                  id="banco"
-                  name="banco"
-                  value={filtros.banco}
-                  onChange={handleChange}
-                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                >
-                  <option value="">Todos</option>
-                  <option value="1">BCP</option>
-                  <option value="2">BBVA</option>
-                </select>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-4">
+              
               <div>
                 <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-2">
                   Fecha

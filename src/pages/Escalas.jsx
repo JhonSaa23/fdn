@@ -310,14 +310,14 @@ const Escalas = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Laboratorio</th>
-                    <th className="px-6 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
-                    <th className="px-6 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                    <th className="px-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 1</th>
-                    <th className="px-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 2</th>
-                    <th className="px-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 3</th>
-                    <th className="px-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 4</th>
-                    <th className="px-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 5</th>
+                    <th className="pl-6 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Laboratorio</th>
+                    <th className="pl-6 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                    <th className="pl-6 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                    <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 1</th>
+                    <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 2</th>
+                    <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 3</th>
+                    <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 4</th>
+                    <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 5</th>
                     <th className="px-4 py-0 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50">Acciones</th>
                   </tr>
                 </thead>
@@ -331,22 +331,20 @@ const Escalas = () => {
                   ) : (filtros.nombreProducto ? escalasFiltradasLocal : escalas).length === 0 ? (
                     <tr>
                       <td colSpan="9" className="px-6 py-4 text-center">
-                        {filtros.nombreProducto ? 'No se encontraron productos con ese nombre' : 'No hay datos disponibles'}
+                        {filtros.nombreProducto ? 'No se encontraron productos con ese nombre' : 'Seleccione un laboratorio o código '}
                       </td>
                     </tr>
                   ) : (
                     (filtros.nombreProducto ? escalasFiltradasLocal : escalas).map((escala, index) => (
                       <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{escala.Laboratorio}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{escala.CodPro}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{escala.Nombre}</td>
+                        <td className="pl-6 py-1 whitespace-nowrap text-sm text-gray-900">{escala.Laboratorio}</td>
+                        <td className="pl-6 py-1 whitespace-nowrap text-sm text-gray-900 font-bold ">{escala.CodPro}</td>
+                        <td className="pl-6 py-1 whitespace-nowrap text-sm text-gray-900">{escala.Nombre}</td>
                         
                         {/* Rango 1 con descuentos agrupados */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="pl-6 py-1 text-center">
                           <div className="bg-sky-50 border border-sky-200 rounded-lg p-2 min-w-[120px]">
-                            <div className="font-semibold text-sky-800 text-sm mb-1">
-                              Rango: {escala.Rango1 || '0'}
-                            </div>
+                            
                             <div className="text-xs space-y-1 flex items-baseline gap-2">
                               <div className="flex justify-between bg-white rounded px-2 py-1">
                                 <span className="text-gray-600">D1:</span>
@@ -365,11 +363,8 @@ const Escalas = () => {
                         </td>
 
                         {/* Rango 2 con descuentos agrupados */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="pl-6 py-1 text-center">
                           <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 min-w-[120px]">
-                            <div className="font-semibold text-emerald-800 text-sm mb-1">
-                              Rango: {escala.Rango2 || '0'}
-                            </div>
                             <div className="text-xs space-y-1 flex items-baseline gap-2">
                               <div className="flex justify-between bg-white rounded px-2 py-1">
                                 <span className="text-gray-600">D1:</span>
@@ -388,11 +383,8 @@ const Escalas = () => {
                         </td>
 
                         {/* Rango 3 con descuentos agrupados */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="pl-6 py-1 text-center">
                           <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 min-w-[120px]">
-                            <div className="font-semibold text-amber-800 text-sm mb-1">
-                              Rango: {escala.Rango3 || '0'}
-                            </div>
                             <div className="text-xs space-y-1 flex items-baseline gap-2">
                               <div className="flex justify-between bg-white rounded px-2 py-1">
                                 <span className="text-gray-600">D1:</span>
@@ -411,11 +403,8 @@ const Escalas = () => {
                         </td>
 
                         {/* Rango 4 con descuentos agrupados */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="pl-6 py-1 text-center">
                           <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 min-w-[120px]">
-                            <div className="font-semibold text-purple-800 text-sm mb-1">
-                              Rango: {escala.Rango4 || '0'}
-                            </div>
                             <div className="text-xs space-y-1 flex items-baseline gap-2">
                               <div className="flex justify-between bg-white rounded px-2 py-1">
                                 <span className="text-gray-600">D1:</span>
@@ -434,11 +423,8 @@ const Escalas = () => {
                         </td>
 
                         {/* Rango 5 con descuentos agrupados */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="pl-6 py-1 text-center">
                           <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 min-w-[120px]">
-                            <div className="font-semibold text-rose-800 text-sm mb-1">
-                              Rango: {escala.Rango5 || '0'}
-                            </div>
                             <div className="text-xs space-y-1 flex items-baseline gap-2">
                               <div className="flex justify-between bg-white rounded px-2 py-1">
                                 <span className="text-gray-600">D1:</span>
