@@ -584,4 +584,61 @@ export const eliminarEscala = async (codpro) => {
     console.error('Error al eliminar escala:', error);
     throw error;
   }
+};
+
+// Multi Acción
+export const buscarPedido = async (numero) => {
+  try {
+    const response = await axiosClient.get(`/multi-accion/pedido/${encodeURIComponent(numero.trim())}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      throw { status: 404, message: 'No se encontró el pedido' };
+    }
+    console.error('Error al buscar pedido:', error);
+    throw { status: 500, message: 'Error de conexión al buscar el pedido' };
+  }
+};
+
+export const invalidarPedido = async (numero) => {
+  try {
+    const response = await axiosClient.post(`/multi-accion/pedido/${numero.trim()}/invalidar`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al invalidar pedido:', error);
+    throw { status: 500, message: 'Error al invalidar el pedido' };
+  }
+};
+
+export const buscarGuia = async (numero) => {
+  try {
+    const response = await axiosClient.get(`/multi-accion/guia/${numero.trim()}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      throw { status: 404, message: 'No se encontró la guía' };
+    }
+    console.error('Error al buscar guía:', error);
+    throw { status: 500, message: 'Error al buscar la guía' };
+  }
+};
+
+export const reusarGuia = async (numero) => {
+  try {
+    const response = await axiosClient.post(`/multi-accion/guia/${numero.trim()}/reusar`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al reusar guía:', error);
+    throw { status: 500, message: 'Error al reusar la guía' };
+  }
+};
+
+export const autorizarCodigos = async (codigos) => {
+  try {
+    const response = await axiosClient.post('/multi-accion/autorizar', { codigos });
+    return response.data;
+  } catch (error) {
+    console.error('Error al autorizar códigos:', error);
+    throw { status: 500, message: 'Error al autorizar los códigos' };
+  }
 }; 

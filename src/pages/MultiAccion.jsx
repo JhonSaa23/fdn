@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { useNotification } from '../App';
 import Card from '../components/Card';
+import Modal from '../components/Modal';
+import { 
+  buscarPedido, 
+  invalidarPedido, 
+  buscarGuia, 
+  reusarGuia, 
+  autorizarCodigos 
+} from '../services/api';
 
 function MultiAccion() {
   const { showNotification } = useNotification();
@@ -8,109 +16,115 @@ function MultiAccion() {
   // Estados para los inputs
   const [numeroPedido, setNumeroPedido] = useState('');
   const [numeroGuia, setNumeroGuia] = useState('');
-  const [codigoAutorizar, setCodigoAutorizar] = useState('');
+  const [codigosAutorizar, setCodigosAutorizar] = useState('');
   
   // Estados para los resultados
   const [resultadoPedido, setResultadoPedido] = useState(null);
   const [resultadoGuia, setResultadoGuia] = useState(null);
   const [showPedidoModal, setShowPedidoModal] = useState(false);
   const [showGuiaModal, setShowGuiaModal] = useState(false);
+  
+  // Estados de carga
+  const [loadingPedido, setLoadingPedido] = useState(false);
+  const [loadingGuia, setLoadingGuia] = useState(false);
+  const [loadingAutorizar, setLoadingAutorizar] = useState(false);
 
   // Función para buscar pedido
-  const buscarPedido = async () => {
+  const handleBuscarPedido = async () => {
     if (!numeroPedido.trim()) {
       showNotification('warning', 'Por favor ingresa un número de pedido');
       return;
     }
 
+    setLoadingPedido(true);
     try {
-      const response = await fetch(`/api/multi-accion/pedido/${encodeURIComponent(numeroPedido.trim())}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setResultadoPedido(data);
-        setShowPedidoModal(true);
-      } else if (response.status === 404) {
-        showNotification('warning', 'No se encontró el pedido');
-      } else {
-        showNotification('danger', 'Error al buscar el pedido');
-      }
+      const data = await buscarPedido(numeroPedido);
+      setResultadoPedido(data);
+      setShowPedidoModal(true);
     } catch (error) {
-      console.error('Error al buscar pedido:', error);
-      showNotification('danger', 'Error de conexión al buscar el pedido');
+      if (error.status === 404) {
+        showNotification('warning', error.message);
+      } else {
+        showNotification('danger', error.message);
+      }
+    } finally {
+      setLoadingPedido(false);
     }
   };
 
   // Función para invalidar pedido
-  const invalidarPedido = async () => {
+  const handleInvalidarPedido = async () => {
     try {
-      const response = await fetch(`/api/multi-accion/pedido/${numeroPedido}/invalidar`, {
-        method: 'POST'
-      });
-      
-      if (response.ok) {
-        showNotification('success', 'Pedido invalidado correctamente');
-        setShowPedidoModal(false);
-        setResultadoPedido(null);
-        setNumeroPedido('');
-      }
+      await invalidarPedido(numeroPedido);
+      showNotification('success', 'Pedido invalidado correctamente');
+      setShowPedidoModal(false);
+      setResultadoPedido(null);
+      setNumeroPedido('');
     } catch (error) {
-      showNotification('danger', 'Error al invalidar el pedido');
+      showNotification('danger', error.message);
     }
   };
 
   // Función para buscar guía
-  const buscarGuia = async () => {
+  const handleBuscarGuia = async () => {
+    if (!numeroGuia.trim()) {
+      showNotification('warning', 'Por favor ingresa un número de guía');
+      return;
+    }
+
+    setLoadingGuia(true);
     try {
-      const response = await fetch(`/api/multi-accion/guia/${numeroGuia}`);
-      const data = await response.json();
-      
-      if (data) {
-        setResultadoGuia(data);
-        setShowGuiaModal(true);
-      } else {
-        showNotification('warning', 'No se encontró la guía');
-      }
+      const data = await buscarGuia(numeroGuia);
+      setResultadoGuia(data);
+      setShowGuiaModal(true);
     } catch (error) {
-      showNotification('danger', 'Error al buscar la guía');
+      if (error.status === 404) {
+        showNotification('warning', error.message);
+      } else {
+        showNotification('danger', error.message);
+      }
+    } finally {
+      setLoadingGuia(false);
     }
   };
 
   // Función para reusar guía
-  const reusarGuia = async () => {
+  const handleReusarGuia = async () => {
     try {
-      const response = await fetch(`/api/multi-accion/guia/${numeroGuia}/reusar`, {
-        method: 'POST'
-      });
-      
-      if (response.ok) {
-        showNotification('success', 'Guía reusada correctamente');
-        setShowGuiaModal(false);
-        setResultadoGuia(null);
-        setNumeroGuia('');
-      }
+      await reusarGuia(numeroGuia);
+      showNotification('success', 'Guía reusada correctamente');
+      setShowGuiaModal(false);
+      setResultadoGuia(null);
+      setNumeroGuia('');
     } catch (error) {
-      showNotification('danger', 'Error al reusar la guía');
+      showNotification('danger', error.message);
     }
   };
 
-  // Función para autorizar código
-  const autorizarCodigo = async () => {
+  // Función para autorizar códigos
+  const handleAutorizarCodigos = async () => {
+    if (!codigosAutorizar.trim()) {
+      showNotification('warning', 'Por favor ingresa al menos un código');
+      return;
+    }
+
+    setLoadingAutorizar(true);
     try {
-      const response = await fetch('/api/multi-accion/autorizar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ codigo: codigoAutorizar })
-      });
+      const result = await autorizarCodigos(codigosAutorizar);
       
-      if (response.ok) {
-        showNotification('success', 'Código autorizado correctamente');
-        setCodigoAutorizar('');
+      if (result.autorizados === result.total) {
+        showNotification('success', result.message);
+      } else if (result.autorizados > 0) {
+        showNotification('warning', result.message);
+      } else {
+        showNotification('danger', result.message);
       }
+      
+      setCodigosAutorizar('');
     } catch (error) {
-      showNotification('danger', 'Error al autorizar el código');
+      showNotification('danger', error.message);
+    } finally {
+      setLoadingAutorizar(false);
     }
   };
 
@@ -131,12 +145,21 @@ function MultiAccion() {
               onChange={(e) => setNumeroPedido(e.target.value)}
               placeholder="Número de pedido"
               className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              onKeyPress={(e) => e.key === 'Enter' && handleBuscarPedido()}
             />
             <button
-              onClick={buscarPedido}
-              className="btn btn-primary"
+              onClick={handleBuscarPedido}
+              disabled={loadingPedido}
+              className="btn btn-primary min-w-[100px]"
             >
-              Buscar
+              {loadingPedido ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Buscando...
+                </div>
+              ) : (
+                'Buscar'
+              )}
             </button>
           </div>
         </Card.Body>
@@ -155,12 +178,21 @@ function MultiAccion() {
               onChange={(e) => setNumeroGuia(e.target.value)}
               placeholder="Número de guía (T001-XXXXX)"
               className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              onKeyPress={(e) => e.key === 'Enter' && handleBuscarGuia()}
             />
             <button
-              onClick={buscarGuia}
-              className="btn btn-primary"
+              onClick={handleBuscarGuia}
+              disabled={loadingGuia}
+              className="btn btn-primary min-w-[100px]"
             >
-              Buscar
+              {loadingGuia ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Buscando...
+                </div>
+              ) : (
+                'Buscar'
+              )}
             </button>
           </div>
         </Card.Body>
@@ -172,99 +204,176 @@ function MultiAccion() {
           <Card.Title>Autorización de Códigos</Card.Title>
         </Card.Header>
         <Card.Body>
-          <div className="flex gap-4">
-            <input
-              type="text"
-              value={codigoAutorizar}
-              onChange={(e) => setCodigoAutorizar(e.target.value)}
-              placeholder="Código a autorizar"
-              className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          <div className="space-y-3">
+            <textarea
+              value={codigosAutorizar}
+              onChange={(e) => setCodigosAutorizar(e.target.value)}
+              placeholder="Ingresa uno o más códigos separados por comas&#10;Ejemplo: COD001, COD002, COD003"
+              rows={3}
+              className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500 resize-none"
             />
-            <button
-              onClick={autorizarCodigo}
-              className="btn btn-primary"
-            >
-              Autorizar
-            </button>
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-gray-600">
+                {codigosAutorizar.trim() ? 
+                  `${codigosAutorizar.split(',').filter(c => c.trim()).length} código(s) detectado(s)` : 
+                  'Separa múltiples códigos con comas'
+                }
+              </p>
+              <button
+                onClick={handleAutorizarCodigos}
+                disabled={loadingAutorizar}
+                className="btn btn-primary min-w-[120px]"
+              >
+                {loadingAutorizar ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Autorizando...
+                  </div>
+                ) : (
+                  'Autorizar'
+                )}
+              </button>
+            </div>
           </div>
         </Card.Body>
       </Card>
 
       {/* Modal para Pedidos */}
-      {showPedidoModal && resultadoPedido && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Resultado del Pedido</h3>
-            <div className="mb-4 space-y-2">
-              <div className="grid grid-cols-2 gap-4">
-                <p><strong>Número:</strong> {resultadoPedido.Numero}</p>
-                <p><strong>Laboratorio:</strong> {resultadoPedido.Laboratorio}</p>
-                <p><strong>Fecha Pedido:</strong> {resultadoPedido.FechaPed ? new Date(resultadoPedido.FechaPed).toLocaleDateString() : 'No especificada'}</p>
-                <p><strong>Fecha Recepción:</strong> {resultadoPedido.FechaRec ? new Date(resultadoPedido.FechaRec).toLocaleDateString() : 'No especificada'}</p>
-                <p><strong>Fecha Anterior:</strong> {resultadoPedido.FechaAnt ? new Date(resultadoPedido.FechaAnt).toLocaleDateString() : 'No especificada'}</p>
-                <p>
-                  <strong>Validado:</strong>{' '}
-                  <span className={Number(resultadoPedido.Validado) === 1 ? 'text-green-600' : 'text-yellow-600'}>
-                    {Number(resultadoPedido.Validado) === 1 ? 'Si' : 'Por validar'}
-                  </span>
-                </p>
-                <p>
-                  <strong>Eliminado:</strong>{' '}
-                  <span className={Number(resultadoPedido.Eliminado) === 1 ? 'text-red-600' : 'text-green-600'}>
-                    {Number(resultadoPedido.Eliminado) === 1 ? 'Si' : 'No'}
-                  </span>
-                </p>
-                <p><strong>Proveedor:</strong> {resultadoPedido.Proveedor || 'No especificado'}</p>
+      <Modal
+        isOpen={showPedidoModal}
+        onClose={() => setShowPedidoModal(false)}
+        title="Información del Pedido"
+        size="lg"
+      >
+        <Modal.Body>
+          {resultadoPedido && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Número:</span>
+                    <span className="text-gray-900">{resultadoPedido.Numero}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Laboratorio:</span>
+                    <span className="text-gray-900">{resultadoPedido.Laboratorio}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Proveedor:</span>
+                    <span className="text-gray-900">{resultadoPedido.Proveedor || 'No especificado'}</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Fecha Pedido:</span>
+                    <span className="text-gray-900">
+                      {resultadoPedido.FechaPed ? new Date(resultadoPedido.FechaPed).toLocaleDateString() : 'No especificada'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Fecha Recepción:</span>
+                    <span className="text-gray-900">
+                      {resultadoPedido.FechaRec ? new Date(resultadoPedido.FechaRec).toLocaleDateString() : 'No especificada'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Fecha Anterior:</span>
+                    <span className="text-gray-900">
+                      {resultadoPedido.FechaAnt ? new Date(resultadoPedido.FechaAnt).toLocaleDateString() : 'No especificada'}
+                    </span>
+                  </div>
+                </div>
               </div>
+              
+              <div className="border-t pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="font-medium text-gray-700">Estado:</span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      Number(resultadoPedido.Validado) === 1 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {Number(resultadoPedido.Validado) === 1 ? 'Validado' : 'Por validar'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="font-medium text-gray-700">Eliminado:</span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      Number(resultadoPedido.Eliminado) === 1 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {Number(resultadoPedido.Eliminado) === 1 ? 'Sí' : 'No'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
               {resultadoPedido.Observaciones && (
-                <p className="col-span-2"><strong>Observaciones:</strong> {resultadoPedido.Observaciones}</p>
+                <div className="border-t pt-4">
+                  <span className="font-medium text-gray-700">Observaciones:</span>
+                  <p className="mt-1 text-gray-900 bg-gray-50 p-3 rounded-lg">{resultadoPedido.Observaciones}</p>
+                </div>
               )}
             </div>
-            <div className="flex justify-end gap-4">
-              {Number(resultadoPedido.Validado) === 1 && (
-                <button
-                  onClick={invalidarPedido}
-                  className="btn btn-danger"
-                >
-                  Invalidar Pedido
-                </button>
-              )}
-              <button
-                onClick={() => setShowPedidoModal(false)}
-                className="btn btn-secondary"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          {resultadoPedido && Number(resultadoPedido.Validado) === 1 && (
+            <button
+              onClick={handleInvalidarPedido}
+              className="btn btn-danger"
+            >
+              Invalidar Pedido
+            </button>
+          )}
+          <button
+            onClick={() => setShowPedidoModal(false)}
+            className="btn btn-secondary"
+          >
+            Cerrar
+          </button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Modal para Guías */}
-      {showGuiaModal && resultadoGuia && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Resultado de la Guía</h3>
-            <div className="mb-4">
-              <p><strong>Número:</strong> {resultadoGuia.Numero}</p>
+      <Modal
+        isOpen={showGuiaModal}
+        onClose={() => setShowGuiaModal(false)}
+        title="Información de la Guía"
+        size="md"
+      >
+        <Modal.Body>
+          {resultadoGuia && (
+            <div className="text-center py-4">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Guía encontrada</h3>
+              <p className="text-sm text-gray-600 mb-4">Número: <span className="font-mono text-gray-900">{resultadoGuia.Numero}</span></p>
+              <p className="text-sm text-gray-500">¿Deseas reusar esta guía?</p>
             </div>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={reusarGuia}
-                className="btn btn-warning"
-              >
-                Reusar Guía
-              </button>
-              <button
-                onClick={() => setShowGuiaModal(false)}
-                className="btn btn-secondary"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            onClick={handleReusarGuia}
+            className="btn btn-warning"
+          >
+            Reusar Guía
+          </button>
+          <button
+            onClick={() => setShowGuiaModal(false)}
+            className="btn btn-secondary"
+          >
+            Cancelar
+          </button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
