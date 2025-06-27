@@ -638,9 +638,9 @@ export const autorizarCodigos = async (codigos) => {
     console.log('=== DEBUG FRONTEND AUTORIZAR ===');
     console.log('Códigos recibidos:', codigos);
     console.log('Tipo de códigos:', typeof codigos);
-    console.log('Enviando como parámetro URL:', encodeURIComponent(codigos.trim()));
+    console.log('Payload a enviar:', { codigos });
     
-    const response = await axiosClient.post(`/multi-accion/autorizar/${encodeURIComponent(codigos.trim())}`);
+    const response = await axiosClient.post('/multi-accion/autorizar', { codigos });
     return response.data;
   } catch (error) {
     console.error('Error al autorizar códigos:', error);
