@@ -635,10 +635,17 @@ export const reusarGuia = async (numero) => {
 
 export const autorizarCodigos = async (codigos) => {
   try {
+    console.log('=== DEBUG FRONTEND AUTORIZAR ===');
+    console.log('Códigos recibidos:', codigos);
+    console.log('Tipo de códigos:', typeof codigos);
+    console.log('Payload a enviar:', { codigos });
+    
     const response = await axiosClient.post('/multi-accion/autorizar', { codigos });
     return response.data;
   } catch (error) {
     console.error('Error al autorizar códigos:', error);
+    console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
     throw { status: 500, message: 'Error al autorizar los códigos' };
   }
 }; 
