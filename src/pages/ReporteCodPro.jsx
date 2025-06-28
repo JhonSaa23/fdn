@@ -44,8 +44,6 @@ function ReporteCodPro() {
       
       if (resultado.data?.length === 0) {
         showNotification('info', 'No se encontraron resultados para los filtros aplicados');
-      } else {
-        showNotification('success', `Se encontraron ${resultado.data.length} registros`);
       }
     } catch (error) {
       console.error('Error en la consulta:', error);

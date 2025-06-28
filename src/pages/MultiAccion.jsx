@@ -56,7 +56,6 @@ function MultiAccion() {
   const handleInvalidarPedido = async () => {
     try {
       await invalidarPedido(numeroPedido);
-      showNotification('success', 'Pedido invalidado correctamente');
       setShowPedidoModal(false);
       setResultadoPedido(null);
       setNumeroPedido('');
@@ -92,7 +91,6 @@ function MultiAccion() {
   const handleReusarGuia = async () => {
     try {
       await reusarGuia(numeroGuia);
-      showNotification('success', 'Guía reusada correctamente');
       setShowGuiaModal(false);
       setResultadoGuia(null);
       setNumeroGuia('');
@@ -113,7 +111,7 @@ function MultiAccion() {
       const result = await autorizarCodigos(codigosAutorizar);
       
       if (result.autorizados === result.total) {
-        showNotification('success', result.message);
+        // Éxito silencioso
       } else if (result.autorizados > 0) {
         showNotification('warning', result.message);
       } else {

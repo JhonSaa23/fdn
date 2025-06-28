@@ -11,6 +11,7 @@ import ConsultaMovimientos from './pages/ConsultaMovimientos';
 import ReporteCodPro from './pages/ReporteCodPro';
 import Promociones from './pages/Promociones';
 import Escalas from './pages/Escalas';
+import Kardex from './pages/Kardex';
 import MultiAccion from './pages/MultiAccion';
 import ReportePickingProcter from './pages/ReportePickingProcter';
 import ReporteConcurso from './pages/ReporteConcurso';
@@ -127,6 +128,7 @@ function App() {
                 <Route path="/reporte-codpro" element={<ReporteCodPro />} />
                 <Route path="/promociones" element={<Promociones />} />
                 <Route path="/escalas" element={<Escalas />} />
+                <Route path="/kardex" element={<Kardex />} />
                 <Route path="/multi-accion" element={<MultiAccion />} />
                 <Route path="/reportes/picking-procter" element={<ReportePickingProcter />} />
                 <Route path="/reportes/concurso" element={<ReporteConcurso />} />

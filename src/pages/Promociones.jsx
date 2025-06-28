@@ -186,15 +186,13 @@ const Promociones = () => {
           desdeNew: desde,
           porcentajeNew: porcentaje
         });
-        showNotification('success', 'Promoción actualizada exitosamente');
       } else {
         await crearPromocion({
           tipificacion: tipificacionStr,
           codpro: codproStr,
           desde,
           porcentaje
-        });
-        showNotification('success', 'Promoción creada exitosamente');
+                  });
       }
       setShowForm(false);
       setEditingPromocion(null);
@@ -239,7 +237,6 @@ const Promociones = () => {
           desde: promocion.desde,
           porcentaje: promocion.porcentaje
         });
-        showNotification('success', 'Promoción eliminada exitosamente');
         cargarPromociones();
       } catch (error) {
         console.error('Error al eliminar la promoción:', error);
@@ -385,8 +382,8 @@ const Promociones = () => {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipi</th>
                     <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CodPro</th>
                     <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre del Producto</th>
-                    <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
-                    <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Por%</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Por%</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">Acciones</th>
                   </tr>
                 </thead>
@@ -424,10 +421,10 @@ const Promociones = () => {
                           </div>
                         </td>
 
-                        <td className="py-4 whitespace-nowrap">
+                        <td className="text-center py-4 whitespace-nowrap">
                           {promocion.desde}
                         </td>
-                        <td className=" py-4 whitespace-nowrap">
+                        <td className="text-center py-4 whitespace-nowrap">
                           {promocion.porcentaje}%
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">

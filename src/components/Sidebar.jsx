@@ -36,6 +36,7 @@ const menuItems = [
   { name: 'Exportaciones', path: '/exportaciones', icon: <ArrowDownTrayIcon className="w-6 h-6" /> },
   { name: 'Promociones', path: '/promociones', icon: <TagIcon className="w-6 h-6" /> },
   { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-6 h-6" /> },
+  { name: 'Kardex', path: '/kardex', icon: <CubeIcon className="w-6 h-6" /> },
   { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-6 h-6" /> },
   { 
     name: 'Reportes', 

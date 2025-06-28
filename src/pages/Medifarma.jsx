@@ -52,7 +52,6 @@ function Medifarma() {
       
       if (result.success) {
         const totalRows = result.totalRows || 0;
-        showNotification('success', `Importado correctamente. Total de : ${totalRows} (se muestran los primeros 100)`);
         
         // Resetear el selector de archivo
         setFile(null);

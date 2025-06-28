@@ -648,4 +648,15 @@ export const autorizarCodigos = async (codigos) => {
     console.error('Error status:', error.response?.status);
     throw { status: 500, message: 'Error al autorizar los códigos' };
   }
+};
+
+// Kardex
+export const consultarKardex = async (filtros = {}) => {
+  try {
+    const response = await axiosClient.post('/kardex/consultar', filtros);
+    return response.data;
+  } catch (error) {
+    console.error('Error al consultar kardex:', error);
+    throw error;
+  }
 }; 

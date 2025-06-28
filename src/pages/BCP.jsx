@@ -119,7 +119,6 @@ function BCP() {
       // Actualizar datos en la tabla
       setData(result.data || []);
 
-      showNotification('success', result.message || 'Excel importado correctamente');
     } catch (error) {
       console.error('Error al importar:', error);
       showNotification('danger', error.message || 'Error desconocido al importar archivo');
@@ -142,7 +141,6 @@ function BCP() {
       }
 
       setData([]);
-      showNotification('success', result.message || 'Tabla vaciada correctamente');
     } catch (error) {
       console.error('Error al vaciar tabla:', error);
       showNotification('danger', error.message || 'Error desconocido al vaciar tabla');
@@ -164,8 +162,6 @@ function BCP() {
       if (!result.success) {
         throw new Error(result.error || 'Error al subir a producción');
       }
-
-      showNotification('success', result.message || 'Datos subidos a MovimientoBanco correctamente');
 
       // Refrescar los datos después de subir a producción
       await refreshData();

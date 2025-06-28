@@ -37,8 +37,6 @@ function ReporteConcurso() {
         throw new Error(resultado.error || 'Error al actualizar vistas');
       }
       
-      showNotification('success', resultado.message || 'Vistas actualizadas correctamente');
-      
     } catch (error) {
       console.error('Error:', error);
       showNotification('danger', error.message || 'Error desconocido al actualizar vistas');

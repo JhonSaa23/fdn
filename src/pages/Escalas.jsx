@@ -162,7 +162,6 @@ const Escalas = () => {
       };
 
       await actualizarEscala(editingEscala.CodPro, dataToSend);
-      showNotification('success', 'Escala actualizada exitosamente');
       setShowForm(false);
       setEditingEscala(null);
       setFormData({
@@ -213,7 +212,6 @@ const Escalas = () => {
     if (window.confirm(`¿Está seguro de eliminar la escala del producto ${escala.CodPro}?`)) {
       try {
         await eliminarEscala(escala.CodPro);
-        showNotification('success', 'Escala eliminada exitosamente');
         cargarEscalas();
       } catch (error) {
         console.error('Error al eliminar la escala:', error);

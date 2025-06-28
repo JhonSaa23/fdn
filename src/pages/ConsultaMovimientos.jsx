@@ -62,8 +62,6 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
 
       if (resultado.data?.length === 0) {
         showNotification('info', 'No se encontraron resultados para los filtros aplicados');
-      } else {
-        showNotification('success', `Se encontraron ${resultado.data.length} registros`);
       }
     } catch (error) {
       console.error('Error en la consulta:', error);
@@ -103,8 +101,6 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
         throw new Error(resultado.error || 'Error al eliminar movimientos');
       }
 
-      showNotification('success', `Se eliminaron ${resultado.afectados || 0} registro(s) correctamente`);
-      
       // Actualizar la lista después de eliminar
       setResultados([]);
       

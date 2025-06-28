@@ -41,8 +41,6 @@ function ReportePickingProcter() {
         throw new Error(resultado.error || 'Error al actualizar vista');
       }
       
-      showNotification('success', resultado.message || 'Vista actualizada correctamente');
-      
       // Recargar datos después de actualizar la vista
       await handleConsultar();
       
@@ -70,8 +68,6 @@ function ReportePickingProcter() {
       
       if (resultado.data?.length === 0) {
         showNotification('info', 'No se encontraron resultados para los filtros aplicados');
-      } else {
-        showNotification('success', `Se encontraron ${resultado.data.length} registros`);
       }
     } catch (error) {
       console.error('Error en la consulta:', error);
@@ -91,7 +87,6 @@ function ReportePickingProcter() {
         throw new Error(resultado.error || 'Error al descargar Excel');
       }
       
-      showNotification('success', 'Excel descargado correctamente');
     } catch (error) {
       console.error('Error al descargar Excel:', error);
       showNotification('danger', error.message || 'Error desconocido al descargar Excel');
