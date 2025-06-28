@@ -1,7 +1,7 @@
 import { useState, createContext, useContext, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { XMarkIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import Sidebar from './components/Sidebar';
-import Header from './components/Header';
 
 import Home from './pages/Home';
 import Medifarma from './pages/Medifarma';
@@ -33,8 +33,8 @@ export function useNotification() {
 
 
 function App() {
-  // Estado para el sidebar
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Estado para el sidebar - cerrado por defecto en móvil
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Estado para notificaciones
@@ -88,7 +88,27 @@ function App() {
     hideNotification
   };
 
-
+  // Componente de notificación
+  const Notification = ({ type, message, onClose }) => {
+    const bgColor = {
+      success: 'bg-green-100 border-green-400 text-green-700',
+      warning: 'bg-yellow-100 border-yellow-400 text-yellow-700',
+      danger: 'bg-red-100 border-red-400 text-red-700',
+      info: 'bg-blue-100 border-blue-400 text-blue-700',
+    };
+    
+    return (
+      <div className={`flex items-center px-4 py-3 ${bgColor[type]} border rounded-md fixed top-4 right-4 max-w-md shadow-lg z-50 transition-all`}>
+        <div className="flex-grow">{message}</div>
+        <button 
+          onClick={onClose} 
+          className="flex-shrink-0 ml-2 rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
+        >
+          <XMarkIcon className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  };
 
   return (
     <SidebarContext.Provider value={sidebarContextValue}>
@@ -96,28 +116,44 @@ function App() {
         <div className="flex h-screen bg-gray-50">
           <Sidebar />
           
-          <div className={`w-full flex flex-col flex-1 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
-            <Header />
-            
-            <main className="flex-1 p-4 overflow-auto">
-              <div className="container mx-auto">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/medifarma" element={<Medifarma />} />
-                  <Route path="/bcp" element={<BCP />} />
-                  <Route path="/exportaciones" element={<Exportaciones />} />
-                  <Route path="/consulta-movimientos" element={<ConsultaMovimientos />} />
-                  <Route path="/reporte-codpro" element={<ReporteCodPro />} />
-                  <Route path="/promociones" element={<Promociones />} />
-                  <Route path="/escalas" element={<Escalas />} />
-                  <Route path="/multi-accion" element={<MultiAccion />} />
-                  <Route path="/reportes/picking-procter" element={<ReportePickingProcter />} />
-                  <Route path="/reportes/concurso" element={<ReporteConcurso />} />
-                  <Route path="/reportes/loreal-notas" element={<ReporteNotasLoreal />} />
-                </Routes>
-              </div>
-            </main>
-          </div>
+          <main className={`flex-1 overflow-auto transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} ml-0`}>
+            <div className="p-4 h-full">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/medifarma" element={<Medifarma />} />
+                <Route path="/bcp" element={<BCP />} />
+                <Route path="/exportaciones" element={<Exportaciones />} />
+                <Route path="/consulta-movimientos" element={<ConsultaMovimientos />} />
+                <Route path="/reporte-codpro" element={<ReporteCodPro />} />
+                <Route path="/promociones" element={<Promociones />} />
+                <Route path="/escalas" element={<Escalas />} />
+                <Route path="/multi-accion" element={<MultiAccion />} />
+                <Route path="/reportes/picking-procter" element={<ReportePickingProcter />} />
+                <Route path="/reportes/concurso" element={<ReporteConcurso />} />
+                <Route path="/reportes/loreal-notas" element={<ReporteNotasLoreal />} />
+              </Routes>
+            </div>
+          </main>
+          
+          {/* Botón flotante para móvil - solo visible cuando sidebar está cerrado */}
+          {!isSidebarOpen && (
+            <button
+              onClick={toggleSidebar}
+              className="md:hidden fixed top-2 left-2 bg-slate-600 hover:bg-slate-700 text-white rounded-full p-3 shadow-lg z-50 transition-all duration-200 hover:scale-110"
+              title="Abrir menú"
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </button>
+          )}
+          
+          {/* Notificaciones */}
+          {notification.show && (
+            <Notification 
+              type={notification.type}
+              message={notification.text}
+              onClose={hideNotification}
+            />
+          )}
         </div>
       </NotificationContext.Provider>
     </SidebarContext.Provider>

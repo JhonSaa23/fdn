@@ -22,14 +22,14 @@ const TIPIFICACIONES = {
   "6": "Cadena Regional",
   "7": "Farmacias Regulares",
   "8": "Clinicas",
-  "9": "Mayorista",
+  "9": "Mayorista Procter",
   "10": "Farmacias Tops"
 };
 
 // Función auxiliar para manejar strings de manera segura
 const safeString = (value) => {
   return value ? String(value).trim() : '';
-};
+}
 
 const Promociones = () => {
   const { showNotification } = useNotification();
@@ -57,10 +57,14 @@ const Promociones = () => {
   // Estados para el filtro de nombre de producto
   const [filtroNombreProducto, setFiltroNombreProducto] = useState('');
 
+  // Estado para rastrear el filtro usado en la última consulta
+  const [ultimaConsultaTipificacion, setUltimaConsultaTipificacion] = useState('');
+
   // Cargar promociones
   const cargarPromociones = async () => {
     try {
       setLoading(true);
+      console.log('Enviando filtros a la API:', filtros);
       const data = await consultarPromociones(filtros);
       setPromociones(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -76,16 +80,17 @@ const Promociones = () => {
     }
   };
 
-  useEffect(() => {
-    cargarPromociones();
-  }, []);
-
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFiltros(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    console.log(`Cambiando filtro ${name} a:`, value);
+    setFiltros(prev => {
+      const newFiltros = {
+        ...prev,
+        [name]: value
+      };
+      console.log('Nuevos filtros:', newFiltros);
+      return newFiltros;
+    });
   };
 
   const handleInputChange = (e) => {
@@ -96,9 +101,40 @@ const Promociones = () => {
     }));
   };
 
-  const handleConsultar = () => {
+  const handleConsultar = React.useCallback(() => {
+    // Debug: Verificar los valores actuales de filtros
+    console.log('Filtros antes de consultar:', filtros);
+    
+    // Capturar el filtro de tipificacion usado en esta consulta
+    setUltimaConsultaTipificacion(filtros.tipificacion);
     cargarPromociones();
-  };
+  }, [filtros]); // Incluir filtros como dependencia para que se actualice
+
+  useEffect(() => {
+    // Capturar la tipificacion inicial (vacía) y cargar promociones solo al montar
+    setUltimaConsultaTipificacion('');
+    cargarPromociones();
+  }, []); // Solo ejecutar una vez al montar
+
+  // Efecto para manejar la tecla Enter - ejecutar consulta
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Solo ejecutar si estamos en la vista y no hay modal abierto
+      if (e.key === 'Enter' && !showForm) {
+        e.preventDefault(); // Evita comportamiento por defecto (como abrir select)
+        e.stopPropagation(); // Evita que el evento se propague
+        handleConsultar();
+      }
+    };
+
+    // Agregar listener al documento
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup al desmontar
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showForm, handleConsultar]); // Incluir handleConsultar como dependencia
 
   const handleLimpiar = () => {
     setFiltros({
@@ -107,6 +143,7 @@ const Promociones = () => {
       desde: '',
       porcentaje: ''
     });
+    setUltimaConsultaTipificacion('');
   };
 
   const handleSubmit = async (e) => {
@@ -264,7 +301,7 @@ const Promociones = () => {
             </div>
           </div>
           <form className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-4">
+            <div className="grid grid-cols-5 md:grid-cols-5 lg:grid-cols-5 gap-x-4 gap-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Negocio
@@ -322,7 +359,7 @@ const Promociones = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre de producto
+                  Nombre
                 </label>
                 <input
                   type="text"
@@ -339,31 +376,30 @@ const Promociones = () => {
 
       {/* Tabla en un Card aparte */}
       <Card>
-        <div className="overflow-x-auto max-h-[calc(100vh-300px)]">
+        <div className="overflow-x-auto max-h-[calc(100vh-240px)]">
           <div className="min-w-full inline-block align-middle">
             <div className="overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipi</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CodPro</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre del Producto</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Negocio</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Porcentaje</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipi</th>
+                    <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CodPro</th>
+                    <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre del Producto</th>
+                    <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
+                    <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Por%</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan="7" className="px-6 py-4 text-center">
+                      <td colSpan="6" className="px-6 py-4 text-center">
                         Cargando...
                       </td>
                     </tr>
                   ) : promocionesFiltradas.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="px-6 py-4 text-center">
+                      <td colSpan="6" className="px-6 py-4 text-center">
                         No hay datos disponibles
                       </td>
                     </tr>
@@ -373,19 +409,25 @@ const Promociones = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {promocion.tipificacion}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="py-4 whitespace-nowrap">
                           {promocion.codpro}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {promocion.nombreProducto || ''}
+                        <td className="py-4">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{promocion.nombreProducto || ''}</span>
+                            {/* Solo mostrar tipo de negocio en segunda línea si no hay filtro específico en la última consulta */}
+                            {(!ultimaConsultaTipificacion || ultimaConsultaTipificacion === '') && (
+                              <span className="text-sm text-gray-600 italic">
+                                {TIPIFICACIONES[promocion.tipificacion] || promocion.tipificacion}
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {TIPIFICACIONES[promocion.tipificacion] || promocion.tipificacion}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+
+                        <td className="py-4 whitespace-nowrap">
                           {promocion.desde}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className=" py-4 whitespace-nowrap">
                           {promocion.porcentaje}%
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">

@@ -191,7 +191,7 @@ function ReportePickingProcter() {
       </Card>
       
       <Card>
-        <div className="overflow-x-auto max-h-[calc(100vh-222px)]">
+                  <div className="overflow-x-auto max-h-[calc(100vh-180px)]">
           <table className="min-w-full divide-y divide-gray-200 table-fixed">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>

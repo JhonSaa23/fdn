@@ -304,7 +304,7 @@ const Escalas = () => {
 
       {/* Tabla en un Card aparte */}
       <Card>
-        <div className="overflow-x-auto max-h-[calc(100vh-300px)]">
+        <div className="overflow-x-auto max-h-[calc(100vh-240px)]">
           <div className="min-w-full inline-block align-middle">
             <div className="overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200">

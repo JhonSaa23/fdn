@@ -278,7 +278,7 @@ function BCP() {
 
       {/* Tabla de datos */}
       <Card>
-        <div className="overflow-x-auto max-h-[calc(100vh-215px)]">
+        <div className="overflow-x-auto max-h-[calc(100vh-150px)]">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>

@@ -323,7 +323,7 @@ function ConsultaMovimientos({ onBack, showBackButton = false }) {
       </Card>
 
       <Card>
-        <div className="overflow-x-auto max-h-[calc(100vh-300px)]">
+        <div className="overflow-x-auto max-h-[calc(100vh-240px)]">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>

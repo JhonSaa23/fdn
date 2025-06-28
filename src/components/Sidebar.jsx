@@ -18,7 +18,9 @@ import {
   MagnifyingGlassIcon,
   ChartBarIcon,
   ChevronDownIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
 const menuItems = [
@@ -59,12 +61,30 @@ const menuItems = [
 
 function Sidebar() {
   const location = useLocation();
-  const { isSidebarOpen, toggleSidebar, isSidebarCollapsed } = useSidebar();
+  const { isSidebarOpen, setIsSidebarOpen, toggleSidebar, isSidebarCollapsed, toggleSidebarCollapse } = useSidebar();
   const [openMenus, setOpenMenus] = useState(new Set());
   const [hoveredItem, setHoveredItem] = useState(null);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, left: 0 });
   const submenuTimerRef = useRef(null);
   const itemRefs = useRef({});
+
+  // Cerrar sidebar automáticamente en móvil al cambiar de ruta
+  useEffect(() => {
+    if (window.innerWidth < 768 && isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname, isSidebarOpen, setIsSidebarOpen]);
+  
+  const handleMenuClick = () => {
+    // En móvil, abre/cierra el sidebar
+    if (window.innerWidth < 768) {
+      toggleSidebar();
+    } 
+    // En desktop, colapsa/expande el sidebar
+    else {
+      toggleSidebarCollapse();
+    }
+  };
   
   const isMenuOpen = (menuPath) => openMenus.has(menuPath);
   
@@ -207,27 +227,48 @@ function Sidebar() {
       
       {/* Sidebar */}
       <aside className={clsx(
-        "sidebar fixed bg-gradient-to-b from-slate-50 to-slate-100 border-r border-slate-300/60 transition-all duration-300 ease-in-out z-40 shadow-xl",
+        "sidebar fixed inset-y-0 left-0 bg-gradient-to-b from-slate-50 to-slate-100 border-r border-slate-300/60 transition-all duration-300 ease-in-out z-40 shadow-xl",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         "md:translate-x-0",
+        "w-64", // Ancho fijo para móvil
         isSidebarCollapsed ? "md:w-20" : "md:w-64",
-        "overflow-hidden"  // Evita el scroll horizontal
+        "overflow-hidden flex flex-col"  // Flex column para que el contenido se distribuya correctamente
       )}>
         <div className="sidebar-header border-b border-slate-300/60 flex justify-between items-center h-16 px-4 bg-gradient-to-r from-slate-100/80 to-slate-200/80">
           {!isSidebarCollapsed && (
-            <h1 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent">
-              FDN
-            </h1>
+            <>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent">
+                FDN
+              </h1>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md p-2 text-slate-500 hover:bg-slate-200/60 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all"
+                onClick={handleMenuClick}
+                title="Colapsar sidebar"
+              >
+                <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </>
           )}
           {isSidebarCollapsed && (
-            <span className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent w-full text-center">
-              FDN
-            </span>
+            <div className="w-full flex flex-col items-center space-y-2">
+              <span className="text-lg font-bold bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent">
+                FDN
+              </span>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md p-1.5 text-slate-500 hover:bg-slate-200/60 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all"
+                onClick={handleMenuClick}
+                title="Expandir sidebar"
+              >
+                <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
           )}
         </div>
         
-        <div className="sidebar-content">
-          <ul className="space-y-2 py-4">
+        <div className="sidebar-content flex-1 overflow-y-auto">
+          <ul className="space-y-2 py-4 px-2">
             {menuItems.map((item, index) => (
               <li key={item.name} 
                   className="relative"

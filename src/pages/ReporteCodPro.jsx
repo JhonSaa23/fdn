@@ -143,7 +143,7 @@ function ReporteCodPro() {
       
       {/* Tabla de resultados - estructura exactamente igual a BCP.jsx */}
       <Card>
-        <div className="overflow-x-auto max-h-[calc(100vh-222px)]" style={{ width: '100%', maxWidth: '100%' }}>
+                  <div className="overflow-x-auto max-h-[calc(100vh-180px)]" style={{ width: '100%', maxWidth: '100%' }}>
           <table className="min-w-full divide-y divide-gray-200 table-fixed">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
