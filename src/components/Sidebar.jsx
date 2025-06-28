@@ -70,10 +70,10 @@ function Sidebar() {
 
   // Cerrar sidebar automáticamente en móvil al cambiar de ruta
   useEffect(() => {
-    if (window.innerWidth < 768 && isSidebarOpen) {
-      setIsSidebarOpen(false);
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false); // Cerrar sidebar en móvil al cambiar de ruta
     }
-  }, [location.pathname, isSidebarOpen, setIsSidebarOpen]);
+  }, [location.pathname]); // Solo ejecutar cuando cambie la ruta
   
   const handleMenuClick = () => {
     // En móvil, abre/cierra el sidebar
