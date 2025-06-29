@@ -6,7 +6,9 @@ const ResponsiveTableContainer = ({
   filters,
   buttons,
   data,
-  columns,
+  columns, // Para compatibilidad con otros componentes
+  desktopColumns,
+  mobileColumns,
   loading,
   emptyMessage = "No hay datos disponibles",
   maxHeight = "calc(100vh - 300px)",
@@ -14,6 +16,10 @@ const ResponsiveTableContainer = ({
   filtersExpanded,
   onToggleFilters
 }) => {
+  // Si se proporcionan columnas específicas para desktop/mobile, usarlas
+  // Si no, usar las columnas genéricas para compatibilidad
+  const finalDesktopColumns = desktopColumns || columns;
+  const finalMobileColumns = mobileColumns || columns;
   return (
     <div className="space-y-6">
       {/* Card con filtros y botones */}
@@ -52,7 +58,7 @@ const ResponsiveTableContainer = ({
         >
           <MobileTable
             data={data}
-            columns={columns}
+            columns={finalDesktopColumns}
             loading={loading}
             emptyMessage={emptyMessage}
             onRowClick={onRowClick}
@@ -68,7 +74,7 @@ const ResponsiveTableContainer = ({
         >
           <MobileTable
             data={data}
-            columns={columns}
+            columns={finalMobileColumns}
             loading={loading}
             emptyMessage={emptyMessage}
             onRowClick={onRowClick}

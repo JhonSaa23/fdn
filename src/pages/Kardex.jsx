@@ -140,8 +140,8 @@ const Kardex = () => {
     return parseFloat(numero).toFixed(2);
   };
 
-  // Definir columnas con el nuevo enfoque: Stock -> Movimiento -> Cantidad -> Almacén -> Detalles
-  const columns = [
+  // Definir columnas para móvil con orden lógico del kardex
+  const mobileColumns = [
     // GRUPO 1: Lo más importante - STOCK ACTUAL
     { 
       key: 'Stock', 
@@ -203,6 +203,95 @@ const Kardex = () => {
     // GRUPO 7: Valores Monetarios
     { key: 'Costo', title: 'Costo Unit.', formatter: (value) => `S/ ${formatDecimal(value)}` },
     { key: 'Venta', title: 'P. Venta', formatter: (value) => `S/ ${formatDecimal(value)}` }
+  ];
+
+  // Definir columnas para desktop en el orden de la base de datos
+  const desktopColumns = [
+    // 1. Documento
+    { key: 'Documento', title: 'Documento' },
+    
+    // 2. Fecha
+    { key: 'Fecha', title: 'Fecha', formatter: (value) => formatFecha(value) },
+    
+    // 3. CodPro
+    { key: 'CodPro', title: 'CodPro' },
+    
+    // 4. Lote
+    { key: 'Lote', title: 'Lote' },
+    
+    // 5. Vencimiento
+    { key: 'Vencimiento', title: 'Vencimiento', formatter: (value) => formatFecha(value) },
+    
+    // 6. Movimiento
+    { 
+      key: 'Movimiento', 
+      title: 'Movimiento', 
+      formatter: (value) => (
+        <span className={`px-2 py-1 rounded text-xs font-medium ${
+          value === 1 ? 'bg-green-100 text-green-800' : 
+          value === 2 ? 'bg-red-100 text-red-800' : 
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {formatMovimiento(value)}
+        </span>
+      )
+    },
+    
+    // 7. Clase
+    { key: 'Clase', title: 'Clase' },
+    
+    // 8. Cantidad
+    { 
+      key: 'Cantidad', 
+      title: 'Cantidad', 
+      formatter: (value) => formatDecimal(value)
+    },
+    
+    // 9. Costo
+    { key: 'Costo', title: 'Costo', formatter: (value) => formatDecimal(value) },
+    
+    // 10. Venta
+    { key: 'Venta', title: 'Venta', formatter: (value) => formatDecimal(value) },
+    
+    // 11. Stock
+    { 
+      key: 'Stock', 
+      title: 'Stock', 
+      formatter: (value) => formatDecimal(value)
+    },
+    
+    // 12. Almacen
+    { 
+      key: 'Almacen', 
+      title: 'Almacen',
+      formatter: (value) => value || 'N/A'
+    },
+    
+    // 13. Impreso
+    { 
+      key: 'Impreso', 
+      title: 'Impreso',
+      formatter: (value) => (
+        <span className={`px-2 py-1 rounded text-xs ${
+          value === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+        }`}>
+          {value === 1 ? 'Sí' : 'No'}
+        </span>
+      )
+    },
+    
+    // 14. Anulado
+    { 
+      key: 'Anulado', 
+      title: 'Anulado',
+      formatter: (value) => (
+        <span className={`px-2 py-1 rounded text-xs ${
+          value === 1 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+        }`}>
+          {value === 1 ? 'Sí' : 'No'}
+        </span>
+      )
+    }
   ];
 
   // Componente de filtros
@@ -334,7 +423,8 @@ const Kardex = () => {
         filters={filters}
         buttons={buttons}
         data={movimientos}
-        columns={columns}
+        desktopColumns={desktopColumns}
+        mobileColumns={mobileColumns}
         loading={loading}
         emptyMessage="No se encontraron movimientos. Use los filtros para consultar el kardex."
         maxHeight="calc(100vh - 280px)"
