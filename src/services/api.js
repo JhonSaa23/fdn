@@ -659,4 +659,131 @@ export const consultarKardex = async (filtros = {}) => {
     console.error('Error al consultar kardex:', error);
     throw error;
   }
+};
+
+// Clientes
+export const consultarClientes = async (filtros = {}, page = 1, limit = 40) => {
+  try {
+    const params = new URLSearchParams({
+      ...filtros,
+      page: page.toString(),
+      limit: limit.toString()
+    });
+    const response = await axiosClient.get(`/clientes?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al consultar clientes:', error);
+    throw error;
+  }
+};
+
+export const crearCliente = async (data) => {
+  try {
+    const response = await axiosClient.post('/clientes', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const actualizarCliente = async (data) => {
+  try {
+    const response = await axiosClient.put('/clientes', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const eliminarCliente = async (data) => {
+  try {
+    const response = await axiosClient.delete('/clientes', { data });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const obtenerLaboratoriosClientes = async () => {
+  try {
+    const response = await axiosClient.get('/clientes/laboratorios');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener laboratorios:', error);
+    throw error;
+  }
+};
+
+export const obtenerTipificacionesClientes = async () => {
+  try {
+    const response = await axiosClient.get('/clientes/tipificaciones');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener tipificaciones:', error);
+    throw error;
+  }
+};
+
+export const importarClientesExcel = async (file, codlab) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('codlab', codlab);
+    
+    const response = await axiosClient.post('/clientes/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 120000 // 2 minutos para importación
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error al importar archivo de clientes:', error);
+    throw error;
+  }
+};
+
+// Eliminar clientes en masa por tipificaciones
+export const eliminarClientesEnMasa = async (tipificaciones) => {
+  try {
+    const response = await axiosClient.delete('/clientes/masa', {
+      data: { tipificaciones },
+      timeout: 60000 // 1 minuto para eliminación en masa
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al eliminar clientes en masa:', error);
+    throw error;
+  }
+};
+
+// Importar promociones desde Excel
+export const importarPromocionesExcel = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await axiosClient.post('/promociones/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 120000 // 2 minutos para importación
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error al importar archivo de promociones:', error);
+    throw error;
+  }
+};
+
+export const obtenerTipificacionesPromociones = async () => {
+  try {
+    const response = await axiosClient.get('/promociones/tipificaciones');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener tipificaciones de promociones:', error);
+    throw error;
+  }
 }; 

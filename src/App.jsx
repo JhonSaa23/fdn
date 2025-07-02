@@ -10,6 +10,7 @@ import Exportaciones from './pages/Exportaciones';
 import ConsultaMovimientos from './pages/ConsultaMovimientos';
 import ReporteCodPro from './pages/ReporteCodPro';
 import Promociones from './pages/Promociones';
+import Clientes from './pages/Clientes';
 import Escalas from './pages/Escalas';
 import Kardex from './pages/Kardex';
 import MultiAccion from './pages/MultiAccion';
@@ -127,6 +128,7 @@ function App() {
                 <Route path="/consulta-movimientos" element={<ConsultaMovimientos />} />
                 <Route path="/reporte-codpro" element={<ReporteCodPro />} />
                 <Route path="/promociones" element={<Promociones />} />
+                <Route path="/clientes" element={<Clientes />} />
                 <Route path="/escalas" element={<Escalas />} />
                 <Route path="/kardex" element={<Kardex />} />
                 <Route path="/multi-accion" element={<MultiAccion />} />

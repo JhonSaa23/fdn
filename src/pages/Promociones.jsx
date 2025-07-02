@@ -1,30 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../App';
-import { consultarPromociones, crearPromocion, actualizarPromocion, eliminarPromocion } from '../services/api';
+import { consultarPromociones, crearPromocion, actualizarPromocion, eliminarPromocion, importarPromocionesExcel, obtenerTipificacionesPromociones } from '../services/api';
 import { 
   ArrowLeftIcon,
   PencilIcon, 
   TrashIcon,
   PlusIcon,
   FunnelIcon,
-  XMarkIcon
+  XMarkIcon,
+  DocumentArrowUpIcon
 } from '@heroicons/react/24/outline';
 import Card from '../components/Card';
 import Button from '../components/Button';
 
-// Nueva lista de tipificaciones/negocios
-const TIPIFICACIONES = {
-  "1": "Farmacia Independiente",
-  "2": "Mayorista",
-  "3": "Minicadenas",
-  "4": "Sub-Distribuidores",
-  "5": "Institución",
-  "6": "Cadena Regional",
-  "7": "Farmacias Regulares",
-  "8": "Clinicas",
-  "9": "Mayorista Procter",
-  "10": "Farmacias Tops"
-};
+// Las tipificaciones se cargarán dinámicamente de la base de datos
 
 // Función auxiliar para manejar strings de manera segura
 const safeString = (value) => {
@@ -37,6 +26,15 @@ const Promociones = () => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingPromocion, setEditingPromocion] = useState(null);
+  
+  // Estados para el modal de importación
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  
+  // Estado para tipificaciones dinámicas
+  const [tipificaciones, setTipificaciones] = useState([]);
+  const [tipificacionesMap, setTipificacionesMap] = useState({});
 
   // Estados para filtros
   const [filtros, setFiltros] = useState({
@@ -59,6 +57,24 @@ const Promociones = () => {
 
   // Estado para rastrear el filtro usado en la última consulta
   const [ultimaConsultaTipificacion, setUltimaConsultaTipificacion] = useState('');
+
+  // Cargar tipificaciones desde la base de datos
+  const cargarTipificaciones = async () => {
+    try {
+      const data = await obtenerTipificacionesPromociones();
+      setTipificaciones(data);
+      
+      // Crear un mapa para búsqueda rápida
+      const map = {};
+      data.forEach(tip => {
+        map[tip.tipificacion.toString()] = tip.descripcion;
+      });
+      setTipificacionesMap(map);
+    } catch (error) {
+      console.error('Error al cargar tipificaciones:', error);
+      showNotification('error', 'Error al cargar las tipificaciones');
+    }
+  };
 
   // Cargar promociones
   const cargarPromociones = async () => {
@@ -111,8 +127,11 @@ const Promociones = () => {
   }, [filtros]); // Incluir filtros como dependencia para que se actualice
 
   useEffect(() => {
-    // Capturar la tipificacion inicial (vacía) y cargar promociones solo al montar
+    // Capturar la tipificacion inicial (vacía) y cargar datos al montar
     setUltimaConsultaTipificacion('');
+    
+    // Cargar tipificaciones y promociones
+    cargarTipificaciones();
     cargarPromociones();
   }, []); // Solo ejecutar una vez al montar
 
@@ -249,6 +268,39 @@ const Promociones = () => {
     }
   };
 
+  // Funciones para manejar la importación
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    setSelectedFile(file);
+  };
+
+  const handleImportSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      showNotification('error', 'Debe seleccionar un archivo');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const result = await importarPromocionesExcel(selectedFile);
+      
+      if (result.error) {
+        showNotification('error', result.error);
+      } else {
+        showNotification('success', `Importación completada. Insertados: ${result.resumen.insertados}, Duplicados: ${result.resumen.duplicados}`);
+        setShowImportModal(false);
+        setSelectedFile(null);
+        cargarPromociones(); // Recargar los datos
+      }
+    } catch (error) {
+      console.error('Error en importación:', error);
+      showNotification('error', 'Error al procesar el archivo');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   // Filtrar promociones en tiempo real por nombre de producto
   const promocionesFiltradas = Array.isArray(promociones)
     ? (filtroNombreProducto
@@ -278,6 +330,15 @@ const Promociones = () => {
                 disabled={loading}
               >
                 {loading ? 'Consultando...' : 'Consultar'}
+              </Button>
+              <Button
+                style={{ display: 'flex', backgroundColor: '#007bff', color: 'white' }}
+                type="button"
+                variant="info"
+                onClick={() => setShowImportModal(true)}
+              >
+                <DocumentArrowUpIcon className="w-5 h-5 mr-2" />
+                Importar
               </Button>
               <Button
                 type="button"
@@ -310,8 +371,10 @@ const Promociones = () => {
                   className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 >
                   <option value="">Todos</option>
-                  {Object.entries(TIPIFICACIONES).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
+                  {tipificaciones.map(tip => (
+                    <option key={tip.tipificacion} value={tip.tipificacion}>
+                      {tip.tipificacion} - {tip.descripcion}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -415,7 +478,7 @@ const Promociones = () => {
                             {/* Solo mostrar tipo de negocio en segunda línea si no hay filtro específico en la última consulta */}
                             {(!ultimaConsultaTipificacion || ultimaConsultaTipificacion === '') && (
                               <span className="text-sm text-gray-600 italic">
-                                {TIPIFICACIONES[promocion.tipificacion] || promocion.tipificacion}
+                                {tipificacionesMap[promocion.tipificacion] || 'Desconocida'}
                               </span>
                             )}
                           </div>
@@ -487,8 +550,10 @@ const Promociones = () => {
                     className="w-full p-2 border rounded-md"
                   >
                     <option value="">Seleccione un tipo</option>
-                    {Object.entries(TIPIFICACIONES).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
+                    {tipificaciones.map(tip => (
+                      <option key={tip.tipificacion} value={tip.tipificacion}>
+                        {tip.tipificacion} - {tip.descripcion}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -550,6 +615,77 @@ const Promociones = () => {
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                 >
                   {editingPromocion ? 'Actualizar' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Importación Excel */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Importar Promociones desde Excel</h2>
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setSelectedFile(null);
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+              <h3 className="font-semibold text-blue-900 mb-2">Formato requerido del Excel:</h3>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• <strong>Tipificacion</strong>: Número del negocio (1-10)</li>
+                <li>• <strong>Codpro</strong>: Código del producto</li>
+                <li>• <strong>Desde</strong>: Cantidad mínima (número)</li>
+                <li>• <strong>Porcentaje</strong>: Descuento (número)</li>
+              </ul>
+            </div>
+
+            <form onSubmit={handleImportSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Archivo Excel (.xls, .xlsx)
+                </label>
+                <input
+                  type="file"
+                  accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  onChange={handleFileSelect}
+                  className="w-full p-2 border rounded-md"
+                  required
+                />
+                {selectedFile && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Archivo seleccionado: {selectedFile.name}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowImportModal(false);
+                    setSelectedFile(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  disabled={importing}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  disabled={importing || !selectedFile}
+                >
+                  {importing ? 'Importando...' : 'Importar'}
                 </button>
               </div>
             </form>
