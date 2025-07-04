@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../App';
-import { consultarPromociones, crearPromocion, actualizarPromocion, eliminarPromocion, importarPromocionesExcel, obtenerTipificacionesPromociones } from '../services/api';
+import { consultarPromociones, crearPromocion, actualizarPromocion, eliminarPromocion, importarPromocionesExcel, obtenerTipificacionesPromociones, eliminarPromocionesEnMasa } from '../services/api';
 import { 
   ArrowLeftIcon,
   PencilIcon, 
@@ -8,7 +8,8 @@ import {
   PlusIcon,
   FunnelIcon,
   XMarkIcon,
-  DocumentArrowUpIcon
+  DocumentArrowUpIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -31,6 +32,11 @@ const Promociones = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [importing, setImporting] = useState(false);
+  
+  // Estados para eliminación en masa
+  const [showDeleteMassModal, setShowDeleteMassModal] = useState(false);
+  const [selectedTipificaciones, setSelectedTipificaciones] = useState([]);
+  const [deleteMassLoading, setDeleteMassLoading] = useState(false);
   
   // Estado para tipificaciones dinámicas
   const [tipificaciones, setTipificaciones] = useState([]);
@@ -301,6 +307,65 @@ const Promociones = () => {
     }
   };
 
+  // Manejar selección de tipificaciones para eliminación en masa
+  const handleTipificacionToggle = (tipificacion) => {
+    setSelectedTipificaciones(prev => {
+      if (prev.includes(tipificacion)) {
+        return prev.filter(t => t !== tipificacion);
+      } else {
+        return [...prev, tipificacion];
+      }
+    });
+  };
+
+  // Manejar eliminación en masa
+  const handleDeleteMass = async () => {
+    if (selectedTipificaciones.length === 0) {
+      showNotification('error', 'Debe seleccionar al menos una tipificación');
+      return;
+    }
+
+    const tipificacionesTexto = selectedTipificaciones
+      .map(t => `${t} (${tipificacionesMap[t] || 'Desconocida'})`)
+      .join(', ');
+
+    const confirmacion = window.confirm(
+      `¿Está seguro de eliminar TODAS las promociones con las siguientes tipificaciones?\n\n${tipificacionesTexto}\n\n⚠️ Esta acción NO se puede deshacer y eliminará los registros de ambas tablas.`
+    );
+
+    if (!confirmacion) return;
+
+    try {
+      setDeleteMassLoading(true);
+      
+      const response = await eliminarPromocionesEnMasa(selectedTipificaciones);
+      
+      // Mostrar resumen de la eliminación
+      const { resumen } = response;
+      let mensaje = `Eliminación en masa completada:\n`;
+      mensaje += `• ${resumen.registrosEliminadosTemporal} registros eliminados de tabla temporal\n`;
+      mensaje += `• ${resumen.registrosEliminadosPrincipal} registros eliminados de tabla principal\n`;
+      mensaje += `• Total: ${resumen.totalRegistrosEliminados} registros eliminados`;
+      
+      showNotification('success', mensaje);
+      
+      // Cerrar modal y recargar datos
+      setShowDeleteMassModal(false);
+      setSelectedTipificaciones([]);
+      cargarPromociones();
+      
+    } catch (error) {
+      console.error('Error en eliminación en masa:', error);
+      let mensaje = 'Error al eliminar promociones en masa';
+      if (error.response?.data?.details) {
+        mensaje += `: ${error.response.data.details}`;
+      }
+      showNotification('error', mensaje);
+    } finally {
+      setDeleteMassLoading(false);
+    }
+  };
+
   // Filtrar promociones en tiempo real por nombre de producto
   const promocionesFiltradas = Array.isArray(promociones)
     ? (filtroNombreProducto
@@ -339,6 +404,15 @@ const Promociones = () => {
               >
                 <DocumentArrowUpIcon className="w-5 h-5 mr-2" />
                 Importar
+              </Button>
+              <Button
+                style={{ display: 'flex', backgroundColor: '#dc2626', color: 'white' }}
+                type="button"
+                variant="danger"
+                onClick={() => setShowDeleteMassModal(true)}
+              >
+                <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
+                Eliminar Masa
               </Button>
               <Button
                 type="button"
@@ -689,6 +763,121 @@ const Promociones = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Eliminación en Masa */}
+      {showDeleteMassModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-red-600 flex items-center">
+                <ExclamationTriangleIcon className="w-6 h-6 mr-2" />
+                Eliminar Masa
+              </h2>
+              <button
+                onClick={() => {
+                  setShowDeleteMassModal(false);
+                  setSelectedTipificaciones([]);
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Advertencia */}
+              <div className="bg-red-50 p-4 rounded-md border border-red-200">
+                <div className="flex">
+                  <ExclamationTriangleIcon className="w-5 h-5 text-red-400 mr-2 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-red-800">
+                      ⚠️ Acción irreversible
+                    </h3>
+                    <p className="text-xs text-red-700 mt-1">
+                      Esta acción eliminará TODAS las promociones de las tipificaciones seleccionadas
+                      de ambas tablas (t_Descuento_laboratorio y Descuento_laboratorio). 
+                      <strong> No se puede deshacer.</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Selección de tipificaciones */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Seleccione las tipificaciones a eliminar:
+                </label>
+                <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border rounded-lg p-3">
+                  {tipificaciones.map(tip => (
+                    <label key={tip.tipificacion} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        checked={selectedTipificaciones.includes(tip.tipificacion.toString())}
+                        onChange={() => handleTipificacionToggle(tip.tipificacion.toString())}
+                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                      <span className="text-sm">
+                        <strong>{tip.tipificacion}</strong> - {tip.descripcion}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Resumen de selección */}
+              {selectedTipificaciones.length > 0 && (
+                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200">
+                  <h4 className="text-sm font-medium text-yellow-800 mb-2">
+                    Tipificaciones seleccionadas para eliminación:
+                  </h4>
+                  <ul className="text-xs text-yellow-700 space-y-1">
+                    {selectedTipificaciones.map(tip => (
+                      <li key={tip}>
+                        • <strong>{tip}</strong> - {tipificacionesMap[tip] || 'Desconocida'}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-yellow-700 mt-2 font-medium">
+                    Se eliminarán TODAS las promociones con estas tipificaciones.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteMassModal(false);
+                  setSelectedTipificaciones([]);
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                disabled={deleteMassLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteMass}
+                disabled={deleteMassLoading || selectedTipificaciones.length === 0}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+              >
+                {deleteMassLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
+                    Eliminar {selectedTipificaciones.length > 0 ? `(${selectedTipificaciones.length})` : ''}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -607,7 +607,7 @@ const Clientes = () => {
                 onClick={() => setShowDeleteMassModal(true)}
               >
                 <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
-                Eliminar en Masa
+                Eliminar Masa
               </Button>
               <Button
                 type="button"
@@ -1018,7 +1018,7 @@ const Clientes = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-red-600 flex items-center">
                 <ExclamationTriangleIcon className="w-6 h-6 mr-2" />
-                Eliminar Clientes en Masa
+                Eliminar Masa
               </h2>
               <button
                 onClick={() => {

@@ -20,11 +20,12 @@ import {
   ChevronDownIcon,
   ArrowUpTrayIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  TruckIcon
 } from '@heroicons/react/24/outline';
 
 const menuItems = [
-  { name: 'Inicio', path: '/', icon: <HomeIcon className="w-6 h-6" /> },
+  // { name: 'Inicio', path: '/', icon: <HomeIcon className="w-6 h-6" /> },
   { 
     name: 'Importar', 
     icon: <ArrowUpTrayIcon className="w-6 h-6" />,
@@ -33,11 +34,12 @@ const menuItems = [
       { name: 'BCP', path: '/bcp' }
     ]
   },
-  { name: 'Exportaciones', path: '/exportaciones', icon: <ArrowDownTrayIcon className="w-6 h-6" /> },
+  // { name: 'Exportaciones', path: '/exportaciones', icon: <ArrowDownTrayIcon className="w-6 h-6" /> },
   { name: 'Promociones', path: '/promociones', icon: <TagIcon className="w-6 h-6" /> },
   { name: 'Clientes', path: '/clientes', icon: <UserGroupIcon className="w-6 h-6" /> },
   { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-6 h-6" /> },
   { name: 'Kardex', path: '/kardex', icon: <CubeIcon className="w-6 h-6" /> },
+  { name: 'Guías', path: '/guias', icon: <TruckIcon className="w-6 h-6" /> },
   { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-6 h-6" /> },
   { 
     name: 'Reportes', 
@@ -280,6 +282,12 @@ function Sidebar() {
                 {renderMenuItem(item)}
               </li>
             ))}
+            <li>
+              <a href="/bonificaciones" className="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-100 rounded transition">
+                <span className="mr-3 text-lg">🎁</span>
+                <span>Bonificaciones</span>
+              </a>
+            </li>
           </ul>
         </div>
       </aside>

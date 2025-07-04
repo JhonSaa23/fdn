@@ -786,4 +786,99 @@ export const obtenerTipificacionesPromociones = async () => {
     console.error('Error al obtener tipificaciones de promociones:', error);
     throw error;
   }
+};
+
+// Eliminar promociones en masa por tipificaciones
+export const eliminarPromocionesEnMasa = async (tipificaciones) => {
+  try {
+    const response = await axiosClient.delete('/promociones/masa', {
+      data: { tipificaciones },
+      timeout: 60000 // 1 minuto para eliminación en masa
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al eliminar promociones en masa:', error);
+    throw error;
+  }
+};
+
+// GUÍAS
+export const listarGuias = async (filtros = {}, page = 1, limit = 40) => {
+  try {
+    const params = new URLSearchParams({
+      ...filtros,
+      page: page.toString(),
+      limit: limit.toString()
+    });
+    const response = await axiosClient.get(`/guias/listar?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error obteniendo lista de guías:', error);
+    throw error;
+  }
+};
+
+export const editarGuiaIndividual = async (data) => {
+  try {
+    const response = await axiosClient.post('/guias/editar-individual', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error editando guía individual:', error);
+    throw error;
+  }
+};
+
+export const editarGuiasRango = async (data) => {
+  try {
+    const response = await axiosClient.post('/guias/editar-rango', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error editando guías por rango:', error);
+    throw error;
+  }
+};
+
+export const editarGuiasSeleccion = async (data) => {
+  try {
+    const response = await axiosClient.post('/guias/editar-seleccion', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error editando selección de guías:', error);
+    throw error;
+  }
+};
+
+export const obtenerDetalleGuia = async (numero, tipo) => {
+  try {
+    const response = await axiosClient.get(`/guias/detalle/${numero}/${tipo}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error obteniendo detalle de guía:', error);
+    throw error;
+  }
+};
+
+export const buscarGuiaEspecifica = async (numero) => {
+  try {
+    const response = await axiosClient.get(`/guias/buscar-guia/${numero}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error buscando guía específica:', error);
+    throw error;
+  }
+};
+
+export const listarBonificaciones = async (filtros = {}) => {
+  try {
+    const params = new URLSearchParams();
+    if (filtros.Codproducto) params.append('Codproducto', filtros.Codproducto);
+    if (filtros.Factor) params.append('Factor', filtros.Factor);
+    if (filtros.CodBoni) params.append('CodBoni', filtros.CodBoni);
+    if (filtros.Cantidad) params.append('Cantidad', filtros.Cantidad);
+    const response = await axiosClient.get(`/bonificaciones/listar?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error listando bonificaciones:', error);
+    throw error;
+  }
 }; 
