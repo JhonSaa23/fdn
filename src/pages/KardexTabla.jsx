@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNotification } from '../App';
 import axios from '../services/axiosClient';
+import { getObservacionesDocumento } from '../services/api';
+import ObservacionesModal from '../components/ObservacionesModal';
 import {
   ChevronUpIcon,
   ChevronDownIcon,
   FunnelIcon,
   XMarkIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
 
 const KardexTabla = () => {
@@ -19,6 +22,12 @@ const KardexTabla = () => {
   const [uniqueValues, setUniqueValues] = useState({});
   const [selectedValues, setSelectedValues] = useState({});
   const [searchText, setSearchText] = useState('');
+  const [observacionesModal, setObservacionesModal] = useState({
+    isOpen: false,
+    documento: '',
+    observaciones: null,
+    loading: false
+  });
   const filterMenuRef = useRef(null);
 
   // Cargar datos
@@ -180,6 +189,42 @@ const KardexTabla = () => {
            sortConfig.key !== null;
   }, [selectedValues, sortConfig]);
 
+  // Función para obtener observaciones
+  const handleVerObservaciones = async (documento) => {
+    setObservacionesModal({
+      isOpen: true,
+      documento: documento,
+      observaciones: null,
+      loading: true
+    });
+
+    try {
+      const response = await getObservacionesDocumento(documento);
+      setObservacionesModal(prev => ({
+        ...prev,
+        observaciones: response.data,
+        loading: false
+      }));
+    } catch (error) {
+      console.error('Error al obtener observaciones:', error);
+      showNotification('Error al obtener observaciones', 'error');
+      setObservacionesModal(prev => ({
+        ...prev,
+        loading: false
+      }));
+    }
+  };
+
+  // Función para cerrar modal de observaciones
+  const handleCloseObservaciones = () => {
+    setObservacionesModal({
+      isOpen: false,
+      documento: '',
+      observaciones: null,
+      loading: false
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -194,6 +239,10 @@ const KardexTabla = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              {/* Columna de observaciones */}
+              <th className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+                Obs
+              </th>
               {Object.keys(data[0] || {}).map((columnName) => (
                 <th
                   key={columnName}
@@ -326,6 +375,16 @@ const KardexTabla = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredData.map((row, rowIndex) => (
               <tr key={rowIndex} className="hover:bg-gray-50">
+                {/* Botón de observaciones */}
+                <td className="px-2 py-1 whitespace-nowrap">
+                  <button
+                    onClick={() => handleVerObservaciones(row.Documento)}
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition-colors"
+                    title="Ver observaciones"
+                  >
+                    <EyeIcon className="h-4 w-4" />
+                  </button>
+                </td>
                 {Object.keys(row).map((key) => (
                   <td key={key} className="px-2 py-1 whitespace-nowrap text-[15px] text-gray-500">
                     {row[key]?.toString() || ''}
@@ -352,6 +411,14 @@ const KardexTabla = () => {
           <span>Limpiar filtros</span>
         </button>
       )}
+
+      {/* Modal de observaciones */}
+      <ObservacionesModal
+        isOpen={observacionesModal.isOpen}
+        onClose={handleCloseObservaciones}
+        observaciones={observacionesModal.observaciones}
+        documento={observacionesModal.documento}
+      />
     </div>
   );
 };

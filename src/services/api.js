@@ -901,4 +901,15 @@ export const obtenerTodosLosProductos = async () => {
     console.error('Error al obtener productos:', error);
     throw error;
   }
+};
+
+// Función para obtener observaciones de un documento
+export const getObservacionesDocumento = async (documento) => {
+  try {
+    const response = await axiosClient.get(`/kardex/observaciones/${documento}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener observaciones:', error);
+    throw error;
+  }
 }; 
