@@ -39,7 +39,6 @@ const menuItems = [
   { name: 'Promociones', path: '/promociones', icon: <TagIcon className="w-6 h-6" /> },
   { name: 'Clientes', path: '/clientes', icon: <UserGroupIcon className="w-6 h-6" /> },
   { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-6 h-6" /> },
-  { name: 'Kardex', path: '/kardex', icon: <CubeIcon className="w-6 h-6" /> },
   { name: 'Kardex Tabla', path: '/kardex-tabla', icon: <TableCellsIcon className="w-6 h-6" /> },
   { name: 'Guías', path: '/guias', icon: <TruckIcon className="w-6 h-6" /> },
   { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-6 h-6" /> },

@@ -106,7 +106,7 @@ const KardexTabla = () => {
               {sortedData.map((row, rowIndex) => (
                 <tr key={rowIndex} className="hover:bg-gray-50">
                   {Object.keys(row).map((key) => (
-                    <td key={key} className="px-2 py-1 whitespace-nowrap text-[11px] text-gray-500">
+                    <td key={key} className="px-2 py-1 whitespace-nowrap text-[16px] text-gray-500">
                       {row[key]?.toString() || ''}
                     </td>
                   ))}
