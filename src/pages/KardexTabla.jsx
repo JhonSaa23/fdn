@@ -306,7 +306,7 @@ const KardexTabla = () => {
                             <label key={value} className="flex items-center p-0.5 hover:bg-gray-50">
                               <input
                                 type="checkbox"
-                                checked={selectedValues[columnName].has(value)}
+                                checked={selectedValues[columnName]?.has(value) || false}
                                 onChange={() => handleValueSelect(columnName, value)}
                                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-3 w-3"
                               />
