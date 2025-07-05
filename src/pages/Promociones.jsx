@@ -429,7 +429,7 @@ const Promociones = () => {
     const resultados = todosLosProductos.filter(producto => 
       producto.codpro.toLowerCase().includes(busquedaLower) ||
       producto.nombre.toLowerCase().includes(busquedaLower)
-    ).slice(0, 10); // Limitamos a 10 resultados
+    ).slice(0, 50); // Limitamos a 50 resultados
 
     setProductosFiltrados(resultados);
   };
