@@ -308,14 +308,11 @@ const Escalas = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="pl-6 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Laboratorio</th>
                     <th className="pl-6 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
                     <th className="pl-6 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
                     <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 1</th>
                     <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 2</th>
                     <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 3</th>
-                    <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 4</th>
-                    <th className="pl-6 py-0 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rango 5</th>
                     <th className="px-4 py-0 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">Acciones</th>
                   </tr>
                 </thead>
@@ -335,9 +332,13 @@ const Escalas = () => {
                   ) : (
                     (filtros.nombreProducto ? escalasFiltradasLocal : escalas).map((escala, index) => (
                       <tr key={index} className="hover:bg-gray-50">
-                        <td className="pl-6 py-1 whitespace-nowrap text-sm text-gray-900">{escala.Laboratorio}</td>
                         <td className="pl-6 py-1 whitespace-nowrap text-sm text-gray-900 font-bold ">{escala.CodPro}</td>
-                        <td className="pl-6 py-1 whitespace-nowrap text-sm text-gray-900">{escala.Nombre}</td>
+                        <td className="pl-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                          <div>
+                            <div>{escala.Nombre}</div>
+                            <div className="text-xs text-gray-400">{escala.Laboratorio}</div>
+                          </div>
+                        </td>
                         
                         {/* Rango 1 con descuentos agrupados */}
                         <td className="pl-6 py-1 text-center">
@@ -400,45 +401,9 @@ const Escalas = () => {
                           </div>
                         </td>
 
-                        {/* Rango 4 con descuentos agrupados */}
-                        <td className="pl-6 py-1 text-center">
-                          <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 min-w-[120px]">
-                            <div className="text-xs space-y-1 flex items-baseline gap-2">
-                              <div className="flex justify-between bg-white rounded px-2 py-1">
-                                <span className="text-gray-600">D1:</span>
-                                <span className="font-medium">{escala.des41 || '0'}</span>
-                              </div>
-                              <div className="flex justify-between bg-white rounded px-2 py-1">
-                                <span className="text-gray-600">D2:</span>
-                                <span className="font-medium">{escala.des42 || '0'}</span>
-                              </div>
-                              <div className="flex justify-between bg-white rounded px-2 py-1">
-                                <span className="text-gray-600">D3:</span>
-                                <span className="font-medium">{escala.des43 || '0'}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
+                        
 
-                        {/* Rango 5 con descuentos agrupados */}
-                        <td className="pl-6 py-1 text-center">
-                          <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 min-w-[120px]">
-                            <div className="text-xs space-y-1 flex items-baseline gap-2">
-                              <div className="flex justify-between bg-white rounded px-2 py-1">
-                                <span className="text-gray-600">D1:</span>
-                                <span className="font-medium">{escala.des51 || '0'}</span>
-                              </div>
-                              <div className="flex justify-between bg-white rounded px-2 py-1">
-                                <span className="text-gray-600">D2:</span>
-                                <span className="font-medium">{escala.des52 || '0'}</span>
-                              </div>
-                              <div className="flex justify-between bg-white rounded px-2 py-1">
-                                <span className="text-gray-600">D3:</span>
-                                <span className="font-medium">{escala.des53 || '0'}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
+
 
                         {/* Acciones pegadas a la derecha */}
                         <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">

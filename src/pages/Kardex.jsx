@@ -296,7 +296,7 @@ const Kardex = () => {
 
   // Componente de filtros
   const filters = (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 xl:grid-cols-6 gap-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Producto (CodPro)
@@ -381,19 +381,6 @@ const Kardex = () => {
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Clase
-        </label>
-        <input
-          type="text"
-          name="clase"
-          value={filtros.clase}
-          onChange={handleFilterChange}
-          placeholder="Clase de producto"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-        />
-      </div>
     </div>
   );
 

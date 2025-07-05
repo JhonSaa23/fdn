@@ -881,4 +881,24 @@ export const listarBonificaciones = async (filtros = {}) => {
     console.error('Error listando bonificaciones:', error);
     throw error;
   }
+};
+
+export const buscarProductos = async (busqueda) => {
+  try {
+    const response = await axiosClient.get(`/promociones/buscar-productos?busqueda=${encodeURIComponent(busqueda)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al buscar productos:', error);
+    throw error;
+  }
+};
+
+export const obtenerTodosLosProductos = async () => {
+  try {
+    const response = await axiosClient.get('/promociones/productos');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener productos:', error);
+    throw error;
+  }
 }; 

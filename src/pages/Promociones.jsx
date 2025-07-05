@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../App';
-import { consultarPromociones, crearPromocion, actualizarPromocion, eliminarPromocion, importarPromocionesExcel, obtenerTipificacionesPromociones, eliminarPromocionesEnMasa } from '../services/api';
+import { consultarPromociones, crearPromocion, actualizarPromocion, eliminarPromocion, importarPromocionesExcel, obtenerTipificacionesPromociones, eliminarPromocionesEnMasa, obtenerTodosLosProductos } from '../services/api';
 import { 
   ArrowLeftIcon,
   PencilIcon, 
@@ -64,6 +64,13 @@ const Promociones = () => {
   // Estado para rastrear el filtro usado en la última consulta
   const [ultimaConsultaTipificacion, setUltimaConsultaTipificacion] = useState('');
 
+  // Estados para el autocompletado de productos
+  const [busquedaProducto, setBusquedaProducto] = useState('');
+  const [todosLosProductos, setTodosLosProductos] = useState([]);
+  const [productosFiltrados, setProductosFiltrados] = useState([]);
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+  const [cargandoProductos, setCargandoProductos] = useState(false);
+
   // Cargar tipificaciones desde la base de datos
   const cargarTipificaciones = async () => {
     try {
@@ -117,6 +124,12 @@ const Promociones = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'codpro' && showForm) {
+      setBusquedaProducto(value);
+      setMostrarSugerencias(true);
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -250,6 +263,8 @@ const Promociones = () => {
       desde: promocion.desde?.toString() || '',
       porcentaje: promocion.porcentaje?.toString() || ''
     });
+    setBusquedaProducto(promocion.codpro || '');
+    cargarTodosLosProductos();
     setShowForm(true);
   };
 
@@ -373,6 +388,92 @@ const Promociones = () => {
         : promociones)
     : [];
 
+  // Función para cargar todos los productos
+  const cargarTodosLosProductos = async () => {
+    try {
+      setCargandoProductos(true);
+      const productos = await obtenerTodosLosProductos();
+      setTodosLosProductos(productos);
+      
+      if (productos.length === 0) {
+        showNotification('warning', 'No se encontraron productos en la base de datos');
+      }
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      let mensaje = 'Error al cargar la lista de productos';
+      
+      if (error.response?.data) {
+        const { type, details } = error.response.data;
+        if (type === 'CONNECTION_ERROR') {
+          mensaje = 'Error de conexión con la base de datos. Por favor, intente nuevamente.';
+        } else {
+          mensaje = `Error al cargar productos: ${details}`;
+        }
+      }
+      
+      showNotification('error', mensaje);
+      setTodosLosProductos([]);
+    } finally {
+      setCargandoProductos(false);
+    }
+  };
+
+  // Función para filtrar productos localmente
+  const filtrarProductos = (busqueda) => {
+    if (!busqueda) {
+      setProductosFiltrados([]);
+      return;
+    }
+
+    const busquedaLower = busqueda.toLowerCase();
+    const resultados = todosLosProductos.filter(producto => 
+      producto.codpro.toLowerCase().includes(busquedaLower) ||
+      producto.nombre.toLowerCase().includes(busquedaLower)
+    ).slice(0, 10); // Limitamos a 10 resultados
+
+    setProductosFiltrados(resultados);
+  };
+
+  // Efecto para filtrar productos cuando cambia la búsqueda
+  useEffect(() => {
+    filtrarProductos(busquedaProducto);
+  }, [busquedaProducto]);
+
+  const handleSeleccionarProducto = (producto) => {
+    setFormData(prev => ({
+      ...prev,
+      codpro: producto.codpro
+    }));
+    setBusquedaProducto(producto.codpro);
+    setMostrarSugerencias(false);
+  };
+
+  // Efecto para cerrar las sugerencias al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const sugerenciasElement = document.querySelector('.sugerencias-productos');
+      const inputElement = document.querySelector('.input-producto');
+      
+      if (sugerenciasElement && inputElement) {
+        if (!sugerenciasElement.contains(event.target) && !inputElement.contains(event.target)) {
+          setMostrarSugerencias(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Modificar la función que abre el modal para cargar los productos
+  const handleAgregarClick = () => {
+    setShowForm(true);
+    setEditingPromocion(null);
+    setFormData({ tipificacion: '', codpro: '', desde: '', porcentaje: '' });
+    setBusquedaProducto('');
+    cargarTodosLosProductos();
+  };
+
   return (
     <>
       {/* Bloque principal: Título, botones y filtros juntos en un solo Card */}
@@ -415,19 +516,10 @@ const Promociones = () => {
                 Eliminar Masa
               </Button>
               <Button
-                type="button"
-                variant="success"
-                onClick={() => {
-                  setEditingPromocion(null);
-                  setFormData({
-                    tipificacion: '',
-                    codpro: '',
-                    desde: '',
-                    porcentaje: ''
-                  });
-                  setShowForm(true);
-                }}
+                onClick={handleAgregarClick}
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
+                <PlusIcon className="h-5 w-5 mr-2" />
                 Agregar
               </Button>
             </div>
@@ -594,99 +686,144 @@ const Promociones = () => {
 
       {/* Formulario Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">
-                {editingPromocion ? 'Editar Promoción' : 'Nueva Promoción'}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingPromocion(null);
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tipo de Negocio
-                  </label>
-                  <select
-                    name="tipificacion"
-                    value={formData.tipificacion}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">Seleccione un tipo</option>
-                    {tipificaciones.map(tip => (
-                      <option key={tip.tipificacion} value={tip.tipificacion}>
-                        {tip.tipificacion} - {tip.descripcion}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Código de Producto
-                  </label>
-                  <input
-                    type="text"
-                    name="codpro"
-                    value={formData.codpro}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-2 border rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Desde
-                  </label>
-                  <input
-                    type="number"
-                    name="desde"
-                    value={formData.desde}
-                    onChange={handleInputChange}
-                    required
-                    step="0"
-                    className="w-full p-2 border rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Porcentaje
-                  </label>
-                  <input
-                    type="number"
-                    name="porcentaje"
-                    value={formData.porcentaje}
-                    onChange={handleInputChange}
-                    required
-                    step="0"
-                    className="w-full p-2 border rounded-md"
-                  />
-                </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
+            <button
+              onClick={() => {
+                setShowForm(false);
+                setEditingPromocion(null);
+                setFormData({ tipificacion: '', codpro: '', desde: '', porcentaje: '' });
+                setBusquedaProducto('');
+                setMostrarSugerencias(false);
+              }}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+            
+            <h2 className="text-xl font-bold mb-4">
+              {editingPromocion ? 'Editar Promoción' : 'Nueva Promoción'}
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo de Negocio
+                </label>
+                <select
+                  name="tipificacion"
+                  value={formData.tipificacion}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccione un tipo</option>
+                  {tipificaciones.map(tip => (
+                    <option key={tip.tipificacion} value={tip.tipificacion}>
+                      {tip.descripcion}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="flex justify-end gap-2 mt-6">
+
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Código de Producto
+                </label>
+                <input
+                  type="text"
+                  name="codpro"
+                  value={busquedaProducto}
+                  onChange={handleInputChange}
+                  onFocus={() => {
+                    setMostrarSugerencias(true);
+                    if (todosLosProductos.length === 0) {
+                      cargarTodosLosProductos();
+                    }
+                  }}
+                  autoComplete="off"
+                  placeholder="Buscar por código o nombre..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 input-producto"
+                />
+                
+                {/* Lista de sugerencias */}
+                {mostrarSugerencias && (busquedaProducto || cargandoProductos) && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto sugerencias-productos">
+                    {cargandoProductos ? (
+                      <div className="p-2 text-gray-500">
+                        <div className="flex items-center justify-center">
+                          <svg className="animate-spin h-5 w-5 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Cargando productos...
+                        </div>
+                      </div>
+                    ) : productosFiltrados.length > 0 ? (
+                      productosFiltrados.map((producto) => (
+                        <div
+                          key={producto.codpro}
+                          onClick={() => handleSeleccionarProducto(producto)}
+                          className="p-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          <div className="font-medium">{producto.codpro}</div>
+                          <div className="text-sm text-gray-600">{producto.nombre}</div>
+                          <div className="text-xs text-gray-500">{producto.laboratorio}</div>
+                        </div>
+                      ))
+                    ) : busquedaProducto ? (
+                      <div className="p-2 text-gray-500">No se encontraron productos</div>
+                    ) : todosLosProductos.length === 0 ? (
+                      <div className="p-2 text-gray-500">No hay productos disponibles</div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Desde
+                </label>
+                <input
+                  type="number"
+                  name="desde"
+                  value={formData.desde}
+                  onChange={handleInputChange}
+                  placeholder="Cantidad mínima"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Porcentaje
+                </label>
+                <input
+                  type="number"
+                  name="porcentaje"
+                  value={formData.porcentaje}
+                  onChange={handleInputChange}
+                  placeholder="Porcentaje de descuento"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setShowForm(false);
                     setEditingPromocion(null);
+                    setFormData({ tipificacion: '', codpro: '', desde: '', porcentaje: '' });
+                    setBusquedaProducto('');
+                    setMostrarSugerencias(false);
                   }}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
                 >
                   {editingPromocion ? 'Actualizar' : 'Guardar'}
                 </button>
