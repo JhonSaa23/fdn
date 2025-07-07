@@ -22,7 +22,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   TruckIcon,
-  TableCellsIcon
+  TableCellsIcon,
+  GiftIcon
 } from '@heroicons/react/24/outline';
 
 const menuItems = [
@@ -37,6 +38,7 @@ const menuItems = [
   },
   // { name: 'Exportaciones', path: '/exportaciones', icon: <ArrowDownTrayIcon className="w-6 h-6" /> },
   { name: 'Promociones', path: '/promociones', icon: <TagIcon className="w-6 h-6" /> },
+  { name: 'Bonificaciones', path: '/bonificaciones', icon: <GiftIcon className="w-6 h-6" /> },
   { name: 'Clientes', path: '/clientes', icon: <UserGroupIcon className="w-6 h-6" /> },
   { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-6 h-6" /> },
   { name: 'Kardex Tabla', path: '/kardex-tabla', icon: <TableCellsIcon className="w-6 h-6" /> },

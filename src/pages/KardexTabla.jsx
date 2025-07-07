@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNotification } from '../App';
 import axios from '../services/axiosClient';
-import { getObservacionesDocumento } from '../services/api';
+import { getObservacionesDocumento, ejecutarProcedimientoKardex, getKardexTabla } from '../services/api';
 import ObservacionesModal from '../components/ObservacionesModal';
 import {
   ChevronUpIcon,
@@ -28,6 +28,13 @@ const KardexTabla = () => {
     observaciones: null,
     loading: false
   });
+  const [procedureParams, setProcedureParams] = useState({
+    codigo: '',
+    lote: '',
+    fechaInicio: '',
+    fechaFin: ''
+  });
+  const [executingProcedure, setExecutingProcedure] = useState(false);
   const filterMenuRef = useRef(null);
 
   // Cargar datos
@@ -35,12 +42,12 @@ const KardexTabla = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/kardex/tabla');
-        setData(response.data);
+        const response = await getKardexTabla();
+        setData(response);
         
         // Obtener valores únicos para cada columna
         const values = {};
-        response.data.forEach(row => {
+        response.forEach(row => {
           Object.keys(row).forEach(key => {
             if (!values[key]) values[key] = new Set();
             values[key].add(row[key]?.toString() || '');
@@ -71,6 +78,78 @@ const KardexTabla = () => {
 
     fetchData();
   }, []);
+
+  // Función para refrescar datos después de ejecutar procedimiento
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      const response = await getKardexTabla();
+      setData(response);
+      
+      // Obtener valores únicos para cada columna
+      const values = {};
+      response.forEach(row => {
+        Object.keys(row).forEach(key => {
+          if (!values[key]) values[key] = new Set();
+          values[key].add(row[key]?.toString() || '');
+        });
+      });
+      
+      // Convertir Sets a Arrays ordenados
+      Object.keys(values).forEach(key => {
+        values[key] = Array.from(values[key]).sort();
+      });
+      
+      setUniqueValues(values);
+      
+      // Inicializar todos los valores como seleccionados
+      const selected = {};
+      Object.keys(values).forEach(key => {
+        selected[key] = new Set(values[key]);
+      });
+      setSelectedValues(selected);
+      
+    } catch (error) {
+      console.error('Error al recargar datos:', error);
+      showNotification('Error al recargar los datos del kardex', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para manejar cambios en el formulario
+  const handleParamChange = (field, value) => {
+    setProcedureParams(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Función para ejecutar el procedimiento
+  const handleExecuteProcedure = async () => {
+    if (!procedureParams.codigo || !procedureParams.fechaInicio || !procedureParams.fechaFin) {
+      showNotification('Los campos código, fecha inicio y fecha fin son obligatorios', 'error');
+      return;
+    }
+
+    try {
+      setExecutingProcedure(true);
+      const response = await ejecutarProcedimientoKardex(procedureParams);
+      
+      if (response.success) {
+        showNotification('Procedimiento ejecutado correctamente', 'success');
+        // Recargar los datos de la tabla
+        await refreshData();
+      } else {
+        showNotification(response.error || 'Error al ejecutar procedimiento', 'error');
+      }
+    } catch (error) {
+      console.error('Error al ejecutar procedimiento:', error);
+      showNotification('Error al ejecutar el procedimiento', 'error');
+    } finally {
+      setExecutingProcedure(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -235,6 +314,86 @@ const KardexTabla = () => {
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden relative">
+      {/* Formulario para ejecutar procedimiento sp_kardex */}
+      <div className="p-4 border-b bg-gray-50">
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Ejecutar Procedimiento sp_kardex</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Código <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={procedureParams.codigo}
+              onChange={(e) => handleParamChange('codigo', e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Ej: 12079"
+              disabled={executingProcedure}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Lote
+            </label>
+            <input
+              type="text"
+              value={procedureParams.lote}
+              onChange={(e) => handleParamChange('lote', e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Ej: 2010242 (opcional)"
+              disabled={executingProcedure}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Fecha Inicio <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={procedureParams.fechaInicio}
+              onChange={(e) => handleParamChange('fechaInicio', e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              min="1753-01-01"
+              max="9999-12-31"
+              disabled={executingProcedure}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Fecha Fin <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={procedureParams.fechaFin}
+              onChange={(e) => handleParamChange('fechaFin', e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              min="1753-01-01"
+              max="9999-12-31"
+              disabled={executingProcedure}
+            />
+          </div>
+        </div>
+        <div className="mt-3">
+          <button
+            onClick={handleExecuteProcedure}
+            disabled={executingProcedure}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {executingProcedure ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Ejecutando...
+              </>
+            ) : (
+              'Consultar'
+            )}
+          </button>
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">

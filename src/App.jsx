@@ -19,6 +19,7 @@ import MultiAccion from './pages/MultiAccion';
 import ReportePickingProcter from './pages/ReportePickingProcter';
 import ReporteConcurso from './pages/ReporteConcurso';
 import ReporteNotasLoreal from './pages/ReporteNotasLoreal';
+import Bonificaciones from './pages/Bonificaciones';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
@@ -128,6 +129,7 @@ function App() {
                 <Route path="/consulta-movimientos" element={<ConsultaMovimientos />} />
                 <Route path="/reporte-codpro" element={<ReporteCodPro />} />
                 <Route path="/promociones" element={<Promociones />} />
+                <Route path="/bonificaciones" element={<Bonificaciones />} />
                 <Route path="/clientes" element={<Clientes />} />
                 <Route path="/escalas" element={<Escalas />} />
                 <Route path="/kardex" element={<Kardex />} />

@@ -912,4 +912,28 @@ export const getObservacionesDocumento = async (documento) => {
     console.error('Error al obtener observaciones:', error);
     throw error;
   }
-}; 
+};
+
+// Función para obtener datos de la tabla Kardex
+export const getKardexTabla = async () => {
+  try {
+    const response = await axiosClient.get('/kardex/tabla');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener datos de la tabla kardex:', error);
+    throw error;
+  }
+};
+
+// Función para ejecutar procedimiento sp_kardex
+export const ejecutarProcedimientoKardex = async (params) => {
+  try {
+    const response = await axiosClient.post('/kardex/ejecutar-procedimiento', params, {
+      timeout: 60000 // 1 minuto para la ejecución del procedimiento
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al ejecutar procedimiento kardex:', error);
+    throw error;
+  }
+};
