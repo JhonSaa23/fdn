@@ -147,10 +147,10 @@ function App() {
           {!isSidebarOpen && (
             <button
               onClick={toggleSidebar}
-              className="md:hidden fixed top-2 left-2 bg-slate-600 hover:bg-slate-700 text-white rounded-full p-3 shadow-lg z-50 transition-all duration-200 hover:scale-110"
+              className="md:hidden fixed top-1 left-1 bg-slate-600 hover:bg-slate-700 text-white rounded-full p-2 shadow-lg z-50 transition-all duration-200 hover:scale-110"
               title="Abrir menú"
             >
-              <Bars3Icon className="h-6 w-6" />
+              <Bars3Icon className="h-5 w-5" />
             </button>
           )}
           
