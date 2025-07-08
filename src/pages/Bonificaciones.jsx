@@ -323,6 +323,8 @@ const Bonificaciones = () => {
                       )}
                       <th className="px-2 py-2 text-left text-xs text-gray-600 uppercase tracking-wider">Cant</th>
                       <th className="px-2 py-2 text-left text-xs text-gray-600 uppercase tracking-wider">Stock</th>
+                      <th className="px-2 py-2 text-left text-xs text-gray-600 uppercase tracking-wider">Paq</th>
+                      <th className="px-2 py-2 text-left text-xs text-gray-600 uppercase tracking-wider">Bonos</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -382,6 +384,20 @@ const Bonificaciones = () => {
                               : 'bg-red-100 text-red-800'
                           }`}>
                             {bonificacion.StockBonificacion !== null ? bonificacion.StockBonificacion.toFixed(0) : 'N/A'}
+                          </span>
+                        </td>
+                        <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-700">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {bonificacion.Paquetes || '0'}
+                          </span>
+                        </td>
+                        <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-700">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                            parseInt(bonificacion.BonosAComprar) > 0 
+                              ? 'bg-red-100 text-red-800' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {bonificacion.BonosAComprar || '0'}
                           </span>
                         </td>
                       </tr>

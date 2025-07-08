@@ -503,7 +503,6 @@ const Promociones = () => {
                 variant="info"
                 onClick={() => setShowImportModal(true)}
               >
-                <DocumentArrowUpIcon className="w-5 h-5 mr-2" />
                 Importar
               </Button>
               <Button
@@ -513,13 +512,12 @@ const Promociones = () => {
                 onClick={() => setShowDeleteMassModal(true)}
               >
                 <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
-                Eliminar Masa
+                EliMasa
               </Button>
               <Button
                 onClick={handleAgregarClick}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
-                <PlusIcon className="h-5 w-5 mr-2" />
                 Agregar
               </Button>
             </div>
