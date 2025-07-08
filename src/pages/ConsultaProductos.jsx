@@ -80,6 +80,7 @@ const ConsultaProductos = () => {
                 <div className="flex justify-between">
                     <input
                         type="text"
+                        inputMode="numeric"
                         value={codProducto}
                         onChange={(e) => setCodProducto(e.target.value)}
                         onKeyPress={handleKeyPress}
