@@ -64,6 +64,7 @@ const menuItems = [
       { name: 'Concurso', path: '/reportes/concurso' }
     ]
   },
+  { name: 'Consulta Produc', path: '/consulta-productos', icon: <MagnifyingGlassIcon className="w-6 h-6" /> },
 ];
 
 function Sidebar() {

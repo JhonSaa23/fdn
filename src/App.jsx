@@ -20,6 +20,7 @@ import ReportePickingProcter from './pages/ReportePickingProcter';
 import ReporteConcurso from './pages/ReporteConcurso';
 import ReporteNotasLoreal from './pages/ReporteNotasLoreal';
 import Bonificaciones from './pages/Bonificaciones';
+import ConsultaProductos from './pages/ConsultaProductos';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
@@ -134,6 +135,7 @@ function App() {
                 <Route path="/escalas" element={<Escalas />} />
                 <Route path="/kardex" element={<Kardex />} />
                 <Route path="/kardex-tabla" element={<KardexTabla />} />
+                <Route path="/consulta-productos" element={<ConsultaProductos />} />
                 <Route path="/guias" element={<Guias />} />
                 <Route path="/multi-accion" element={<MultiAccion />} />
                 <Route path="/reportes/picking-procter" element={<ReportePickingProcter />} />
