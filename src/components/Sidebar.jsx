@@ -27,40 +27,29 @@ import {
 } from '@heroicons/react/24/outline';
 
 const menuItems = [
-  // { name: 'Inicio', path: '/', icon: <HomeIcon className="w-6 h-6" /> },
+  { name: 'Dashboard', path: '/', icon: <HomeIcon className="w-5 h-5" /> },
   { 
     name: 'Importar', 
-    icon: <ArrowUpTrayIcon className="w-6 h-6" />,
+    icon: <ArrowUpTrayIcon className="w-5 h-5" />,
     submenu: [
       { name: 'Medifarma', path: '/medifarma' },
       { name: 'BCP', path: '/bcp' }
     ]
   },
-  // { name: 'Exportaciones', path: '/exportaciones', icon: <ArrowDownTrayIcon className="w-6 h-6" /> },
-  { name: 'Promociones', path: '/promociones', icon: <TagIcon className="w-6 h-6" /> },
-  { name: 'Bonificaciones', path: '/bonificaciones', icon: <GiftIcon className="w-6 h-6" /> },
-  { name: 'Clientes', path: '/clientes', icon: <UserGroupIcon className="w-6 h-6" /> },
-  { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-6 h-6" /> },
-  { name: 'Kardex Tabla', path: '/kardex-tabla', icon: <TableCellsIcon className="w-6 h-6" /> },
-  { name: 'Guías', path: '/guias', icon: <TruckIcon className="w-6 h-6" /> },
-  { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-6 h-6" /> },
+  { name: 'Promociones', path: '/promociones', icon: <TagIcon className="w-5 h-5" /> },
+  { name: 'Bonificaciones', path: '/bonificaciones', icon: <GiftIcon className="w-5 h-5" /> },
+  { name: 'Clientes', path: '/clientes', icon: <UserGroupIcon className="w-5 h-5" /> },
+  { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-5 h-5" /> },
+  { name: 'Kardex', path: '/kardex-tabla', icon: <TableCellsIcon className="w-5 h-5" /> },
+  { name: 'Guías', path: '/guias', icon: <TruckIcon className="w-5 h-5" /> },
+  { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-5 h-5" /> },
   { 
     name: 'Reportes', 
-    icon: <DocumentTextIcon className="w-6 h-6" />,
+    icon: <DocumentTextIcon className="w-5 h-5" />,
     submenu: [
-      { name: 'Reporte CodPro', path: '/reporte-codpro' },
-      { 
-        name: 'Procter',
-        submenu: [
-          { name: 'Picking Cobertura General', path: '/reportes/picking-procter' }
-        ]
-      },
-      {
-        name: 'Loreal',
-        submenu: [
-          { name: 'Notas de Crédito', path: '/reportes/loreal-notas' }
-        ]
-      },
+      { name: 'CodPro', path: '/reporte-codpro' },
+      { name: 'Picking Procter', path: '/reportes/picking-procter' },
+      { name: 'Notas Loreal', path: '/reportes/loreal-notas' },
       { name: 'Concurso', path: '/reportes/concurso' }
     ]
   },
