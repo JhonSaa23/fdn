@@ -7,6 +7,7 @@ import {
   XMarkIcon,
   ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
+import axiosClient from '../services/axiosClient';
 
 const Saldos = () => {
   const { showNotification } = useNotification();
@@ -35,8 +36,8 @@ const Saldos = () => {
         }
       });
 
-      const response = await fetch(`/api/saldos?${params.toString()}`);
-      const data = await response.json();
+      const response = await axiosClient.get(`/saldos?${params.toString()}`);
+      const data = response.data;
       
       if (data.success) {
         setSaldos(data.data);
@@ -53,8 +54,8 @@ const Saldos = () => {
 
   const cargarCodigosDisponibles = async () => {
     try {
-      const response = await fetch('/api/saldos/codigos-disponibles');
-      const data = await response.json();
+      const response = await axiosClient.get('/saldos/codigos-disponibles');
+      const data = response.data;
       
       if (data.success) {
         setCodigosDisponibles(data.data);
@@ -79,9 +80,10 @@ const Saldos = () => {
         }
       });
 
-      const response = await fetch(`/api/saldos/export?${params.toString()}`);
-      if (!response.ok) throw new Error('Error al exportar los saldos');
-      const blob = await response.blob();
+      const response = await axiosClient.get(`/saldos/export?${params.toString()}`, {
+        responseType: 'blob'
+      });
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

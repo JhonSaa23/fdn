@@ -10,6 +10,7 @@ import {
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import Modal from '../components/Modal';
+import axiosClient from '../services/axiosClient';
 
 const Pedidos = () => {
   const { showNotification } = useNotification();
@@ -38,8 +39,8 @@ const Pedidos = () => {
   const cargarPedidosDefault = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/pedidos/default');
-      const data = await response.json();
+      const response = await axiosClient.get('/pedidos/default');
+      const data = response.data;
 
       if (data.success) {
         setPedidos(data.data);
@@ -64,8 +65,8 @@ const Pedidos = () => {
 
   const cargarEstados = async () => {
     try {
-      const response = await fetch('/api/pedidos/utils/estados');
-      const data = await response.json();
+      const response = await axiosClient.get('/pedidos/utils/estados');
+      const data = response.data;
 
       if (data.success) {
         setEstadosDisponibles(data.data);
@@ -87,8 +88,8 @@ const Pedidos = () => {
         }
       });
 
-      const response = await fetch(`/api/pedidos?${params.toString()}`);
-      const data = await response.json();
+      const response = await axiosClient.get(`/pedidos?${params.toString()}`);
+      const data = response.data;
 
       if (data.success) {
         setPedidos(data.data);
@@ -106,8 +107,8 @@ const Pedidos = () => {
 
   const verDetallePedido = async (numero) => {
     try {
-      const response = await fetch(`/api/pedidos/${numero}`);
-      const data = await response.json();
+      const response = await axiosClient.get(`/pedidos/${numero}`);
+      const data = response.data;
 
       if (data.success) {
         setPedidoSeleccionado(data.data);
@@ -125,14 +126,9 @@ const Pedidos = () => {
     try {
       setAutorizandoPedido(numero);
 
-      const response = await fetch(`/api/pedidos/autorizar/${numero}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axiosClient.post(`/pedidos/autorizar/${numero}`);
 
-      const data = await response.json();
+      const data = response.data;
 
       if (data.success) {
         showNotification('success', data.message);
