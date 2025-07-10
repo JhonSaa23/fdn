@@ -20,6 +20,8 @@ import ReportePickingProcter from './pages/ReportePickingProcter';
 import ReporteConcurso from './pages/ReporteConcurso';
 import ReporteNotasLoreal from './pages/ReporteNotasLoreal';
 import Bonificaciones from './pages/Bonificaciones';
+import Pedidos from './pages/Pedidos';
+import Saldos from './pages/Saldos';
 import ConsultaProductos from './pages/ConsultaProductos';
 
 // Crear contexto para manejar el estado del sidebar
@@ -131,6 +133,8 @@ function App() {
                 <Route path="/reporte-codpro" element={<ReporteCodPro />} />
                 <Route path="/promociones" element={<Promociones />} />
                 <Route path="/bonificaciones" element={<Bonificaciones />} />
+                <Route path="/pedidos" element={<Pedidos />} />
+                <Route path="/saldos" element={<Saldos />} />
                 <Route path="/clientes" element={<Clientes />} />
                 <Route path="/escalas" element={<Escalas />} />
                 <Route path="/kardex" element={<Kardex />} />
