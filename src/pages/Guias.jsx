@@ -584,7 +584,7 @@ const Guias = () => {
   const columnasGuia = [
     { key: 'Numero', label: 'Número' },
     { key: 'Docventa', label: 'Doc Venta' },
-    { key: 'TipoDoc', label: 'Tipo Doc' },
+    { key: 'TipoDoc', label: 'Tipo' },
     { key: 'Fecha', label: 'Fecha' },
     { key: 'Empresa', label: 'Empresa' },
     { key: 'Ruc', label: 'RUC' },
@@ -621,154 +621,134 @@ const Guias = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <DocumentIcon className="h-8 w-8 text-blue-600 mr-3" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Gestión de Guías</h1>
-              <p className="text-gray-600">Administra guías de transporte y facturas (del más reciente al más antiguo)</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">Total de registros</p>
-            <p className="text-2xl font-bold text-blue-600">{totalGuias}</p>
-            <p className="text-xs text-gray-400">
-              Mostrando {guias.length} de {totalGuias}
-              {allGuias.length > guias.length && (
-                <span className="text-blue-600"> (ventana: páginas {visibleStartPage}-{visibleEndPage})</span>
-              )}
-              {hasMore && ' (cargando más al hacer scroll)'}
-            </p>
-          </div>
-        </div>
-
-        {/* Botones de acción */}
-        <div className="flex flex-wrap gap-3">
-          <Button
-            onClick={() => abrirModal('individual')}
-            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center"
-          >
-            <PencilIcon className="h-4 w-4 mr-2" />
-            Editar Individual
-          </Button>
-          
-          <Button
-            onClick={() => abrirModal('rango')}
-            className="bg-green-600 hover:bg-green-700 text-white flex items-center"
-          >
-            <ClockIcon className="h-4 w-4 mr-2" />
-            Editar por Rango
-          </Button>
-          
-          <Button
-            onClick={() => abrirModal('seleccion')}
-            disabled={selectedGuias.length === 0}
-            className="bg-purple-600 hover:bg-purple-700 text-white flex items-center disabled:opacity-50"
-          >
-            <CalendarIcon className="h-4 w-4 mr-2" />
-            Editar Selección ({selectedGuias.length})
-          </Button>
-
-          <Button
-            onClick={() => cargarGuias(true)}
-            variant="secondary"
-            loading={loading}
-          >
-            Actualizar
-          </Button>
-        </div>
-      </div>
-
-      {/* Filtros */}
+      {/* Header y Filtros Fusionados */}
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="p-4">
+          {/* Header con título y botones de acción */}
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Filtros de Búsqueda</h3>
-            <Button
-              onClick={() => setFiltersExpanded(!filtersExpanded)}
-              variant="outline"
-              size="sm"
-              className="md:hidden"
-            >
-              {filtersExpanded ? 'Ocultar' : 'Mostrar'} Filtros
-            </Button>
+            <div className="flex items-center">
+              <DocumentIcon className="h-8 w-8 text-blue-600 mr-3" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Gestión de Guías</h1>
+              </div>
+            </div>
+            
+            {/* Botones de acción */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => abrirModal('individual')}
+                className="text-xs bg-blue-600 hover:bg-blue-700 text-white flex items-center"
+              >
+                <PencilIcon className="h-3 w-3 mr-2" />
+                Editar
+              </Button>
+              
+              <Button
+                onClick={() => abrirModal('rango')}
+                className="text-xs bg-green-600 hover:bg-green-700 text-white flex items-center"
+              >
+                <ClockIcon className="h-3 w-3 mr-2" />
+                Rango          
+              </Button>
+              
+              <Button
+                onClick={() => abrirModal('seleccion')}
+                disabled={selectedGuias.length === 0}
+                className="text-xs bg-purple-600 hover:bg-purple-700 text-white flex items-center disabled:opacity-50"
+              >
+                <CalendarIcon className="h-3 w-3 mr-2" />
+                Selección ({selectedGuias.length})
+              </Button>
+
+              <Button
+                onClick={() => cargarGuias(true)}
+                variant="secondary"
+                loading={loading}
+                className="text-xs bg-gray-600 hover:bg-gray-700 text-white flex items-center"
+              >
+                Actualizar
+              </Button>
+            </div>
           </div>
 
-          <div className={`space-y-4 ${filtersExpanded ? 'block' : 'hidden md:block'}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Documento
-                </label>
-                <select
-                  name="tipo"
-                  value={filtros.tipo}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          {/* Filtros */}
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Filtros de Búsqueda</h3>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleConsultar}
+                  loading={loading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
                 >
-                  <option value="">Todos</option>
-                  <option value="GUIA">Guías</option>
-                  <option value="FACTURA">Facturas</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Número
-                </label>
-                <input
-                  type="text"
-                  name="numero"
-                  value={filtros.numero}
-                  onChange={handleFilterChange}
-                  placeholder="Ej: T001-025424"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha Desde
-                </label>
-                <input
-                  type="date"
-                  name="fechaDesde"
-                  value={filtros.fechaDesde}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha Hasta
-                </label>
-                <input
-                  type="date"
-                  name="fechaHasta"
-                  value={filtros.fechaHasta}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                />
+                  Buscar
+                </Button>
+                <Button
+                  onClick={handleLimpiarFiltros}
+                  variant="outline"
+                  className="text-xs"
+                >
+                  Limpiar Filtros
+                </Button>
+                <Button
+                  onClick={() => setFiltersExpanded(!filtersExpanded)}
+                  variant="outline"
+                  size="sm"
+                  className="md:hidden text-xs"
+                >
+                  {filtersExpanded ? 'Ocultar' : 'Mostrar'} Filtros
+                </Button>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 pt-4">
-              <Button
-                onClick={handleConsultar}
-                loading={loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Buscar
-              </Button>
-              <Button
-                onClick={handleLimpiarFiltros}
-                variant="outline"
-              >
-                Limpiar Filtros
-              </Button>
+            <div className={`space-y-4 ${filtersExpanded ? 'block' : 'hidden md:block'}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <select
+                    name="tipo"
+                    value={filtros.tipo}
+                    onChange={handleFilterChange}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="">Tipo de Documento</option>
+                    <option value="GUIA">Guías</option>
+                    <option value="FACTURA">Facturas</option>
+                  </select>
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    name="numero"
+                    value={filtros.numero}
+                    onChange={handleFilterChange}
+                    placeholder="Número (Ej: T001-025424)"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="date"
+                    name="fechaDesde"
+                    value={filtros.fechaDesde}
+                    onChange={handleFilterChange}
+                    placeholder="Fecha Desde"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="date"
+                    name="fechaHasta"
+                    value={filtros.fechaHasta}
+                    onChange={handleFilterChange}
+                    placeholder="Fecha Hasta"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -776,27 +756,34 @@ const Guias = () => {
 
       {/* Tabla de guías */}
       <div className="bg-white rounded-lg shadow-sm border">
-        <div className="p-4 border-b">
+        <div className="p-2 border-b">
           <div className="flex items-center justify-between">
-            {selectedGuias.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">
-                  {selectedGuias.length} seleccionados
-                </span>
-                <Button
-                  onClick={() => setSelectedGuias([])}
-                  variant="outline"
-                  size="sm"
-                >
-                  Limpiar selección
-                </Button>
+            <div className="flex items-center space-x-4 justify-between w-full">
+              {selectedGuias.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-600">
+                    {selectedGuias.length} seleccionados
+                  </span>
+                  <Button
+                    onClick={() => setSelectedGuias([])}
+                    variant="outline"
+                    size="xs"
+                    className="text-xs"
+                  >
+                    Limpiar selección
+                  </Button>
+                </div>
+              )}
+              <div className="text-right flex items-center gap-2">
+                <p className="text-xs text-gray-500">Total de registros</p>
+                <p className="text-xs font-bold text-blue-600">{totalGuias}</p>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
         {filtros.tipo && (filtros.tipo === 'GUIA' || filtros.tipo === 'FACTURA') && guias.length > 0 && (
-          <div ref={tableContainerRef} className="overflow-x-auto max-h-[calc(100vh-400px)]">
+          <div ref={tableContainerRef} className="overflow-x-auto max-h-[calc(100vh-280px)]">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
