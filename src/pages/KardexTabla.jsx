@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNotification } from '../App';
 import axios from '../services/axiosClient';
-import { getObservacionesDocumento, ejecutarProcedimientoKardex, getKardexTabla } from '../services/api';
+import { getObservacionesDocumento, ejecutarProcedimientoKardex, getKardexTabla, obtenerDetalleDocumentoConHeaders } from '../services/api';
 import ObservacionesModal from '../components/ObservacionesModal';
+import DocumentoDetalleModal from '../components/DocumentoDetalleModal';
 import {
   ChevronUpIcon,
   ChevronDownIcon,
@@ -10,6 +11,7 @@ import {
   XMarkIcon,
   MagnifyingGlassIcon,
   EyeIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 
 const KardexTabla = () => {
@@ -26,6 +28,12 @@ const KardexTabla = () => {
     isOpen: false,
     documento: '',
     observaciones: null,
+    loading: false
+  });
+  const [documentoModal, setDocumentoModal] = useState({
+    isOpen: false,
+    documento: '',
+    data: null,
     loading: false
   });
   const [procedureParams, setProcedureParams] = useState({
@@ -304,6 +312,42 @@ const KardexTabla = () => {
     });
   };
 
+  // Función para ver detalles del documento
+  const handleVerDetallesDocumento = async (documento) => {
+    setDocumentoModal({
+      isOpen: true,
+      documento: documento,
+      data: null,
+      loading: true
+    });
+
+    try {
+      const response = await obtenerDetalleDocumentoConHeaders(documento);
+      setDocumentoModal(prev => ({
+        ...prev,
+        data: response,
+        loading: false
+      }));
+    } catch (error) {
+      console.error('Error al obtener detalles del documento:', error);
+      showNotification('Error al obtener detalles del documento', 'error');
+      setDocumentoModal(prev => ({
+        ...prev,
+        loading: false
+      }));
+    }
+  };
+
+  // Función para cerrar modal de documento
+  const handleCloseDocumento = () => {
+    setDocumentoModal({
+      isOpen: false,
+      documento: '',
+      data: null,
+      loading: false
+    });
+  };
+
   // Función para formatear fechas
   const formatDateTime = (dateString) => {
     if (!dateString) return '';
@@ -409,7 +453,7 @@ const KardexTabla = () => {
               <tr>
                 {/* Columna de observaciones */}
                 <th className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                  Obs
+                  Acciones
                 </th>
                 {Object.keys(data[0] || {}).map((columnName) => (
                   <th
@@ -543,15 +587,24 @@ const KardexTabla = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredData.map((row, rowIndex) => (
                 <tr key={rowIndex} className="hover:bg-gray-50">
-                  {/* Botón de observaciones */}
+                  {/* Botones de acciones */}
                   <td className="px-2 py-1 whitespace-nowrap">
-                    <button
-                      onClick={() => handleVerObservaciones(row.Documento)}
-                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition-colors"
-                      title="Ver observaciones"
-                    >
-                      <EyeIcon className="h-4 w-4" />
-                    </button>
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => handleVerObservaciones(row.Documento)}
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition-colors"
+                        title="Ver observaciones"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleVerDetallesDocumento(row.Documento)}
+                        className="text-green-600 hover:text-green-800 hover:bg-green-50 p-1 rounded transition-colors"
+                        title="Ver detalles del documento"
+                      >
+                        <PencilSquareIcon className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                   {Object.keys(row).map((key) => (
                     <td key={key} className="px-2 py-1 whitespace-nowrap text-[15px] text-gray-500">
@@ -587,6 +640,14 @@ const KardexTabla = () => {
         onClose={handleCloseObservaciones}
         observaciones={observacionesModal.observaciones}
         documento={observacionesModal.documento}
+      />
+
+      {/* Modal de detalles del documento */}
+      <DocumentoDetalleModal
+        isOpen={documentoModal.isOpen}
+        onClose={handleCloseDocumento}
+        documentData={documentoModal.data}
+        loading={documentoModal.loading}
       />
     </div>
   );

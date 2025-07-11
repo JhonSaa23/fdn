@@ -937,3 +937,25 @@ export const ejecutarProcedimientoKardex = async (params) => {
     throw error;
   }
 };
+
+// Función para obtener detalles de documento desde kardex
+export const obtenerDetalleDocumento = async (numero) => {
+  try {
+    const response = await axiosClient.get(`/kardex/documento/${numero}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener detalles del documento:', error);
+    throw error;
+  }
+};
+
+// Función para obtener detalles de documento con headers desde kardex
+export const obtenerDetalleDocumentoConHeaders = async (numero) => {
+  try {
+    const response = await axiosClient.get(`/kardex/documento-headers/${numero}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener detalle de documento con headers:', error);
+    throw error;
+  }
+};

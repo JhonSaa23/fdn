@@ -783,7 +783,7 @@ const Guias = () => {
         </div>
 
         {filtros.tipo && (filtros.tipo === 'GUIA' || filtros.tipo === 'FACTURA') && guias.length > 0 && (
-          <div ref={tableContainerRef} className="overflow-x-auto max-h-[calc(100vh-280px)]">
+          <div ref={tableContainerRef} className="overflow-x-auto max-h-[calc(100vh-28  0px)]">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>

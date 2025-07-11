@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNotification } from '../App';
-import { consultarKardex } from '../services/api';
+import { consultarKardex, obtenerDetalleDocumento } from '../services/api';
 import Button from '../components/Button';
 import ResponsiveTableContainer from '../components/ResponsiveTableContainer';
 import KardexDetailDrawer from '../components/KardexDetailDrawer';
 import KardexDetailModal from '../components/KardexDetailModal';
+import DocumentDetailModal from '../components/DocumentDetailModal';
 
 const Kardex = () => {
   const { showNotification } = useNotification();
@@ -15,6 +16,11 @@ const Kardex = () => {
   const [selectedMovimiento, setSelectedMovimiento] = useState(null);
   const [showDetailDrawer, setShowDetailDrawer] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  
+  // Estados para el modal de documento
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [documentData, setDocumentData] = useState(null);
+  const [documentLoading, setDocumentLoading] = useState(false);
   
   // Estado para controlar los filtros colapsables
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -36,6 +42,44 @@ const Kardex = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Función para manejar click en documento
+  const handleDocumentClick = async (documento) => {
+    if (!documento || documento.trim() === '') {
+      showNotification('Documento vacío', 'warning');
+      return;
+    }
+
+    try {
+      setDocumentLoading(true);
+      setShowDocumentModal(true);
+      setDocumentData(null); // Limpiar datos anteriores
+      
+      const data = await obtenerDetalleDocumento(documento.trim());
+      setDocumentData(data);
+      
+      if (!data.success) {
+        showNotification(data.message || 'No se encontraron detalles para este documento', 'info');
+      }
+    } catch (error) {
+      console.error('Error al obtener detalles del documento:', error);
+      showNotification('Error al obtener detalles del documento', 'error');
+      setDocumentData({ 
+        success: false, 
+        message: 'Error al cargar los detalles del documento',
+        documento: documento.trim()
+      });
+    } finally {
+      setDocumentLoading(false);
+    }
+  };
+
+  // Función para cerrar el modal de documento
+  const handleCloseDocumentModal = () => {
+    setShowDocumentModal(false);
+    setDocumentData(null);
+    setDocumentLoading(false);
   };
 
   // Función para ordenar movimientos por documento (del más antiguo al más reciente)
@@ -65,7 +109,7 @@ const Kardex = () => {
       if (error.response) {
         mensaje = error.response.data?.error || mensaje;
       }
-      showNotification('error', mensaje);
+      showNotification(mensaje, 'error');
       setMovimientos([]);
     } finally {
       setLoading(false);
@@ -193,7 +237,22 @@ const Kardex = () => {
     // GRUPO 5: Identificación del Producto
     { key: 'CodPro', title: 'Producto' },
     { key: 'Fecha', title: 'Fecha', formatter: (value) => formatFecha(value) },
-    { key: 'Documento', title: 'Documento' },
+    { 
+      key: 'Documento', 
+      title: 'Documento',
+      formatter: (value, row) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Evitar que se active el click de la fila
+            handleDocumentClick(value);
+          }}
+          className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
+          title="Ver detalles del documento"
+        >
+          {value || 'Sin documento'}
+        </button>
+      )
+    },
 
     // GRUPO 6: Detalles del Producto
     { key: 'Lote', title: 'Lote' },
@@ -207,8 +266,23 @@ const Kardex = () => {
 
   // Definir columnas para desktop en el orden de la base de datos
   const desktopColumns = [
-    // 1. Documento
-    { key: 'Documento', title: 'Documento' },
+    // 1. Documento - Hacer clickeable
+    { 
+      key: 'Documento', 
+      title: 'Documento',
+      formatter: (value, row) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Evitar que se active el click de la fila
+            handleDocumentClick(value);
+          }}
+          className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
+          title="Ver detalles del documento"
+        >
+          {value || 'Sin documento'}
+        </button>
+      )
+    },
     
     // 2. Fecha
     { key: 'Fecha', title: 'Fecha', formatter: (value) => formatFecha(value) },
@@ -432,6 +506,14 @@ const Kardex = () => {
         isOpen={showDetailModal}
         onClose={handleCloseModal}
         movimiento={selectedMovimiento}
+      />
+
+      {/* Modal para detalles de documento */}
+      <DocumentDetailModal
+        isOpen={showDocumentModal}
+        onClose={handleCloseDocumentModal}
+        documentData={documentData}
+        loading={documentLoading}
       />
     </>
   );
