@@ -42,7 +42,7 @@ const DocumentoDetalleModal = ({ isOpen, onClose, documentData, loading }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl w-full h-full overflow-hidden">
         {/* Header del Modal */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-blue-50">
           <div className="flex items-center space-x-3">
@@ -70,7 +70,7 @@ const DocumentoDetalleModal = ({ isOpen, onClose, documentData, loading }) => {
         </div>
 
         {/* Contenido del Modal */}
-        <div className="p-6 overflow-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
+        <div className=" overflow-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
