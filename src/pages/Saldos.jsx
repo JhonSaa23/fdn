@@ -66,14 +66,14 @@ const Saldos = () => {
       return isNaN(valor) ? 0 : valor;
     }
     
-    // Si hay un conteo guardado, usarlo
+    // Si hay un conteo guardado en el estado local, usarlo
     const conteoActual = conteosFisicos[clave];
     if (conteoActual && conteoActual.Fisico !== undefined) {
       const valor = parseFloat(conteoActual.Fisico);
       return isNaN(valor) ? 0 : valor;
     }
     
-    // Si hay un valor en el saldo, usarlo
+    // Si hay un valor en el saldo (que viene del backend), usarlo
     if (saldo.fisico !== null && saldo.fisico !== undefined) {
       const valor = parseFloat(saldo.fisico);
       return isNaN(valor) ? 0 : valor;
@@ -156,42 +156,44 @@ const Saldos = () => {
   // Agregar información de conteos físicos a los saldos
   const agregarConteosFisicos = async (saldosData) => {
     try {
-      // Obtener todos los conteos físicos para los productos en esta consulta
-      const codpros = [...new Set(saldosData.map(s => s.codpro))];
-      const conteosPromises = codpros.map(codpro => 
-        axiosClient.get(`/conteos/obtener-por-producto/${codpro}`)
-      );
-      
-      const conteosResponses = await Promise.all(conteosPromises);
+      // Los datos ya vienen con los conteos físicos desde el backend
+      // Solo necesitamos mapear los datos y actualizar el estado de conteos
       const todosLosConteos = {};
       
-      conteosResponses.forEach(response => {
-        if (response.data.success) {
-          response.data.data.forEach(conteo => {
-            const clave = `${conteo.CodPro}-${conteo.Almacen}-${conteo.Lote || 'sin-lote'}-${conteo.Vencimiento || 'sin-vencimiento'}`;
-            todosLosConteos[clave] = conteo;
-          });
+      const saldosConConteos = saldosData.map(saldo => {
+        const clave = generarClaveSaldo(saldo);
+        
+        // Si hay datos de conteo físico, crear el objeto de conteo
+        if (saldo.Fisico !== null && saldo.Fisico !== undefined) {
+          const conteoData = {
+            CodPro: saldo.codpro,
+            Almacen: saldo.almacen,
+            Lote: saldo.lote,
+            Vencimiento: saldo.vencimiento,
+            Fisico: saldo.Fisico,
+            SaldoSistema: saldo.saldo,
+            Diferencia: saldo.Diferencia,
+            TipoDiferencia: saldo.TipoDiferencia
+          };
+          
+          todosLosConteos[clave] = conteoData;
         }
+        
+        return {
+          ...saldo,
+          fisico: saldo.Fisico,
+          diferencia: saldo.Diferencia,
+          tipoDiferencia: saldo.TipoDiferencia,
+          tieneConteo: saldo.Fisico !== null && saldo.Fisico !== undefined
+        };
       });
       
       // Actualizar estado de conteos físicos
       setConteosFisicos(prev => ({ ...prev, ...todosLosConteos }));
       
-      // Agregar información de conteos a cada saldo
-      return saldosData.map(saldo => {
-        const clave = generarClaveSaldo(saldo);
-        const conteo = todosLosConteos[clave];
-        
-        return {
-          ...saldo,
-          fisico: conteo ? conteo.Fisico : null,
-          diferencia: conteo ? conteo.Diferencia : null,
-          tipoDiferencia: conteo ? conteo.TipoDiferencia : null,
-          tieneConteo: !!conteo
-        };
-      });
+      return saldosConConteos;
     } catch (error) {
-      console.error('Error al cargar conteos físicos:', error);
+      console.error('Error al procesar conteos físicos:', error);
       return saldosData.map(saldo => ({
         ...saldo,
         fisico: null,

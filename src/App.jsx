@@ -70,9 +70,11 @@ function App() {
   // Función para mostrar notificaciones
   const showNotification = (type, text) => {
     setNotification({ show: true, type, text });
-    
-    // Se elimina el auto-ocultar después de 5 segundos
-    // para que las notificaciones permanezcan hasta que el usuario las cierre
+
+    // Auto-ocultar después de 3 segundos
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, show: false }));
+    }, 3000);
   };
 
   const hideNotification = () => {
