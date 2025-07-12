@@ -970,3 +970,74 @@ export const obtenerClienteDocumento = async (numero) => {
     throw error;
   }
 };
+
+// ===== CONTEOS FÍSICOS =====
+
+// Guardar o actualizar conteo físico
+export const guardarConteoFisico = async (data) => {
+  try {
+    const response = await axiosClient.post('/conteos/guardar', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error al guardar conteo físico:', error);
+    throw error;
+  }
+};
+
+// Obtener conteos físicos por filtros
+export const obtenerConteosFisicos = async (filtros = {}) => {
+  try {
+    const params = new URLSearchParams();
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        params.append(key, value);
+      }
+    });
+    
+    const response = await axiosClient.get(`/conteos/obtener?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener conteos físicos:', error);
+    throw error;
+  }
+};
+
+// Obtener conteos de un producto específico
+export const obtenerConteosPorProducto = async (codpro) => {
+  try {
+    const response = await axiosClient.get(`/conteos/obtener-por-producto/${codpro}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener conteos por producto:', error);
+    throw error;
+  }
+};
+
+// Eliminar conteo físico
+export const eliminarConteoFisico = async (data) => {
+  try {
+    const response = await axiosClient.delete('/conteos/eliminar', { data });
+    return response.data;
+  } catch (error) {
+    console.error('Error al eliminar conteo físico:', error);
+    throw error;
+  }
+};
+
+// Generar reporte de conteos físicos
+export const generarReporteConteos = async (filtros = {}) => {
+  try {
+    const params = new URLSearchParams();
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        params.append(key, value);
+      }
+    });
+    
+    const response = await axiosClient.get(`/conteos/reporte?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al generar reporte de conteos:', error);
+    throw error;
+  }
+};
