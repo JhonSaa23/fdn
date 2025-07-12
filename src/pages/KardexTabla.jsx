@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNotification } from '../App';
 import axios from '../services/axiosClient';
-import { getObservacionesDocumento, ejecutarProcedimientoKardex, getKardexTabla, obtenerDetalleDocumentoConHeaders } from '../services/api';
+import { getObservacionesDocumento, ejecutarProcedimientoKardex, getKardexTabla, obtenerDetalleDocumentoConHeaders, obtenerTodosLosProductos } from '../services/api';
 import ObservacionesModal from '../components/ObservacionesModal';
 import DocumentoDetalleModal from '../components/DocumentoDetalleModal';
 import {
@@ -44,6 +44,13 @@ const KardexTabla = () => {
   });
   const [executingProcedure, setExecutingProcedure] = useState(false);
   const filterMenuRef = useRef(null);
+
+  // Estados para autocompletado de productos
+  const [busquedaProducto, setBusquedaProducto] = useState('');
+  const [todosLosProductos, setTodosLosProductos] = useState([]);
+  const [productosFiltrados, setProductosFiltrados] = useState([]);
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+  const [cargandoProductos, setCargandoProductos] = useState(false);
 
   // Cargar datos
   useEffect(() => {
@@ -133,6 +140,95 @@ const KardexTabla = () => {
     }));
   };
 
+  // Función para cargar todos los productos
+  const cargarTodosLosProductos = async () => {
+    try {
+      setCargandoProductos(true);
+      const productos = await obtenerTodosLosProductos();
+      setTodosLosProductos(productos);
+      
+      if (productos.length === 0) {
+        showNotification('No se encontraron productos en la base de datos', 'warning');
+      }
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      let mensaje = 'Error al cargar la lista de productos';
+      
+      if (error.response?.data) {
+        const { type, details } = error.response.data;
+        if (type === 'CONNECTION_ERROR') {
+          mensaje = 'Error de conexión con la base de datos. Por favor, intente nuevamente.';
+        } else {
+          mensaje = `Error al cargar productos: ${details}`;
+        }
+      }
+      
+      showNotification(mensaje, 'error');
+      setTodosLosProductos([]);
+    } finally {
+      setCargandoProductos(false);
+    }
+  };
+
+  // Función para filtrar productos localmente
+  const filtrarProductos = (busqueda) => {
+    if (!busqueda) {
+      setProductosFiltrados([]);
+      return;
+    }
+
+    const busquedaLower = busqueda.toLowerCase();
+    const resultados = todosLosProductos.filter(producto => 
+      producto.codpro.toLowerCase().includes(busquedaLower) ||
+      producto.nombre.toLowerCase().includes(busquedaLower)
+    ).slice(0, 50); // Limitamos a 50 resultados
+
+    setProductosFiltrados(resultados);
+  };
+
+  // Función para seleccionar un producto
+  const handleSeleccionarProducto = (producto) => {
+    setProcedureParams(prev => ({
+      ...prev,
+      codigo: producto.codpro
+    }));
+    setBusquedaProducto('');
+    setMostrarSugerencias(false);
+  };
+
+  // Función para manejar cambios en el input de código
+  const handleCodigoChange = (value) => {
+    setProcedureParams(prev => ({
+      ...prev,
+      codigo: value
+    }));
+    
+    setBusquedaProducto(value);
+    
+    if (value.length > 0) {
+      setMostrarSugerencias(true);
+      // Cargar productos si no están cargados
+      if (todosLosProductos.length === 0 && !cargandoProductos) {
+        cargarTodosLosProductos();
+      }
+    } else {
+      setMostrarSugerencias(false);
+    }
+  };
+
+  // Función para manejar tecla Enter
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Si hay sugerencias visibles y hay al menos una, seleccionar la primera
+      if (mostrarSugerencias && productosFiltrados.length > 0) {
+        handleSeleccionarProducto(productosFiltrados[0]);
+      } else {
+        handleExecuteProcedure();
+      }
+    }
+  };
+
   // Función para ejecutar el procedimiento
   const handleExecuteProcedure = async () => {
     if (!procedureParams.codigo || !procedureParams.fechaInicio || !procedureParams.fechaFin) {
@@ -171,6 +267,28 @@ const KardexTabla = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, []);
+
+  // Efecto para filtrar productos cuando cambia la búsqueda
+  useEffect(() => {
+    filtrarProductos(busquedaProducto);
+  }, [busquedaProducto, todosLosProductos]);
+
+  // Efecto para cerrar las sugerencias al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const sugerenciasElement = document.querySelector('.sugerencias-productos-kardex');
+      const inputElement = document.querySelector('.input-producto-kardex');
+      
+      if (sugerenciasElement && inputElement) {
+        if (!sugerenciasElement.contains(event.target) && !inputElement.contains(event.target)) {
+          setMostrarSugerencias(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Ordenar datos
@@ -399,15 +517,48 @@ const KardexTabla = () => {
           </button>
         </div>
         <div className="grid grid-cols-4 md:grid-cols-4 gap-1">
-          <div>
+          <div className="relative">
             <input
               type="text"
               value={procedureParams.codigo}
-              onChange={(e) => handleParamChange('codigo', e.target.value)}
-              className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Código *"
+              onChange={(e) => handleCodigoChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 input-producto-kardex"
+              placeholder="Código * - Escriba para buscar"
               disabled={executingProcedure}
             />
+            
+            {/* Lista de sugerencias */}
+            {mostrarSugerencias && (busquedaProducto || cargandoProductos) && !executingProcedure && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto sugerencias-productos-kardex">
+                {cargandoProductos ? (
+                  <div className="p-2 text-gray-500">
+                    <div className="flex items-center justify-center">
+                      <svg className="animate-spin h-5 w-5 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Cargando productos...
+                    </div>
+                  </div>
+                ) : productosFiltrados.length > 0 ? (
+                  productosFiltrados.map((producto) => (
+                    <div
+                      key={producto.codpro}
+                      onClick={() => handleSeleccionarProducto(producto)}
+                      className="p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-medium text-blue-600">{producto.codpro}</div>
+                      <div className="text-sm text-gray-600">{producto.nombre}</div>
+                    </div>
+                  ))
+                ) : busquedaProducto ? (
+                  <div className="p-2 text-gray-500">No se encontraron productos</div>
+                ) : todosLosProductos.length === 0 ? (
+                  <div className="p-2 text-gray-500">No hay productos disponibles</div>
+                ) : null}
+              </div>
+            )}
           </div>
           <div>
             <input

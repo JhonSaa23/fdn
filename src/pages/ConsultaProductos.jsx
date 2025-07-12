@@ -85,17 +85,18 @@ const ConsultaProductos = () => {
     }, []);
 
     const handleSeleccionarProducto = (producto) => {
-        // Si ya hay códigos en el input, agregar el nuevo separado por coma
-        const codigosExistentes = codProducto.trim();
-        let nuevoCodigo;
+        // Obtener el input actual
+        const inputActual = codProducto.trim();
         
-        if (codigosExistentes) {
-            // Si hay códigos existentes, agregar coma y el nuevo código
-            nuevoCodigo = codigosExistentes + ',' + producto.codpro;
-        } else {
-            // Si no hay códigos, solo poner el nuevo
-            nuevoCodigo = producto.codpro;
-        }
+        // Dividir por comas para obtener los códigos existentes
+        const codigosArray = inputActual.split(',').map(codigo => codigo.trim());
+        
+        // Quitar el último elemento (que es la búsqueda actual) y agregar el nuevo código
+        codigosArray.pop();
+        codigosArray.push(producto.codpro);
+        
+        // Crear el nuevo valor con coma al final para seguir escribiendo
+        const nuevoCodigo = codigosArray.join(',') + ',';
         
         setCodProducto(nuevoCodigo);
         setBusquedaProducto(''); // Limpiar búsqueda
@@ -145,6 +146,7 @@ const ConsultaProductos = () => {
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
+            e.preventDefault();
             // Si hay sugerencias visibles y hay al menos una, seleccionar la primera
             if (mostrarSugerencias && productosFiltrados.length > 0) {
                 handleSeleccionarProducto(productosFiltrados[0]);
@@ -200,7 +202,7 @@ const ConsultaProductos = () => {
                         type="text"
                         value={codProducto}
                         onChange={handleInputChange}
-                        onKeyPress={handleKeyPress}
+                        onKeyDown={handleKeyPress}
                         className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 input-producto"
                         placeholder="Códigos de productos separados por comas (ej: 001,002,003) - Escriba para buscar"
                     />

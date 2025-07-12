@@ -959,3 +959,14 @@ export const obtenerDetalleDocumentoConHeaders = async (numero) => {
     throw error;
   }
 };
+
+// Función para obtener información del cliente por número de documento
+export const obtenerClienteDocumento = async (numero) => {
+  try {
+    const response = await axiosClient.get(`/kardex/cliente-documento/${numero}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener información del cliente:', error);
+    throw error;
+  }
+};

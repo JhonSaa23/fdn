@@ -1,7 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { XMarkIcon, DocumentTextIcon, TableCellsIcon } from '@heroicons/react/24/outline';
+import { obtenerClienteDocumento } from '../services/api';
 
 const DocumentoDetalleModal = ({ isOpen, onClose, documentData, loading }) => {
+  const [clienteData, setClienteData] = useState(null);
+  const [loadingCliente, setLoadingCliente] = useState(false);
+
+  // Cargar información del cliente cuando se abre el modal
+  useEffect(() => {
+    if (isOpen && documentData?.documento && !loading) {
+      const cargarCliente = async () => {
+        try {
+          setLoadingCliente(true);
+          setClienteData(null);
+          const response = await obtenerClienteDocumento(documentData.documento);
+          setClienteData(response);
+        } catch (error) {
+          console.error('Error al cargar cliente:', error);
+          setClienteData(null);
+        } finally {
+          setLoadingCliente(false);
+        }
+      };
+      
+      cargarCliente();
+    }
+  }, [isOpen, documentData?.documento, loading]);
+
   if (!isOpen) return null;
 
   const formatValue = (value) => {
@@ -40,37 +65,70 @@ const DocumentoDetalleModal = ({ isOpen, onClose, documentData, loading }) => {
     return subtotal - desc1 - desc2 - desc3;
   };
 
+  // Columnas a ocultar
+  const columnasOcultas = ["codprom", "descab", "codoferta", "codautoriza","editado","autoriza","paquete"];
+  const normalizar = str => str.replace(/\s|_/g, '').toLowerCase();
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full h-full overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl w-full h-full overflow-hidden flex flex-col">
         {/* Header del Modal */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-blue-50">
-          <div className="flex items-center space-x-3">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Detalles del Documento
-              </h2>
-              {documentData && (
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-sm text-blue-700 font-bold">{documentData.documento}</span>
-                  <span className="text-xs text-gray-500">• {documentData.tabla || 'Tabla no identificada'}</span>
-                  {documentData.data && (
-                    <span className="ml-2 text-xs font-semibold text-green-600">{documentData.data.length} items</span>
-                  )}
+        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between p-3 border-b border-gray-200 bg-blue-50 gap-1 flex-shrink-0">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Detalles del Documento
+            </h2>
+            {documentData && (
+              <div className="flex items-center space-x-2 mt-1">
+                <span className="text-sm text-blue-700 font-bold">{documentData.documento}</span>
+                <span className="text-xs text-gray-500">• {documentData.tabla || 'Tabla no identificada'}</span>
+                {documentData.data && (
+                  <span className="ml-2 text-xs font-semibold text-green-600">{documentData.data.length} items</span>
+                )}
+              </div>
+            )}
+          </div>
+          {/* Información del cliente: derecha en desktop, debajo en móvil */}
+          <div className="md:text-right pr-0 md:pr-12">
+            {loadingCliente ? (
+              <div className="flex items-center space-x-2 md:justify-end mt-2 md:mt-0">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-xs text-gray-500">Cargando información del cliente...</span>
+              </div>
+            ) : clienteData?.success && clienteData.cliente ? (
+              <div className="mt-2 md:mt-0 p-2 bg-green-50 rounded-md inline-block">
+                <div className="flex flex-col md:items-end">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-green-700">{clienteData.cliente.NombreCliente}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className="text-xs font-medium text-green-600">RUC:</span>
+                    <span className="text-xs text-green-600 font-mono">{clienteData.cliente.RUC}</span>
+                    <span className="text-xs text-gray-500">• Código: {clienteData.cliente.Codclie}</span>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : clienteData?.success === false ? (
+              <div className="mt-2 md:mt-0 p-2 bg-yellow-50 rounded-md inline-block">
+                <div className="flex items-center space-x-2 md:justify-end">
+                  <span className="text-xs text-yellow-700">
+                    {clienteData.message || 'No se encontró información del cliente'}
+                  </span>
+                </div>
+              </div>
+            ) : null}
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 transition-colors"
+            className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-500 transition-colors"
+            aria-label="Cerrar"
           >
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
         {/* Contenido del Modal */}
-        <div className=" overflow-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
+        <div className="flex-1 overflow-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
@@ -121,42 +179,46 @@ const DocumentoDetalleModal = ({ isOpen, onClose, documentData, loading }) => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      {Object.keys(documentData.data[0]).map((key) => (
-                        <th 
-                          key={key}
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                        </th>
-                      ))}
+                      {Object.keys(documentData.data[0])
+                        .filter(key => !columnasOcultas.includes(normalizar(key)))
+                        .map((key) => (
+                          <th 
+                            key={key}
+                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                          </th>
+                        ))}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {documentData.data.map((item, index) => (
                       <tr key={index} className="hover:bg-gray-50">
-                        {Object.entries(item).map(([key, value]) => (
-                          <td key={key} className="px-4 py-3 whitespace-nowrap text-sm">
-                            {key.toLowerCase().includes('precio') || 
-                             key.toLowerCase().includes('total') || 
-                             key.toLowerCase().includes('costo') ? (
-                              <span className="font-medium text-green-600">
-                                {formatCurrency(value)}
-                              </span>
-                            ) : key.toLowerCase().includes('cantidad') ? (
-                              <span className="font-medium text-blue-600">
-                                {formatValue(value)}
-                              </span>
-                            ) : key.toLowerCase().includes('codpro') ? (
-                              <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                                {value}
-                              </span>
-                            ) : (
-                              <span className="text-gray-900">
-                                {formatValue(value)}
-                              </span>
-                            )}
-                          </td>
-                        ))}
+                        {Object.entries(item)
+                          .filter(([key]) => !columnasOcultas.includes(normalizar(key)))
+                          .map(([key, value]) => (
+                            <td key={key} className="px-4 py-3 whitespace-nowrap text-sm">
+                              {key.toLowerCase().includes('precio') || 
+                               key.toLowerCase().includes('total') || 
+                               key.toLowerCase().includes('costo') ? (
+                                <span className="font-medium text-green-600">
+                                  {formatCurrency(value)}
+                                </span>
+                              ) : key.toLowerCase().includes('cantidad') ? (
+                                <span className="font-medium text-blue-600">
+                                  {formatValue(value)}
+                                </span>
+                              ) : key.toLowerCase().includes('codpro') ? (
+                                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                                  {value}
+                                </span>
+                              ) : (
+                                <span className="text-gray-900">
+                                  {formatValue(value)}
+                                </span>
+                              )}
+                            </td>
+                          ))}
                       </tr>
                     ))}
                   </tbody>
