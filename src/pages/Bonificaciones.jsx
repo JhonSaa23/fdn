@@ -206,7 +206,7 @@ const Bonificaciones = () => {
             {/* Segunda fila: Filtros existentes */}
             <div className="grid grid-cols-4 gap-3">
               <input
-                type="text"
+                  type="number"
                 name="Codproducto"
                 value={filtros.Codproducto}
                 onChange={handleFilterChange}
@@ -224,7 +224,7 @@ const Bonificaciones = () => {
               />
               
               <input
-                type="text"
+                  type="number"
                 name="CodBoni"
                 value={filtros.CodBoni}
                 onChange={handleFilterChange}

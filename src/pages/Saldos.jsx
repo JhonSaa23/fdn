@@ -580,8 +580,7 @@ const Saldos = () => {
               </div>
               <div className="relative">
                 <input
-                  type="number"
-                  inputMode="numeric"
+                  type="text"
                   value={filtroTiempoReal.lote}
                   onChange={(e) => setFiltroTiempoReal({...filtroTiempoReal, lote: e.target.value})}
                   className="w-full border border-gray-300 rounded-md px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

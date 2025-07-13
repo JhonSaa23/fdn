@@ -645,7 +645,7 @@ const Clientes = () => {
                   Cliente
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="cliente"
                   value={filtros.cliente}
                   onChange={handleFilterChange}
