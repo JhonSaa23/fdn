@@ -426,30 +426,23 @@ const Saldos = () => {
           <div className="flex items-center gap-2 mb-3">
             <FunnelIcon className="w-5 h-5 text-gray-600" />
             <h3 className="text-sm font-medium text-gray-700">Filtros de búsqueda</h3>
+            <select
+                value={filtros.codigoProducto}
+                onChange={(e) => setFiltros({...filtros, codigoProducto: e.target.value})}
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[100px]"
+                style={{ maxWidth: 90 }}
+              >
+                {codigosDisponibles.map(codigo => (
+                  <option key={codigo} value={codigo}>
+                    {codigo}
+                  </option>
+                ))}
+              </select>
           </div>
           
           {/* Desktop */}
           <div className="hidden md:block">
             <div className="grid grid-cols-7 gap-3 items-end">
-              {/* Código de producto */}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Código (2 dígitos)
-                </label>
-                <select
-                  value={filtros.codigoProducto}
-                  onChange={(e) => setFiltros({...filtros, codigoProducto: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {codigosDisponibles.map(codigo => (
-                    <option key={codigo} value={codigo}>
-                      {codigo}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Filtros en tiempo real */}
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Código</label>
                 <input
@@ -523,10 +516,6 @@ const Saldos = () => {
                   <XMarkIcon className="w-4 h-4" />
                   Limpiar
                 </button>
-              </div>
-              
-              {/* Botón Excel */}
-              <div>
                 <button
                   onClick={exportarExcel}
                   disabled={exporting || allSaldos.length === 0}
@@ -545,110 +534,91 @@ const Saldos = () => {
                   )}
                 </button>
               </div>
+              
+              {/* Botón Excel */}
+              <div>
+              </div>
             </div>
           </div>
 
           {/* Mobile */}
           <div className="md:hidden">
-            {/* Código de producto */}
-            <div className="mb-4">
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Código (2 dígitos)
-              </label>
-              <select
-                value={filtros.codigoProducto}
-                onChange={(e) => setFiltros({...filtros, codigoProducto: e.target.value})}
-                className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {codigosDisponibles.map(codigo => (
-                  <option key={codigo} value={codigo}>
-                    {codigo}
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-center justify-between gap-2">
+              
+              
             </div>
-            
             {/* Filtros en tiempo real en 2 columnas */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Código</label>
                 <input
-                  type="text"
+                  type="number"
+                  inputMode="numeric"
                   value={filtroTiempoReal.codpro}
                   onChange={(e) => setFiltroTiempoReal({...filtroTiempoReal, codpro: e.target.value})}
                   className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Filtrar código..."
+                  placeholder="Código"
                 />
               </div>
-              
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
                 <input
                   type="text"
                   value={filtroTiempoReal.nombre}
                   onChange={(e) => setFiltroTiempoReal({...filtroTiempoReal, nombre: e.target.value})}
                   className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Filtrar nombre..."
+                  placeholder="Nombre"
                 />
               </div>
-              
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Almacén</label>
                 <input
-                  type="text"
+                  type="number"
+                  inputMode="numeric"
                   value={filtroTiempoReal.almacen}
                   onChange={(e) => setFiltroTiempoReal({...filtroTiempoReal, almacen: e.target.value})}
                   className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Filtrar almacén..."
+                  placeholder="Almacén"
                 />
               </div>
-              
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Lote</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={filtroTiempoReal.lote}
-                    onChange={(e) => setFiltroTiempoReal({...filtroTiempoReal, lote: e.target.value})}
-                    className="w-full border border-gray-300 rounded-md px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Filtrar lote..."
-                  />
-                  {hayFiltrosActivos && (
-                    <button
-                      onClick={limpiarFiltrosTiempoReal}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      title="Limpiar filtros"
-                    >
-                      <XMarkIcon className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={filtroTiempoReal.lote}
+                  onChange={(e) => setFiltroTiempoReal({...filtroTiempoReal, lote: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Lote"
+                />
+                {hayFiltrosActivos && (
+                  <button
+                    onClick={limpiarFiltrosTiempoReal}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    title="Limpiar filtros"
+                  >
+                    <XMarkIcon className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             </div>
-            
-            {/* Botones en la parte inferior */}
-            <div className="flex gap-2 justify-center">
+            {/* Botones */}
+            <div className="flex gap-2">
               <button
                 onClick={buscarSaldos}
                 disabled={loading}
-                className="flex items-center gap-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
+                className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm w-full justify-center"
               >
                 <MagnifyingGlassIcon className="w-4 h-4" />
                 {loading ? 'Buscando...' : 'Buscar'}
               </button>
-              
               <button
                 onClick={limpiarFiltros}
-                className="flex items-center gap-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm"
+                className="flex items-center gap-1 bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 text-sm w-full justify-center"
               >
                 <XMarkIcon className="w-4 h-4" />
                 Limpiar
               </button>
-              
               <button
                 onClick={exportarExcel}
                 disabled={exporting || allSaldos.length === 0}
-                className="flex items-center gap-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 text-sm"
+                className="flex items-center gap-1 bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 disabled:opacity-50 text-sm w-full justify-center"
               >
                 {exporting ? (
                   <>
@@ -670,13 +640,11 @@ const Saldos = () => {
       {/* Panel de acciones */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-          <div>
+          <div className='flex items-center gap-2'>
             <h2 className="text-lg font-semibold text-gray-900">Saldos</h2>
             <p className="text-sm text-gray-600">
               Mostrando {saldosAMostrar.length} de {totalSaldos} resultados
-              {hayFiltrosActivos && (
-                <span className="text-green-600"> • Filtro activo: {saldosFiltrados.length} coincidencias de {totalSaldos}</span>
-              )}
+              
             </p>
           </div>
         </div>
@@ -924,7 +892,7 @@ const Saldos = () => {
                       <span className="text-sm font-mono font-medium text-gray-900">
                         {saldo.codpro}
                       </span>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs font-semibold text-gray-500 mt-1">
                         Almacén: {saldo.almacen || '-'} | Lote: {saldo.lote || '-'}
                       </div>
                     </div>
