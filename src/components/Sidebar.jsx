@@ -46,6 +46,7 @@ const menuItems = [
   { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-5 h-5" /> },
   { name: 'Kardex', path: '/kardex-tabla', icon: <TableCellsIcon className="w-5 h-5" /> },
   { name: 'Guías', path: '/guias', icon: <TruckIcon className="w-5 h-5" /> },
+  { name: 'Devolución Canje', path: '/devolucion-canje', icon: <ArrowDownTrayIcon className="w-5 h-5" /> },
   { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-5 h-5" /> },
   { 
     name: 'Reportes', 

@@ -23,6 +23,7 @@ import Bonificaciones from './pages/Bonificaciones';
 import Pedidos from './pages/Pedidos';
 import Saldos from './pages/Saldos';
 import ConsultaProductos from './pages/ConsultaProductos';
+import DevolucionCanjeForm from './pages/DevolucionCanjeForm';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
@@ -142,6 +143,7 @@ function App() {
                 <Route path="/kardex" element={<Kardex />} />
                 <Route path="/kardex-tabla" element={<KardexTabla />} />
                 <Route path="/consulta-productos" element={<ConsultaProductos />} />
+                <Route path="/devolucion-canje" element={<DevolucionCanjeForm />} />
                 <Route path="/guias" element={<Guias />} />
                 <Route path="/multi-accion" element={<MultiAccion />} />
                 <Route path="/reportes/picking-procter" element={<ReportePickingProcter />} />
