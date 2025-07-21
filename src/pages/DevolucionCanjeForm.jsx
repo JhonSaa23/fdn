@@ -1,18 +1,81 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../services/axiosClient';
 
-    const DevolucionCanjeForm = () => {
-        // Detectar si es móvil
-        const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+const DevolucionCanjeForm = () => {
+    // Detectar si es móvil
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
         
-        useEffect(() => {
-            const handleResize = () => {
-                setIsMobile(window.innerWidth <= 768);
-            };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Función para formatear fechas de manera consistente
+    const formatFechaConsistente = (fecha) => {
+        if (!fecha) return '';
+        
+        try {
+            // Si la fecha ya es un string en formato YYYY-MM-DD, devolverla tal como está
+            if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+                return fecha;
+            }
             
-            window.addEventListener('resize', handleResize);
-            return () => window.removeEventListener('resize', handleResize);
-        }, []);
+            // Crear un objeto Date
+            const date = new Date(fecha);
+            
+            // Si la fecha es UTC (termina en Z), extraer solo la parte de fecha sin conversión de zona horaria
+            if (typeof fecha === 'string' && fecha.includes('T') && fecha.endsWith('Z')) {
+                const fechaPart = fecha.split('T')[0];
+                return fechaPart;
+            }
+            
+            // Para otros casos, usar los métodos locales
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        } catch (error) {
+            console.error('Error formateando fecha:', error);
+            return fecha;
+        }
+    };
+
+    // Función para mostrar fecha en formato DD/MM/YYYY
+    const formatFechaDisplay = (fecha) => {
+        if (!fecha) return '';
+        
+        try {
+            // Si la fecha es UTC (termina en Z), extraer solo la parte de fecha sin conversión de zona horaria
+            if (typeof fecha === 'string' && fecha.includes('T') && fecha.endsWith('Z')) {
+                const fechaPart = fecha.split('T')[0];
+                const [year, month, day] = fechaPart.split('-');
+                return `${day}/${month}/${year}`;
+            }
+            
+            // Si la fecha ya es un string en formato YYYY-MM-DD
+            if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+                const [year, month, day] = fecha.split('-');
+                return `${day}/${month}/${year}`;
+            }
+            
+            // Para otros casos, usar los métodos locales
+            const date = new Date(fecha);
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch (error) {
+            console.error('Error formateando fecha para display:', error);
+            return fecha;
+        }
+    };
+
     // --- ESTADOS DE LA VISTA ---
     const [cabecera, setCabecera] = useState({
         NroGuia: '',
@@ -418,7 +481,7 @@ import axios from '../services/axiosClient';
                 // Limpiar espacios en blanco de los datos recibidos
                 const cleanCabecera = {
                     NroGuia: fetchedCabecera.NroGuia?.trim(),
-                    Fecha: new Date(fetchedCabecera.Fecha).toISOString().split('T')[0],
+                    Fecha: formatFechaConsistente(fetchedCabecera.Fecha),
                     Proveedor: fetchedCabecera.Proveedor?.trim(),
                     ProveedorNombre: fetchedCabecera.ProveedorNombre?.trim(),
                     EmpTrans: fetchedCabecera.EmpTrans?.trim(),
@@ -1204,7 +1267,7 @@ import axios from '../services/axiosClient';
                     <input 
                         type="date" 
                         name="Fecha" 
-                        value={cabecera.Fecha} 
+                        value={formatFechaConsistente(cabecera.Fecha)} 
                         onChange={handleCabeceraChange}
                         disabled={true}
                         placeholder="Fecha Emisión"
@@ -1500,7 +1563,7 @@ import axios from '../services/axiosClient';
                     <input 
                         type="date" 
                         name="Vencimiento" 
-                        value={currentItemDetalle.Vencimiento} 
+                        value={formatFechaConsistente(currentItemDetalle.Vencimiento)} 
                         onChange={handleDetalleChange} 
                         readOnly
                         placeholder="Vencimiento"
@@ -1658,7 +1721,7 @@ import axios from '../services/axiosClient';
                                             padding: '12px', 
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px'
-                                        }}>{item.Vencimiento ? new Date(item.Vencimiento).toLocaleDateString() : ''}</td>
+                                        }}>{formatFechaDisplay(item.Vencimiento)}</td>
                                         <td style={{ 
                                             padding: '12px', 
                                             border: '1px solid #e0e0e0',
@@ -1991,11 +2054,7 @@ import axios from '../services/axiosClient';
                                                     border: '1px solid #e0e0e0',
                                                     color: '#34495e'
                                                 }}>
-                                                    {new Date(guia.Fecha).toLocaleDateString('es-ES', {
-                                                        day: '2-digit',
-                                                        month: '2-digit',
-                                                        year: 'numeric'
-                                                    })}
+                                                    {formatFechaDisplay(guia.Fecha)}
                                                 </td>
                                                 <td style={{ 
                                                     padding: isMobile ? '10px 8px' : '12px 10px', 
@@ -2871,7 +2930,7 @@ import axios from '../services/axiosClient';
                                                         color: '#7f8c8d',
                                                         fontSize: '14px'
                                                     }}>
-                                                        {guia.Fecha ? new Date(guia.Fecha).toLocaleDateString('es-ES') : 'N/A'}
+                                                        {formatFechaDisplay(guia.Fecha)}
                                                     </td>
                                                     <td style={{
                                                         padding: '12px',
