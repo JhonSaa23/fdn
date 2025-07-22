@@ -25,7 +25,7 @@ const Pedidos = () => {
     estado: '',
     eliminado: '0'
   });
-  const [showFilters, setShowFilters] = useState(false);
+
   const [estadosDisponibles, setEstadosDisponibles] = useState([]);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -228,142 +228,101 @@ const Pedidos = () => {
 
       {/* Panel de filtros */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-2">
-        <div className="border-b border-gray-200 px-4 py-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium"
-          >
-            <FunnelIcon className="w-5 h-5" />
-            Filtros de búsqueda
-            <span className={`transform transition-transform ${showFilters ? 'rotate-180' : ''}`}>
-              ▼
-            </span>
-          </button>
+        <div className=" border-gray-200 px-4 pt-3 flex  md:flex-row  justify-between items-center gap-2">
+          <div className="flex items-center gap-2 text-gray-700 font-medium">
+            
+            Búsqueda
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={buscarPedidos}
+              disabled={loading}
+              className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
+            >
+              {loading ? 'Buscando...' : 'Buscar'}
+            </button>
+
+            <button
+              onClick={limpiarFiltros}
+              className="flex items-center gap-2 bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 text-sm"
+            >
+              Limpiar
+            </button>
+
+            <button
+              onClick={cargarPedidosDefault}
+              className="flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 text-sm"
+            >
+              Defecto
+            </button>
+          </div>
         </div>
 
-        {showFilters && (
-          <div className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Número de Pedido
-                </label>
-                <input
-                  type="text"
-                  value={filtros.numero}
-                  onChange={(e) => setFiltros({ ...filtros, numero: e.target.value })}
-                  placeholder="Buscar por número..."
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+        <div className="p-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-6 gap-4">
+              <input
+                type="text"
+                value={filtros.numero}
+                onChange={(e) => setFiltros({ ...filtros, numero: e.target.value })}
+                placeholder="Número de Pedido"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Día
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={filtros.dia}
-                  onChange={(e) => setFiltros({ ...filtros, dia: e.target.value })}
-                  placeholder="Día"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <input
+                type="number"
+                min="1"
+                max="31"
+                value={filtros.dia}
+                onChange={(e) => setFiltros({ ...filtros, dia: e.target.value })}
+                placeholder="Día"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mes
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="12"
-                  value={filtros.mes}
-                  onChange={(e) => setFiltros({ ...filtros, mes: e.target.value })}
-                  placeholder="Mes"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <input
+                type="number"
+                min="1"
+                max="12"
+                value={filtros.mes}
+                onChange={(e) => setFiltros({ ...filtros, mes: e.target.value })}
+                placeholder="Mes"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Año
-                </label>
-                <input
-                  type="number"
-                  min="2020"
-                  max="2030"
-                  value={filtros.anio}
-                  onChange={(e) => setFiltros({ ...filtros, anio: e.target.value })}
-                  placeholder="Año"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <input
+                type="number"
+                min="2020"
+                max="2030"
+                value={filtros.anio}
+                onChange={(e) => setFiltros({ ...filtros, anio: e.target.value })}
+                placeholder="Año"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Estado
-                </label>
-                <select
-                  value={filtros.estado}
-                  onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Todos los estados</option>
-                  {estadosDisponibles.map(estado => (
-                    <option key={estado.codigo} value={estado.codigo}>
-                      {estado.descripcion}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Estado de Eliminación
-                </label>
-                <select
-                  value={filtros.eliminado}
-                  onChange={(e) => setFiltros({ ...filtros, eliminado: e.target.value })}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="0">No Eliminados</option>
-                  <option value="1">Eliminados</option>
-                  <option value="">Todos</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={buscarPedidos}
-                disabled={loading}
-                className="flex items-center gap-2 bg-blue-600 text-white  pl-2 pr-3 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              <select
+                value={filtros.estado}
+                onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <MagnifyingGlassIcon className="w-4 h-4" />
-                {loading ? 'Buscando...' : 'Buscar'}
-              </button>
+                <option value="">Todos los estados</option>
+                {estadosDisponibles.map(estado => (
+                  <option key={estado.codigo} value={estado.codigo}>
+                    {estado.descripcion}
+                  </option>
+                ))}
+              </select>
 
-              <button
-                onClick={limpiarFiltros}
-                className="flex items-center gap-2 bg-gray-600 text-white pl-2 pr-3 py-2 rounded-md hover:bg-gray-700"
+              <select
+                value={filtros.eliminado}
+                onChange={(e) => setFiltros({ ...filtros, eliminado: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <XMarkIcon className="w-4 h-4" />
-                Limpiar
-              </button>
-
-              <button
-                onClick={cargarPedidosDefault}
-                className="flex items-center gap-2 bg-green-600 text-white pl-2 pr-3 py-2 rounded-md hover:bg-green-700"
-              >
-                <CalendarDaysIcon className="w-4 h-4" />
-                Defecto
-              </button>
+                <option value="0">No Eliminados</option>
+                <option value="1">Eliminados</option>
+                <option value="">Todos</option>
+              </select>
             </div>
           </div>
-        )}
       </div>
 
       {/* Tabla de pedidos */}

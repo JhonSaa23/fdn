@@ -1091,7 +1091,6 @@ const DevolucionCanjeForm = () => {
             minHeight: '100vh',
             maxWidth: '100%',
             overflowX: 'hidden',
-            padding: isMobile ? '8px' : '0'
         }}>
 
             {isLoading && (
@@ -1266,7 +1265,7 @@ const DevolucionCanjeForm = () => {
                         >🗑️ Eliminar</button>
                     </div>
                 </div>
-                <div style={isMobile ? mobileGridStyles : gridContainerStyles}>
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
                     <input 
                         type="text" 
                         name="NroGuia" 
@@ -1274,14 +1273,7 @@ const DevolucionCanjeForm = () => {
                         onChange={handleCabeceraChange} 
                         readOnly={true}
                         placeholder="Nro Docum"
-                        style={{
-                            ...inputStyles,
-                            backgroundColor: '#f5f5f5',
-                            color: '#666',
-                            cursor: 'not-allowed'
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = '#e0e0e0'}
-                        onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500"
                     />
                     
                     <input 
@@ -1291,21 +1283,7 @@ const DevolucionCanjeForm = () => {
                         onChange={handleCabeceraChange}
                         disabled={true}
                         placeholder="Fecha Emisión"
-                        style={{
-                            padding: '8px 12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '6px',
-                            fontSize: '14px',
-                            transition: 'border-color 0.3s ease',
-                            backgroundColor: '#f5f5f5',
-                            color: '#666',
-                            cursor: 'not-allowed',
-                            width: '100%',
-                            boxSizing: 'border-box',
-                            outline: 'none'
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = '#e0e0e0'}
-                        onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500"
                     />
                     
                     <select 
@@ -1313,17 +1291,11 @@ const DevolucionCanjeForm = () => {
                         value={cabecera.Proveedor} 
                         onChange={handleCabeceraChange}
                         disabled={isConsultaMode}
-                        style={{
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            transition: 'border-color 0.3s ease',
-                            backgroundColor: isConsultaMode ? '#f5f5f5' : 'white',
-                            cursor: isConsultaMode ? 'not-allowed' : 'pointer'
-                        }}
-                        onFocus={(e) => !isConsultaMode && (e.target.style.borderColor = '#3498db')}
-                        onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isConsultaMode 
+                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
+                                : 'bg-white text-gray-900 cursor-pointer'
+                        }`}
                     >
                         <option value="">Proveedor</option>
                         {proveedores.map(prov => (
@@ -1338,17 +1310,11 @@ const DevolucionCanjeForm = () => {
                         value={cabecera.EmpTrans} 
                         onChange={handleTransportistaChange}
                         disabled={isConsultaMode}
-                        style={{
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            transition: 'border-color 0.3s ease',
-                            backgroundColor: isConsultaMode ? '#f5f5f5' : 'white',
-                            cursor: isConsultaMode ? 'not-allowed' : 'pointer'
-                        }}
-                        onFocus={(e) => !isConsultaMode && (e.target.style.borderColor = '#3498db')}
-                        onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isConsultaMode 
+                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
+                                : 'bg-white text-gray-900 cursor-pointer'
+                        }`}
                     >
                         <option value="">Empresa Transporte</option>
                         {transportistas.map(trans => (
@@ -1446,7 +1412,7 @@ const DevolucionCanjeForm = () => {
             {/* Detalles de la Guia (para añadir/editar un item) - Estilo moderno */}
             <div style={{ 
                 backgroundColor: 'white', 
-                padding: '25px', 
+                padding: '16px', 
                 marginBottom: '25px', 
                 borderRadius: '12px', 
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
@@ -1499,7 +1465,7 @@ const DevolucionCanjeForm = () => {
                         ➕ Agregar Detalle
                     </button>
                 </div>
-                <div style={isMobile ? mobileGridStyles : gridContainerStyles}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                     <select 
                         name="codpro" 
                         value={currentItemDetalle.codpro} 
@@ -1518,22 +1484,11 @@ const DevolucionCanjeForm = () => {
                             }));
                         }}
                         onKeyDown={handleKeyDown}
-                        style={{
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            transition: 'all 0.3s ease',
-                            backgroundColor: (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0) ? '#f5f5f5' : 'white',
-                            opacity: (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0) ? 0.6 : 1,
-                            cursor: (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0) ? 'not-allowed' : 'pointer'
-                        }}
-                        onFocus={(e) => {
-                            if (!(isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)) {
-                                e.target.style.borderColor = '#e74c3c';
-                            }
-                        }}
-                        onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                            (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)
+                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed opacity-60' 
+                                : 'bg-white text-gray-900 cursor-pointer'
+                        }`}
                     >
                         <option value="">
                             {!selectedLaboratorio 
@@ -1557,17 +1512,11 @@ const DevolucionCanjeForm = () => {
                         onKeyDown={handleKeyDown}
                         disabled={isConsultaMode}
                         placeholder="Unidades"
-                        style={{
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            transition: 'border-color 0.3s ease',
-                            backgroundColor: isConsultaMode ? '#f5f5f5' : 'white',
-                            cursor: isConsultaMode ? 'not-allowed' : 'auto'
-                        }}
-                        onFocus={(e) => !isConsultaMode && (e.target.style.borderColor = '#e74c3c')}
-                        onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                            isConsultaMode 
+                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
+                                : 'bg-white text-gray-900'
+                        }`}
                     />
                     <input 
                         type="text" 
@@ -1610,7 +1559,7 @@ const DevolucionCanjeForm = () => {
             {/* Grilla de Detalles de la Guia - Estilo moderno */}
             <div style={{ 
                 backgroundColor: 'white', 
-                padding: '25px', 
+                padding: '16px', 
                 marginBottom: '25px', 
                 borderRadius: '12px', 
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
