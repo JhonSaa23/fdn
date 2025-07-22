@@ -1042,19 +1042,16 @@ const DevolucionCanjeForm = () => {
         }
     };
 
-    // Estilos comunes para inputs responsivos
+    // Estilos comunes para inputs responsivos - basado en Saldos.jsx
     const inputStyles = {
-        padding: '12px',
-        border: '2px solid #e0e0e0',
-        borderRadius: '8px',
+        padding: '8px 12px',
+        border: '1px solid #d1d5db',
+        borderRadius: '6px',
         fontSize: '14px',
         transition: 'border-color 0.3s ease',
         width: '100%',
-        minWidth: '0',
         boxSizing: 'border-box',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        resize: 'none'
+        outline: 'none'
     };
 
     const selectStyles = {
@@ -1062,6 +1059,13 @@ const DevolucionCanjeForm = () => {
         backgroundColor: 'white',
         cursor: 'pointer'
     };
+
+    // Función helper para estilos responsivos
+    const getResponsiveStyles = (baseStyles) => ({
+        ...baseStyles,
+        padding: isMobile ? '14px 12px' : baseStyles.padding,
+        fontSize: isMobile ? '16px' : baseStyles.fontSize
+    });
 
     // Estilos responsivos para contenedores
     const gridContainerStyles = {
@@ -1074,8 +1078,9 @@ const DevolucionCanjeForm = () => {
     const mobileGridStyles = {
         display: 'grid',
         gridTemplateColumns: '1fr',
-        gap: '10px',
-        width: '100%'
+        gap: '12px',
+        width: '100%',
+        padding: '0'
     };
 
     // --- RENDERIZADO DE LA UI ---
@@ -1085,7 +1090,8 @@ const DevolucionCanjeForm = () => {
             backgroundColor: '#f8f9fa',
             minHeight: '100vh',
             maxWidth: '100%',
-            overflowX: 'hidden'
+            overflowX: 'hidden',
+            padding: isMobile ? '8px' : '0'
         }}>
 
             {isLoading && (
@@ -1121,7 +1127,7 @@ const DevolucionCanjeForm = () => {
             {/* Cabecera del Documento - Estilo moderno */}
             <div style={{ 
                 backgroundColor: 'white', 
-                padding: '25px', 
+                padding: isMobile ? '16px' : '25px', 
                 marginBottom: '25px', 
                 borderRadius: '12px', 
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
@@ -1129,17 +1135,20 @@ const DevolucionCanjeForm = () => {
             }}>
                 <div style={{ 
                     display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    marginBottom: '20px',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    justifyContent: isMobile ? 'flex-start' : 'space-between', 
+                    alignItems: isMobile ? 'stretch' : 'center',
+                    marginBottom: isMobile ? '25px' : '20px',
                     borderBottom: '2px solid #3498db',
-                    paddingBottom: '10px'
+                    paddingBottom: '10px',
+                    gap: isMobile ? '20px' : '0'
                 }}>
                     <h3 style={{ 
                         fontWeight: '600', 
                         color: '#2c3e50', 
-                        fontSize: '18px',
-                        margin: '0'
+                        fontSize: isMobile ? '16px' : '18px',
+                        margin: '0',
+                        textAlign: isMobile ? 'center' : 'left'
                     }}>
                         📄 Cabecera del Documento
                     </h3>
@@ -1147,19 +1156,24 @@ const DevolucionCanjeForm = () => {
                     {/* Botones de Acción */}
                     <div style={{ 
                         display: 'flex', 
-                        gap: '8px'
+                        gap: isMobile ? '12px' : '8px',
+                        flexWrap: isMobile ? 'wrap' : 'nowrap',
+                        justifyContent: isMobile ? 'center' : 'flex-end',
+                        width: isMobile ? '100%' : 'auto'
                     }}>
                         <button onClick={handleNuevo} style={{ 
                             backgroundColor: '#2196f3', 
                             color: 'white', 
                             border: 'none', 
-                            padding: '8px 16px', 
+                            padding: isMobile ? '12px 16px' : '8px 16px', 
                             cursor: 'pointer', 
                             borderRadius: '6px',
                             fontWeight: '600',
-                            fontSize: '12px',
+                            fontSize: isMobile ? '14px' : '12px',
                             transition: 'all 0.3s ease',
-                            boxShadow: '0 2px 4px rgba(33,150,243,0.3)'
+                            boxShadow: '0 2px 4px rgba(33,150,243,0.3)',
+                            flex: isMobile ? '1' : 'none',
+                            minWidth: isMobile ? '80px' : 'auto'
                         }}
                         onMouseOver={(e) => {
                             e.target.style.transform = 'translateY(-1px)';
@@ -1174,13 +1188,15 @@ const DevolucionCanjeForm = () => {
                             backgroundColor: '#4caf50', 
                             color: 'white', 
                             border: 'none', 
-                            padding: '8px 16px', 
+                            padding: isMobile ? '12px 16px' : '8px 16px', 
                             cursor: 'pointer', 
                             borderRadius: '6px',
                             fontWeight: '600',
-                            fontSize: '12px',
+                            fontSize: isMobile ? '14px' : '12px',
                             transition: 'all 0.3s ease',
-                            boxShadow: '0 2px 4px rgba(76,175,80,0.3)'
+                            boxShadow: '0 2px 4px rgba(76,175,80,0.3)',
+                            flex: isMobile ? '1' : 'none',
+                            minWidth: isMobile ? '80px' : 'auto'
                         }}
                         onMouseOver={(e) => {
                             e.target.style.transform = 'translateY(-1px)';
@@ -1198,13 +1214,15 @@ const DevolucionCanjeForm = () => {
                                 backgroundColor: '#9b59b6', 
                                 color: 'white', 
                                 border: 'none', 
-                                padding: '8px 16px', 
+                                padding: isMobile ? '12px 16px' : '8px 16px', 
                                 cursor: 'pointer', 
                                 borderRadius: '6px',
                                 fontWeight: '600',
-                                fontSize: '12px',
+                                fontSize: isMobile ? '14px' : '12px',
                                 transition: 'all 0.3s ease',
-                                boxShadow: '0 2px 4px rgba(155,89,182,0.3)'
+                                boxShadow: '0 2px 4px rgba(155,89,182,0.3)',
+                                flex: isMobile ? '1' : 'none',
+                                minWidth: isMobile ? '80px' : 'auto'
                             }}
                         onMouseOver={(e) => {
                             e.target.style.transform = 'translateY(-1px)';
@@ -1223,13 +1241,15 @@ const DevolucionCanjeForm = () => {
                                 backgroundColor: !isConsultaMode ? '#bdc3c7' : '#f44336', 
                                 color: 'white', 
                                 border: 'none', 
-                                padding: '8px 16px', 
+                                padding: isMobile ? '12px 16px' : '8px 16px', 
                                 cursor: !isConsultaMode ? 'not-allowed' : 'pointer', 
                                 borderRadius: '6px',
                                 fontWeight: '600',
-                                fontSize: '12px',
+                                fontSize: isMobile ? '14px' : '12px',
                                 transition: 'all 0.3s ease',
-                                boxShadow: !isConsultaMode ? 'none' : '0 2px 4px rgba(244,67,54,0.3)'
+                                boxShadow: !isConsultaMode ? 'none' : '0 2px 4px rgba(244,67,54,0.3)',
+                                flex: isMobile ? '1' : 'none',
+                                minWidth: isMobile ? '80px' : 'auto'
                             }}
                         onMouseOver={(e) => {
                             if (isConsultaMode) {
@@ -1272,14 +1292,17 @@ const DevolucionCanjeForm = () => {
                         disabled={true}
                         placeholder="Fecha Emisión"
                         style={{
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
+                            padding: '8px 12px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '6px',
                             fontSize: '14px',
                             transition: 'border-color 0.3s ease',
                             backgroundColor: '#f5f5f5',
                             color: '#666',
-                            cursor: 'not-allowed'
+                            cursor: 'not-allowed',
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            outline: 'none'
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#e0e0e0'}
                         onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
@@ -1343,13 +1366,16 @@ const DevolucionCanjeForm = () => {
                         readOnly
                         placeholder="RUC Transportista"
                         style={{
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
+                            padding: '8px 12px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '6px',
                             fontSize: '14px',
                             transition: 'border-color 0.3s ease',
                             backgroundColor: '#f8f9fa',
-                            color: '#495057'
+                            color: '#495057',
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            outline: 'none'
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#3498db'}
                         onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}

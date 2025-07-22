@@ -7,7 +7,8 @@ import {
   CheckIcon,
   XMarkIcon,
   CalendarDaysIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import Modal from '../components/Modal';
 import axiosClient from '../services/axiosClient';
@@ -29,6 +30,7 @@ const Pedidos = () => {
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [autorizandoPedido, setAutorizandoPedido] = useState(null);
+  const [eliminandoPedido, setEliminandoPedido] = useState(null);
 
   // Cargar pedidos por defecto al montar el componente
   useEffect(() => {
@@ -144,6 +146,31 @@ const Pedidos = () => {
       setAutorizandoPedido(null);
     }
   };
+
+  const eliminarPedido = async (numero) => {
+    try {
+      setEliminandoPedido(numero);
+
+      const response = await axiosClient.delete(`/pedidos/${numero}`);
+
+      const data = response.data;
+
+      if (data.success) {
+        showNotification('success', data.message);
+        // Recargar la lista de pedidos
+        buscarPedidos();
+      } else {
+        showNotification('danger', data.error || 'Error al eliminar el pedido');
+      }
+    } catch (error) {
+      console.error('Error al eliminar pedido:', error);
+      showNotification('danger', 'Error de conexión al eliminar el pedido');
+    } finally {
+      setEliminandoPedido(null);
+    }
+  };
+
+
 
   const limpiarFiltros = () => {
     setFiltros({
@@ -417,29 +444,55 @@ const Pedidos = () => {
                         S/ {formatearMonto(pedido.Total)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        {pedido.Estado === 1 && (
+                        <div className="flex items-center justify-center gap-2">
+                          {pedido.Estado === 1 && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                autorizarPedido(pedido.Numero);
+                              }}
+                              disabled={autorizandoPedido === pedido.Numero}
+                              className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+                              title="Autorizar pedido"
+                            >
+                              {autorizandoPedido === pedido.Numero ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                  Autorizando...
+                                </>
+                              ) : (
+                                <>
+                                  <CheckIcon className="w-3 h-3" />
+                                  Autorizar
+                                </>
+                              )}
+                            </button>
+                          )}
+                          
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              autorizarPedido(pedido.Numero);
+                              if (window.confirm(`¿Estás seguro de que deseas eliminar el pedido ${pedido.Numero}?`)) {
+                                eliminarPedido(pedido.Numero);
+                              }
                             }}
-                            disabled={autorizandoPedido === pedido.Numero}
-                            className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
-                            title="Autorizar pedido"
+                            disabled={eliminandoPedido === pedido.Numero}
+                            className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                            title="Eliminar pedido"
                           >
-                            {autorizandoPedido === pedido.Numero ? (
+                            {eliminandoPedido === pedido.Numero ? (
                               <>
                                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                Autorizando...
+                                Eliminando...
                               </>
                             ) : (
                               <>
-                                <CheckIcon className="w-3 h-3" />
-                                Autorizar
+                                <TrashIcon className="w-3 h-3" />
+                                Eliminar
                               </>
                             )}
                           </button>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -492,28 +545,54 @@ const Pedidos = () => {
                       Ver detalle
                     </button>
 
-                    {pedido.Estado === 1 && (
+                    <div className="flex items-center gap-1 ml-auto">
+                      {pedido.Estado === 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            autorizarPedido(pedido.Numero);
+                          }}
+                          disabled={autorizandoPedido === pedido.Numero}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+                        >
+                          {autorizandoPedido === pedido.Numero ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              Autorizando...
+                            </>
+                          ) : (
+                            <>
+                              <CheckIcon className="w-3 h-3" />
+                              Autorizar
+                            </>
+                          )}
+                        </button>
+                      )}
+                      
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          autorizarPedido(pedido.Numero);
+                          if (window.confirm(`¿Estás seguro de que deseas eliminar el pedido ${pedido.Numero}?`)) {
+                            eliminarPedido(pedido.Numero);
+                          }
                         }}
-                        disabled={autorizandoPedido === pedido.Numero}
-                        className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 disabled:opacity-50 flex items-center gap-1 ml-auto"
+                        disabled={eliminandoPedido === pedido.Numero}
+                        className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                        title="Eliminar pedido"
                       >
-                        {autorizandoPedido === pedido.Numero ? (
+                        {eliminandoPedido === pedido.Numero ? (
                           <>
                             <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                            Autorizando...
+                            Eliminando...
                           </>
                         ) : (
                           <>
-                            <CheckIcon className="w-3 h-3" />
-                            Autorizar
+                            <TrashIcon className="w-3 h-3" />
+                            Eliminar
                           </>
                         )}
                       </button>
-                    )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -673,6 +752,8 @@ const Pedidos = () => {
           </div>
         )}
       </Modal>
+
+
     </div>
   );
 };
