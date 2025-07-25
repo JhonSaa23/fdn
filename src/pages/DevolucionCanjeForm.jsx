@@ -1555,7 +1555,7 @@ const DevolucionCanjeForm = () => {
                                             ? 'No hay productos disponibles' 
                                             : 'Buscar por código de producto...'
                                 }
-                                className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                                className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 h-10 ${
                                     (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)
                                         ? 'bg-gray-100 text-gray-600 cursor-not-allowed opacity-60' 
                                         : 'bg-white text-gray-900'
@@ -1698,7 +1698,7 @@ const DevolucionCanjeForm = () => {
                         onKeyDown={handleKeyDown}
                         disabled={isConsultaMode}
                         placeholder="Unidades"
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 h-10 ${
                             isConsultaMode 
                                 ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
                                 : 'bg-white text-gray-900'
@@ -1712,12 +1712,13 @@ const DevolucionCanjeForm = () => {
                         readOnly
                         placeholder="Lote"
                         style={{
-                            padding: '12px',
+                            padding: '8px 12px',
                             border: '2px solid #e0e0e0',
                             borderRadius: '8px',
                             fontSize: '14px',
                             backgroundColor: '#f5f5f5',
-                            color: '#666'
+                            color: '#666',
+                            height: '40px'
                         }}
                     />
                     
@@ -1729,12 +1730,13 @@ const DevolucionCanjeForm = () => {
                         readOnly
                         placeholder="Vencimiento"
                         style={{
-                            padding: '12px',
+                            padding: '8px 12px',
                             border: '2px solid #e0e0e0',
                             borderRadius: '8px',
                             fontSize: '14px',
                             backgroundColor: '#f5f5f5',
-                            color: '#666'
+                            color: '#666',
+                            height: '40px'
                         }}
                     />
                     
