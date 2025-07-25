@@ -129,6 +129,11 @@ const DevolucionCanjeForm = () => {
     const [ultimoNumeroCabGuia, setUltimoNumeroCabGuia] = useState('');
     const [editandoNumero, setEditandoNumero] = useState(false);
     const [nuevoNumero, setNuevoNumero] = useState('');
+    
+    // Estados para búsqueda de productos
+    const [productoSearchTerm, setProductoSearchTerm] = useState('');
+    const [showProductoDropdown, setShowProductoDropdown] = useState(false);
+    const [filteredProductos, setFilteredProductos] = useState([]);
 
     // --- FUNCIONES DE CARGA ---
     const fetchLaboratorios = async () => {
@@ -176,6 +181,20 @@ const DevolucionCanjeForm = () => {
         fetchTransportistas();
     }, []);
 
+    // Cerrar dropdown de productos cuando se hace clic fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showProductoDropdown && !event.target.closest('.producto-dropdown-container')) {
+                setShowProductoDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showProductoDropdown]);
+
     useEffect(() => {
         if (selectedLaboratorio) {
             const fetchProductosADevolver = async () => {
@@ -189,6 +208,7 @@ const DevolucionCanjeForm = () => {
                     const response = await axios.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
                     if (response.data.success) {
                         setProductosADevolver(response.data.data);
+                        setFilteredProductos(response.data.data); // Inicializar productos filtrados
                         console.log('✅ Productos cargados:', response.data.data.length, 'productos');
                         setMessage(`Productos cargados: ${response.data.data.length} productos disponibles para devolución`);
                         setIsError(false);
@@ -196,11 +216,13 @@ const DevolucionCanjeForm = () => {
                         setMessage(`Error al cargar productos a devolver: ${response.data.message}`);
                         setIsError(true);
                         setProductosADevolver([]); // Limpiar si hay error
+                        setFilteredProductos([]); // Limpiar productos filtrados
                     }
                 } catch (error) {
                     setMessage(`Error de red al cargar productos a devolver: ${error.message}`);
                     setIsError(true);
                     setProductosADevolver([]); // Limpiar si hay error
+                    setFilteredProductos([]); // Limpiar productos filtrados
                 } finally {
                     setIsLoading(false);
                 }
@@ -209,6 +231,7 @@ const DevolucionCanjeForm = () => {
         } else {
             // Si no hay laboratorio seleccionado, limpia la lista de productos a devolver
             setProductosADevolver([]);
+            setFilteredProductos([]); // Limpiar productos filtrados
         }
     }, [selectedLaboratorio]);
 
@@ -216,6 +239,40 @@ const DevolucionCanjeForm = () => {
     const handleCabeceraChange = (e) => {
         const { name, value } = e.target;
         setCabecera(prev => ({ ...prev, [name]: value }));
+    };
+
+    // Función para filtrar productos por código
+    const handleProductoSearch = (searchTerm) => {
+        setProductoSearchTerm(searchTerm);
+        
+        if (!searchTerm.trim()) {
+            // Si no hay término de búsqueda, mostrar todos los productos
+            setFilteredProductos(productosADevolver);
+            setShowProductoDropdown(true);
+        } else {
+            // Filtrar productos que coincidan con el código
+            const filtered = productosADevolver.filter(prod => 
+                prod.Codpro && prod.Codpro.trim().toLowerCase().includes(searchTerm.trim().toLowerCase())
+            );
+            setFilteredProductos(filtered);
+            setShowProductoDropdown(true);
+        }
+    };
+
+    // Función para seleccionar producto del dropdown
+    const handleSelectProducto = (producto) => {
+        setCurrentItemDetalle(prev => ({
+            ...prev,
+            codpro: producto.Codpro,
+            Producto: producto.Nombre,
+            lote: producto.Lote,
+            Vencimiento: producto.Vencimiento ? new Date(producto.Vencimiento).toISOString().split('T')[0] : '',
+            GuiaDevo: producto.NroGuia,
+            Referencia: producto.Referencia,
+            TipoDoc: producto.tipodoc
+        }));
+        setProductoSearchTerm(producto.Codpro);
+        setShowProductoDropdown(false);
     };
 
     const handleDetalleChange = (e) => {
@@ -397,6 +454,9 @@ const DevolucionCanjeForm = () => {
         });
         setSelectedLaboratorio('');
         setProductosADevolver([]);
+        setFilteredProductos([]);
+        setProductoSearchTerm('');
+        setShowProductoDropdown(false);
         setSelectedGuiaBusqueda(null);
         setLaboratorioSearchTerm('');
         setIsConsultaMode(false); // Desactivar modo consulta
@@ -1023,6 +1083,8 @@ const DevolucionCanjeForm = () => {
             NroGuia: '', codpro: '', Producto: '', lote: '', Vencimiento: '', Cantidad: '',
             GuiaDevo: '', Referencia: '', tipodoc: ''
         });
+        setProductoSearchTerm('');
+        setShowProductoDropdown(false);
     };
 
     const handleRemoveDetalle = (indexToRemove) => {
@@ -1466,44 +1528,74 @@ const DevolucionCanjeForm = () => {
                     </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-                    <select 
-                        name="codpro" 
-                        value={currentItemDetalle.codpro} 
-                        disabled={isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0}
-                        onChange={(e) => {
-                            const selectedProd = productosADevolver.find(p => p.Codpro === e.target.value);
-                            setCurrentItemDetalle(prev => ({
-                                ...prev,
-                                codpro: e.target.value,
-                                Producto: selectedProd ? selectedProd.Nombre : '',
-                                lote: selectedProd ? selectedProd.Lote : '',
-                                Vencimiento: selectedProd ? new Date(selectedProd.Vencimiento).toISOString().split('T')[0] : '',
-                                GuiaDevo: selectedProd ? selectedProd.NroGuia : '',
-                                Referencia: selectedProd ? selectedProd.Referencia : '',
-                                TipoDoc: selectedProd ? selectedProd.tipodoc : ''
-                            }));
-                        }}
-                        onKeyDown={handleKeyDown}
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                            (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)
-                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed opacity-60' 
-                                : 'bg-white text-gray-900 cursor-pointer'
-                        }`}
-                    >
-                        <option value="">
-                            {!selectedLaboratorio 
-                                ? 'Seleccione un laboratorio primero' 
-                                : productosADevolver.length === 0 
-                                    ? 'No hay productos disponibles' 
-                                    : 'Producto'
+                    {/* Input de búsqueda de productos con autocompletado */}
+                    <div style={{ position: 'relative' }} className="producto-dropdown-container">
+                        <input 
+                            type="text" 
+                            value={productoSearchTerm}
+                            onChange={(e) => handleProductoSearch(e.target.value)}
+                            onFocus={() => setShowProductoDropdown(true)}
+                            onKeyDown={handleKeyDown}
+                            disabled={isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0}
+                            placeholder={
+                                !selectedLaboratorio 
+                                    ? 'Seleccione un laboratorio primero' 
+                                    : productosADevolver.length === 0 
+                                        ? 'No hay productos disponibles' 
+                                        : 'Buscar por código de producto...'
                             }
-                        </option>
-                        {productosADevolver.map((prod, index) => (
-                            <option key={`${prod.Codpro}-${prod.Lote}-${prod.NroGuia}-${index}`} value={prod.Codpro}>
-                                {prod.Nombre} (Lote: {prod.Lote}, Cant: {prod.Cantidad})
-                            </option>
-                        ))}
-                    </select>
+                            className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                                (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)
+                                    ? 'bg-gray-100 text-gray-600 cursor-not-allowed opacity-60' 
+                                    : 'bg-white text-gray-900'
+                            }`}
+                        />
+                        
+                        {/* Dropdown de productos filtrados */}
+                        {showProductoDropdown && !isConsultaMode && selectedLaboratorio && filteredProductos.length > 0 && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                right: 0,
+                                backgroundColor: 'white',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '6px',
+                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                zIndex: 1000,
+                                maxHeight: '200px',
+                                overflowY: 'auto'
+                            }}>
+                                {filteredProductos.map((prod, index) => (
+                                    <div
+                                        key={`${prod.Codpro}-${prod.Lote}-${prod.NroGuia}-${index}`}
+                                        onClick={() => handleSelectProducto(prod)}
+                                        style={{
+                                            padding: '8px 12px',
+                                            cursor: 'pointer',
+                                            borderBottom: '1px solid #f3f4f6',
+                                            fontSize: '12px',
+                                            transition: 'background-color 0.2s ease',
+                                            backgroundColor: 'white'
+                                        }}
+                                        onMouseOver={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                        }}
+                                        onMouseOut={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'white';
+                                        }}
+                                    >
+                                        <div style={{ fontWeight: '600', color: '#374151' }}>
+                                            {prod.Codpro} - {prod.Nombre}
+                                        </div>
+                                        <div style={{ color: '#6b7280', fontSize: '11px' }}>
+                                            Lote: {prod.Lote} | Cant: {prod.Cantidad}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                     <input 
                         type="number" 
                         name="Cantidad" 
