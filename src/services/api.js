@@ -650,6 +650,20 @@ export const autorizarCodigos = async (codigos) => {
   }
 };
 
+// Buscar guías por serie
+export const buscarGuiasPorSerie = async (serie) => {
+  try {
+    const response = await axiosClient.get(`/multi-accion/guias-serie/${encodeURIComponent(serie.trim())}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al buscar guías por serie:', error);
+    if (error.response?.status === 400) {
+      throw { status: 400, message: error.response.data.message };
+    }
+    throw { status: 500, message: 'Error al buscar guías por serie' };
+  }
+};
+
 // Kardex
 export const consultarKardex = async (filtros = {}) => {
   try {

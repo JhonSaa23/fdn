@@ -7,7 +7,8 @@ import {
   invalidarPedido, 
   buscarGuia, 
   reusarGuia, 
-  autorizarCodigos 
+  autorizarCodigos,
+  buscarGuiasPorSerie
 } from '../services/api';
 
 function MultiAccion() {
@@ -17,17 +18,21 @@ function MultiAccion() {
   const [numeroPedido, setNumeroPedido] = useState('');
   const [numeroGuia, setNumeroGuia] = useState('');
   const [codigosAutorizar, setCodigosAutorizar] = useState('');
+  const [serieGuia, setSerieGuia] = useState('');
   
   // Estados para los resultados
   const [resultadoPedido, setResultadoPedido] = useState(null);
   const [resultadoGuia, setResultadoGuia] = useState(null);
+  const [guiasSerie, setGuiasSerie] = useState([]);
   const [showPedidoModal, setShowPedidoModal] = useState(false);
   const [showGuiaModal, setShowGuiaModal] = useState(false);
+  const [showSerieModal, setShowSerieModal] = useState(false);
   
   // Estados de carga
   const [loadingPedido, setLoadingPedido] = useState(false);
   const [loadingGuia, setLoadingGuia] = useState(false);
   const [loadingAutorizar, setLoadingAutorizar] = useState(false);
+  const [loadingSerie, setLoadingSerie] = useState(false);
 
   // Función para buscar pedido
   const handleBuscarPedido = async () => {
@@ -126,6 +131,29 @@ function MultiAccion() {
     }
   };
 
+  // Función para buscar guías por serie
+  const handleBuscarGuiasPorSerie = async () => {
+    if (!serieGuia.trim()) {
+      showNotification('warning', 'Por favor ingresa una serie');
+      return;
+    }
+
+    setLoadingSerie(true);
+    try {
+      const result = await buscarGuiasPorSerie(serieGuia);
+      setGuiasSerie(result.data);
+      setShowSerieModal(true);
+    } catch (error) {
+      if (error.status === 400) {
+        showNotification('warning', error.message);
+      } else {
+        showNotification('danger', error.message);
+      }
+    } finally {
+      setLoadingSerie(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold mb-6">Multi Acción</h2>
@@ -169,29 +197,61 @@ function MultiAccion() {
           <Card.Title>Gestión de Guías</Card.Title>
         </Card.Header>
         <Card.Body>
-          <div className="flex gap-4">
-            <input
-              type="text"
-              value={numeroGuia}
-              onChange={(e) => setNumeroGuia(e.target.value)}
-              placeholder="Número de guía (T001-XXXXX)"
-              className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              onKeyPress={(e) => e.key === 'Enter' && handleBuscarGuia()}
-            />
-            <button
-              onClick={handleBuscarGuia}
-              disabled={loadingGuia}
-              className="btn btn-primary min-w-[100px]"
-            >
-              {loadingGuia ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Buscando...
-                </div>
-              ) : (
-                'Buscar'
-              )}
-            </button>
+          <div className="space-y-4">
+            {/* Búsqueda de guía individual */}
+            <div className="flex gap-4">
+              <input
+                type="text"
+                value={numeroGuia}
+                onChange={(e) => setNumeroGuia(e.target.value)}
+                placeholder="Número de guía (T001-XXXXX)"
+                className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                onKeyPress={(e) => e.key === 'Enter' && handleBuscarGuia()}
+              />
+              <button
+                onClick={handleBuscarGuia}
+                disabled={loadingGuia}
+                className="btn btn-primary min-w-[100px]"
+              >
+                {loadingGuia ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Buscando...
+                  </div>
+                ) : (
+                  'Buscar'
+                )}
+              </button>
+            </div>
+            
+            {/* Búsqueda de guías por serie */}
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Buscar por Serie</h4>
+              <div className="flex gap-4">
+                <input
+                  type="text"
+                  value={serieGuia}
+                  onChange={(e) => setSerieGuia(e.target.value.toUpperCase())}
+                  placeholder="Serie (ej: T001, T002)"
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  onKeyPress={(e) => e.key === 'Enter' && handleBuscarGuiasPorSerie()}
+                />
+                <button
+                  onClick={handleBuscarGuiasPorSerie}
+                  disabled={loadingSerie}
+                  className="btn btn-secondary min-w-[120px]"
+                >
+                  {loadingSerie ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Buscando...
+                    </div>
+                  ) : (
+                    'Buscar Serie'
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </Card.Body>
       </Card>
@@ -369,6 +429,110 @@ function MultiAccion() {
             className="btn btn-secondary"
           >
             Cancelar
+          </button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal para Guías por Serie */}
+      <Modal
+        isOpen={showSerieModal}
+        onClose={() => setShowSerieModal(false)}
+        title={`Guías de la Serie ${serieGuia}`}
+        size="xl"
+      >
+        <Modal.Body>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-gray-600">
+                Mostrando los últimos 50 registros de la serie <span className="font-mono font-medium">{serieGuia}</span>
+              </p>
+              <span className="text-sm text-gray-500">
+                Total: {guiasSerie.length} guías
+              </span>
+            </div>
+            
+            {guiasSerie.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doc. Venta</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RUC</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placa</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Peso</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {guiasSerie.map((guia, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-gray-900">
+                          {guia.Numero}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {guia.Docventa}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {guia.Fecha}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-gray-900 max-w-xs truncate" title={guia.Empresa}>
+                          {guia.Empresa}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {guia.Ruc}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {guia.Placa}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {guia.Peso}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <div className="flex space-x-1">
+                            {guia.Eliminado === 1 && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Eliminado
+                              </span>
+                            )}
+                            {guia.Impreso === 1 && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Impreso
+                              </span>
+                            )}
+                            {guia.Eliminado === 0 && guia.Impreso === 0 && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Pendiente
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
+                  <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron guías</h3>
+                <p className="text-sm text-gray-500">No hay registros para la serie especificada</p>
+              </div>
+            )}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            onClick={() => setShowSerieModal(false)}
+            className="btn btn-secondary"
+          >
+            Cerrar
           </button>
         </Modal.Footer>
       </Modal>
