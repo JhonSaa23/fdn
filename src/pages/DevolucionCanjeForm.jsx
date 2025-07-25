@@ -1154,6 +1154,16 @@ const DevolucionCanjeForm = () => {
             maxWidth: '100%',
             overflowX: 'hidden',
         }}>
+            
+            {/* Estilos CSS para animación de recarga */}
+            <style>
+                {`
+                    @keyframes spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+                `}
+            </style>
 
             {isLoading && (
                 <div style={{
@@ -1530,26 +1540,110 @@ const DevolucionCanjeForm = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                     {/* Input de búsqueda de productos con autocompletado */}
                     <div style={{ position: 'relative' }} className="producto-dropdown-container">
-                        <input 
-                            type="text" 
-                            value={productoSearchTerm}
-                            onChange={(e) => handleProductoSearch(e.target.value)}
-                            onFocus={() => setShowProductoDropdown(true)}
-                            onKeyDown={handleKeyDown}
-                            disabled={isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0}
-                            placeholder={
-                                !selectedLaboratorio 
-                                    ? 'Seleccione un laboratorio primero' 
-                                    : productosADevolver.length === 0 
-                                        ? 'No hay productos disponibles' 
-                                        : 'Buscar por código de producto...'
-                            }
-                            className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                                (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)
-                                    ? 'bg-gray-100 text-gray-600 cursor-not-allowed opacity-60' 
-                                    : 'bg-white text-gray-900'
-                            }`}
-                        />
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <input 
+                                type="text" 
+                                value={productoSearchTerm}
+                                onChange={(e) => handleProductoSearch(e.target.value)}
+                                onFocus={() => setShowProductoDropdown(true)}
+                                onKeyDown={handleKeyDown}
+                                disabled={isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0}
+                                placeholder={
+                                    !selectedLaboratorio 
+                                        ? 'Seleccione un laboratorio primero' 
+                                        : productosADevolver.length === 0 
+                                            ? 'No hay productos disponibles' 
+                                            : 'Buscar por código de producto...'
+                                }
+                                className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                                    (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)
+                                        ? 'bg-gray-100 text-gray-600 cursor-not-allowed opacity-60' 
+                                        : 'bg-white text-gray-900'
+                                }`}
+                            />
+                            
+                            {/* Botón de recarga */}
+                            {selectedLaboratorio && !isConsultaMode && (
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            setIsLoading(true);
+                                            setMessage('');
+                                            setIsError(false);
+                                            
+                                            const cleanCodlab = selectedLaboratorio.trim();
+                                            console.log('🔄 Recargando productos para laboratorio:', cleanCodlab);
+                                            
+                                            const response = await axios.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
+                                            if (response.data.success) {
+                                                setProductosADevolver(response.data.data);
+                                                setFilteredProductos(response.data.data);
+                                                setProductoSearchTerm('');
+                                                setShowProductoDropdown(false);
+                                                
+                                                console.log('✅ Productos recargados:', response.data.data.length, 'productos');
+                                                setMessage(`✅ Productos actualizados: ${response.data.data.length} productos disponibles`);
+                                                setIsError(false);
+                                            } else {
+                                                setMessage(`❌ Error al recargar productos: ${response.data.message}`);
+                                                setIsError(true);
+                                            }
+                                        } catch (error) {
+                                            console.error('❌ Error al recargar productos:', error);
+                                            setMessage(`❌ Error de red al recargar productos: ${error.message}`);
+                                            setIsError(true);
+                                        } finally {
+                                            setIsLoading(false);
+                                        }
+                                    }}
+                                    disabled={isLoading}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '8px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        backgroundColor: 'transparent',
+                                        border: 'none',
+                                        cursor: isLoading ? 'not-allowed' : 'pointer',
+                                        padding: '4px',
+                                        borderRadius: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s ease',
+                                        opacity: isLoading ? 0.5 : 1
+                                    }}
+                                    onMouseOver={(e) => {
+                                        if (!isLoading) {
+                                            e.target.style.backgroundColor = '#f3f4f6';
+                                        }
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.target.style.backgroundColor = 'transparent';
+                                    }}
+                                    title="Recargar productos disponibles"
+                                >
+                                    <svg 
+                                        width="16" 
+                                        height="16" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="2" 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round"
+                                        style={{
+                                            color: '#6b7280',
+                                            animation: isLoading ? 'spin 1s linear infinite' : 'none'
+                                        }}
+                                    >
+                                        <path d="M23 4v6h-6"/>
+                                        <path d="M1 20v-6h6"/>
+                                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
                         
                         {/* Dropdown de productos filtrados */}
                         {showProductoDropdown && !isConsultaMode && selectedLaboratorio && filteredProductos.length > 0 && (
