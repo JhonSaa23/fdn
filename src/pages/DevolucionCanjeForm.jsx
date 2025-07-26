@@ -791,7 +791,7 @@ const DevolucionCanjeForm = () => {
             
             const numeroGuia = numeroGuiaResponse.data.numero;
             setNumeroGuiaGenerado(numeroGuia);
-            setPesoGuia('0.00');
+            setPesoGuia('');
             setDireccionGuia('');
             
             console.log(`✅ Número de guía obtenido: ${numeroGuia}`);
@@ -985,7 +985,7 @@ const DevolucionCanjeForm = () => {
                 placa: cabecera.Placa,
                 pto: cabecera.PtoLlegada,
                 destino: cabecera.Destinatario,
-                peso: parseFloat(pesoGuia) || 0.00
+                                        peso: pesoGuia || '0.00'
             };
             
             const guiaVentaResponse = await axios.post('/guias-venta/insertar', guiaVentaData);
@@ -2834,13 +2834,19 @@ const DevolucionCanjeForm = () => {
                                 }}>
                                     ⚖️ Peso
                                 </label>
+                                <div style={{
+                                    fontSize: '11px',
+                                    color: '#666',
+                                    marginBottom: '4px',
+                                    fontStyle: 'italic'
+                                }}>
+                                    Puedes escribir números y unidades (ej: 1.5 K, 500 ml, 2.3 kg)
+                                </div>
                                 <input
-                                    type="number"
+                                    type="text"
                                     value={pesoGuia}
                                     onChange={(e) => setPesoGuia(e.target.value)}
-                                    placeholder="0.00"
-                                    step="0.01"
-                                    min="0"
+                                    placeholder="0.00 K, 500 ml, etc."
                                     style={{
                                         width: '100%',
                                         padding: '12px',
