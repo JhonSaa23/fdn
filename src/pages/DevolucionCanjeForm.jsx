@@ -134,6 +134,19 @@ const DevolucionCanjeForm = () => {
     const [productoSearchTerm, setProductoSearchTerm] = useState('');
     const [showProductoDropdown, setShowProductoDropdown] = useState(false);
     const [filteredProductos, setFilteredProductos] = useState([]);
+    
+    // Estados para el modal de productos
+    const [showProductosModal, setShowProductosModal] = useState(false);
+    const [laboratoriosProductos, setLaboratoriosProductos] = useState([]);
+    const [productosPorLaboratorio, setProductosPorLaboratorio] = useState([]);
+    const [selectedLaboratorioProductos, setSelectedLaboratorioProductos] = useState('');
+    const [productosSearchTerm, setProductosSearchTerm] = useState('');
+    const [filteredProductosModal, setFilteredProductosModal] = useState([]);
+    const [loadingProductos, setLoadingProductos] = useState(false);
+    
+    // Estados para el dropdown de laboratorios en modal de productos
+    const [showLaboratorioDropdown, setShowLaboratorioDropdown] = useState(false);
+    const [filteredLaboratorios, setFilteredLaboratorios] = useState([]);
 
     // --- FUNCIONES DE CARGA ---
     const fetchLaboratorios = async () => {
@@ -181,11 +194,14 @@ const DevolucionCanjeForm = () => {
         fetchTransportistas();
     }, []);
 
-    // Cerrar dropdown de productos cuando se hace clic fuera
+    // Cerrar dropdowns cuando se hace clic fuera
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (showProductoDropdown && !event.target.closest('.producto-dropdown-container')) {
                 setShowProductoDropdown(false);
+            }
+            if (showLaboratorioDropdown && !event.target.closest('.laboratorio-dropdown-container')) {
+                setShowLaboratorioDropdown(false);
             }
         };
 
@@ -193,7 +209,7 @@ const DevolucionCanjeForm = () => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [showProductoDropdown]);
+    }, [showProductoDropdown, showLaboratorioDropdown]);
 
     useEffect(() => {
         if (selectedLaboratorio) {
@@ -1025,6 +1041,123 @@ const DevolucionCanjeForm = () => {
         }
     };
 
+    // Funciones para el modal de productos
+    const handleProductosClick = async () => {
+        setShowProductosModal(true);
+        setLaboratorioSearchTerm('');
+        setShowLaboratorioDropdown(false);
+        await cargarLaboratoriosProductos();
+    };
+
+    const cargarLaboratoriosProductos = async () => {
+        setLoadingProductos(true);
+        try {
+            console.log('🔍 Cargando laboratorios para productos...');
+            const response = await axios.get('/productos/laboratorios');
+            if (response.data.success) {
+                setLaboratoriosProductos(response.data.data);
+                setFilteredLaboratorios(response.data.data); // Inicializar filtrado
+                console.log(`✅ Se cargaron ${response.data.data.length} laboratorios`);
+            } else {
+                setMessage(`Error al cargar laboratorios: ${response.data.message}`);
+                setIsError(true);
+                setFilteredLaboratorios([]);
+            }
+        } catch (error) {
+            console.error('❌ Error al cargar laboratorios:', error);
+            setMessage(`Error de red al cargar laboratorios: ${error.message}`);
+            setIsError(true);
+            setFilteredLaboratorios([]);
+        } finally {
+            setLoadingProductos(false);
+        }
+    };
+
+    const handleLaboratorioProductosChange = async (codlab) => {
+        setSelectedLaboratorioProductos(codlab);
+        setProductosSearchTerm('');
+        setFilteredProductosModal([]);
+        
+        if (codlab) {
+            await cargarProductosPorLaboratorio(codlab);
+        } else {
+            setProductosPorLaboratorio([]);
+        }
+    };
+
+    const cargarProductosPorLaboratorio = async (codlab) => {
+        setLoadingProductos(true);
+        try {
+            console.log('🔍 Cargando productos para laboratorio:', codlab);
+            const response = await axios.get(`/productos/laboratorio/${codlab}`);
+            if (response.data.success) {
+                setProductosPorLaboratorio(response.data.data);
+                setFilteredProductosModal(response.data.data);
+                console.log(`✅ Se cargaron ${response.data.data.length} productos`);
+            } else {
+                setMessage(`Error al cargar productos: ${response.data.message}`);
+                setIsError(true);
+                setProductosPorLaboratorio([]);
+                setFilteredProductosModal([]);
+            }
+        } catch (error) {
+            console.error('❌ Error al cargar productos:', error);
+            setMessage(`Error de red al cargar productos: ${error.message}`);
+            setIsError(true);
+            setProductosPorLaboratorio([]);
+            setFilteredProductosModal([]);
+        } finally {
+            setLoadingProductos(false);
+        }
+    };
+
+    const handleProductosSearch = (searchTerm) => {
+        setProductosSearchTerm(searchTerm);
+        
+        if (!searchTerm.trim()) {
+            setFilteredProductosModal(productosPorLaboratorio);
+            return;
+        }
+        
+        const filtered = productosPorLaboratorio.filter(producto => 
+            (producto.codpro && producto.codpro.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (producto.nombre && producto.nombre.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (producto.lote && producto.lote.toString().toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+        
+        setFilteredProductosModal(filtered);
+    };
+
+    // Funciones para el autocompletado de laboratorios en el modal
+    const handleLaboratorioSearch = (searchTerm) => {
+        setLaboratorioSearchTerm(searchTerm);
+        setShowLaboratorioDropdown(true);
+        
+        if (!searchTerm.trim()) {
+            setFilteredLaboratorios(laboratoriosProductos);
+            return;
+        }
+        
+        const filtered = laboratoriosProductos.filter(lab => 
+            (lab.codlab && lab.codlab.toString().toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (lab.Descripcion && lab.Descripcion.toString().toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+        
+        setFilteredLaboratorios(filtered);
+    };
+
+    const handleLaboratorioInputClick = () => {
+        setShowLaboratorioDropdown(true);
+        setFilteredLaboratorios(laboratoriosProductos);
+    };
+
+    const handleSelectLaboratorio = (laboratorio) => {
+        setSelectedLaboratorioProductos(laboratorio.codlab);
+        setLaboratorioSearchTerm(`${laboratorio.codlab} - ${laboratorio.Descripcion}`);
+        setShowLaboratorioDropdown(false);
+        cargarProductosPorLaboratorio(laboratorio.codlab);
+    };
+
         // --- Lógica para añadir/modificar/eliminar ítems de detalle en la grilla ---
     const handleAddDetalle = () => {
         if (!currentItemDetalle.codpro || !currentItemDetalle.Cantidad) {
@@ -1150,7 +1283,6 @@ const DevolucionCanjeForm = () => {
         <div style={{ 
             fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', 
             backgroundColor: '#f8f9fa',
-            minHeight: '100vh',
             maxWidth: '100%',
             overflowX: 'hidden',
         }}>
@@ -1198,8 +1330,8 @@ const DevolucionCanjeForm = () => {
             {/* Cabecera del Documento - Estilo moderno */}
             <div style={{ 
                 backgroundColor: 'white', 
-                padding: isMobile ? '16px' : '25px', 
-                marginBottom: '25px', 
+                padding: isMobile ? '15px' : '15px', 
+                marginBottom: '15px', 
                 borderRadius: '12px', 
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 border: '1px solid #e0e0e0'
@@ -1221,7 +1353,7 @@ const DevolucionCanjeForm = () => {
                         margin: '0',
                         textAlign: isMobile ? 'center' : 'left'
                     }}>
-                        📄 Cabecera del Documento
+                        Cabecera del Documento
                     </h3>
                     
                     {/* Botones de Acción */}
@@ -1254,7 +1386,7 @@ const DevolucionCanjeForm = () => {
                             e.target.style.transform = 'translateY(0)';
                             e.target.style.boxShadow = '0 2px 4px rgba(33,150,243,0.3)';
                         }}
-                        >🆕 Nuevo</button>
+                        >Nuevo</button>
                         <button onClick={handleBuscarClick} style={{ 
                             backgroundColor: '#4caf50', 
                             color: 'white', 
@@ -1277,7 +1409,7 @@ const DevolucionCanjeForm = () => {
                             e.target.style.transform = 'translateY(0)';
                             e.target.style.boxShadow = '0 2px 4px rgba(76,175,80,0.3)';
                         }}
-                        >🔍 Busca</button>
+                        >Busca</button>
                         
                         <button 
                             onClick={handleCabGuiasClick}
@@ -1303,7 +1435,7 @@ const DevolucionCanjeForm = () => {
                             e.target.style.transform = 'translateY(0)';
                             e.target.style.boxShadow = '0 2px 4px rgba(155,89,182,0.3)';
                         }}
-                        >📋 CabGuias</button>
+                        >CabGuias</button>
                         
                         <button 
                             onClick={handleEliminar} 
@@ -1334,7 +1466,33 @@ const DevolucionCanjeForm = () => {
                                 e.target.style.boxShadow = '0 2px 4px rgba(244,67,54,0.3)';
                             }
                         }}
-                        >🗑️ Eliminar</button>
+                        >Eliminar</button>
+                        
+                        <button 
+                            onClick={handleProductosClick}
+                            style={{ 
+                                backgroundColor: '#ff9800', 
+                                color: 'white', 
+                                border: 'none', 
+                                padding: isMobile ? '12px 16px' : '8px 16px', 
+                                cursor: 'pointer', 
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                fontSize: isMobile ? '14px' : '12px',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 2px 4px rgba(255,152,0,0.3)',
+                                flex: isMobile ? '1' : 'none',
+                                minWidth: isMobile ? '80px' : 'auto'
+                            }}
+                        onMouseOver={(e) => {
+                            e.target.style.transform = 'translateY(-1px)';
+                            e.target.style.boxShadow = '0 4px 8px rgba(255,152,0,0.4)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = '0 2px 4px rgba(255,152,0,0.3)';
+                        }}
+                        >Productos</button>
                     </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
@@ -1484,8 +1642,8 @@ const DevolucionCanjeForm = () => {
             {/* Detalles de la Guia (para añadir/editar un item) - Estilo moderno */}
             <div style={{ 
                 backgroundColor: 'white', 
-                padding: '16px', 
-                marginBottom: '25px', 
+                padding: '15px', 
+                marginBottom: '15px', 
                 borderRadius: '12px', 
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 border: '1px solid #e0e0e0'
@@ -1537,7 +1695,7 @@ const DevolucionCanjeForm = () => {
                         ➕ Agregar Detalle
                     </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Input de búsqueda de productos con autocompletado */}
                     <div style={{ position: 'relative' }} className="producto-dropdown-container">
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -1747,8 +1905,8 @@ const DevolucionCanjeForm = () => {
             {/* Grilla de Detalles de la Guia - Estilo moderno */}
             <div style={{ 
                 backgroundColor: 'white', 
-                padding: '16px', 
-                marginBottom: '25px', 
+                padding: '15px', 
+                marginBottom: '15px', 
                 borderRadius: '12px', 
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 border: '1px solid #e0e0e0'
@@ -1980,12 +2138,10 @@ const DevolucionCanjeForm = () => {
                 display: 'flex', 
                 justifyContent: 'flex-end', 
                 gap: '15px',
-                padding: '25px',
-                backgroundColor: 'white',
+                padding: '10px',
                 borderRadius: '12px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                border: '1px solid #e0e0e0',
-                marginTop: '20px'
+                marginTop: '15px',
+                marginBottom: '15px'
             }}>
                 <button 
                     onClick={handleRegistrar} 
@@ -3139,6 +3295,301 @@ const DevolucionCanjeForm = () => {
                                 </div>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Productos - Minimalista */}
+            {showProductosModal && (
+                <div 
+                    style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                    }}
+                >
+                    <div 
+                        style={{
+                            backgroundColor: 'white', 
+                            padding: '10px', 
+                            borderRadius: '8px',
+                            width: isMobile ? '95%' : '85%', 
+                            maxWidth: '1200px',
+                            height: isMobile ? '90vh' : '80vh',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                            border: '1px solid #ddd',
+                            position: 'relative',
+                            zIndex: 1000
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header Minimalista */}
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '15px',
+                            borderBottom: '2px solid #ff9800',
+                            paddingBottom: '10px',
+                            flexShrink: 0
+                        }}>
+                            <h3 style={{ 
+                                color: '#333',
+                                fontSize: '18px',
+                                fontWeight: '600',
+                                margin: '0'
+                            }}>
+                                Productos por Laboratorio
+                            </h3>
+                            <button 
+                                onClick={() => setShowProductosModal(false)}
+                                style={{
+                                    backgroundColor: '#e74c3c',
+                                    color: 'white',
+                                    border: 'none',
+                                    width: '24px',
+                                    height: '24px',
+                                    borderRadius: '50%',
+                                    cursor: 'pointer',
+                                    fontSize: '12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Controles Compactos */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '15px',
+                            marginBottom: '15px',
+                            flexWrap: 'wrap',
+                            flexShrink: 0
+                        }}>
+                            {/* Selector de Laboratorio con Autocompletado */}
+                            <div style={{ flex: '1', minWidth: '200px', position: 'relative', zIndex: 9998 }} className="laboratorio-dropdown-container">
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '12px',
+                                    color: '#666',
+                                    marginBottom: '5px',
+                                    fontWeight: '500'
+                                }}>
+                                    Laboratorio
+                                </label>
+                                <div style={{ position: 'relative' }}>
+                                    <input 
+                                        type="text"
+                                        value={laboratorioSearchTerm}
+                                        onChange={(e) => handleLaboratorioSearch(e.target.value)}
+                                        onClick={handleLaboratorioInputClick}
+                                        placeholder="Buscar por código o descripción..."
+                                        disabled={loadingProductos}
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 12px',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
+                                            fontSize: '14px',
+                                            backgroundColor: loadingProductos ? '#f5f5f5' : 'white',
+                                            cursor: 'text'
+                                        }}
+                                    />
+                                    
+                                    {/* Dropdown de Laboratorios */}
+                                    {showLaboratorioDropdown && filteredLaboratorios.length > 0 && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            backgroundColor: 'white',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            zIndex: 9999,
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                            marginTop: '2px'
+                                        }}>
+                                            {filteredLaboratorios.map((lab, index) => (
+                                                <div
+                                                    key={index}
+                                                    onClick={() => handleSelectLaboratorio(lab)}
+                                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f8ff'}
+                                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                                                    style={{
+                                                        padding: '10px 12px',
+                                                        cursor: 'pointer',
+                                                        borderBottom: '1px solid #eee',
+                                                        fontSize: '13px',
+                                                        transition: 'background-color 0.2s ease'
+                                                    }}
+                                                >
+                                                    <div style={{ fontWeight: '600', color: '#333', marginBottom: '2px' }}>
+                                                        {lab.codlab}
+                                                    </div>
+                                                    <div style={{ color: '#666', fontSize: '12px' }}>
+                                                        {lab.Descripcion}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Búsqueda de Productos */}
+                            {selectedLaboratorioProductos && productosPorLaboratorio.length > 0 && (
+                                <div style={{ flex: '1', minWidth: '200px' }}>
+                                    <label style={{
+                                        display: 'block',
+                                        fontSize: '12px',
+                                        color: '#666',
+                                        marginBottom: '5px',
+                                        fontWeight: '500'
+                                    }}>
+                                        Buscar
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        value={productosSearchTerm}
+                                        onChange={(e) => handleProductosSearch(e.target.value)}
+                                        placeholder="Código, nombre o lote..."
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 12px',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Lista de Productos Compacta */}
+                        {selectedLaboratorioProductos && productosPorLaboratorio.length > 0 && (
+                            <div style={{
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                overflow: 'hidden',
+                                flex: 1,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                minHeight: 0
+                            }}>
+                                <div style={{
+                                    backgroundColor: '#ff9800',
+                                    color: 'white',
+                                    padding: '10px 15px',
+                                    fontWeight: '600',
+                                    fontSize: '14px',
+                                    flexShrink: 0
+                                }}>
+                                    Productos ({filteredProductosModal.length})
+                                </div>
+                                
+                                {loadingProductos ? (
+                                    <div style={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#666',
+                                        fontSize: '14px'
+                                    }}>
+                                        Cargando productos...
+                                    </div>
+                                ) : filteredProductosModal.length === 0 ? (
+                                    <div style={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#666',
+                                        fontSize: '14px',
+                                        backgroundColor: '#f9f9f9'
+                                    }}>
+                                        No se encontraron productos
+                                    </div>
+                                ) : (
+                                    <div style={{
+                                        flex: 1,
+                                        overflowY: 'auto',
+                                        minHeight: 0
+                                    }}>
+                                        <div style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '8px'
+                                        }}>
+                                            {filteredProductosModal.map((producto, index) => (
+                                                <div key={index} style={{
+                                                    backgroundColor: index % 2 === 0 ? 'white' : '#f9f9f9',
+                                                    border: '1px solid #eee',
+                                                    borderRadius: '6px',
+                                                    padding: '12px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f8ff'}
+                                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'white' : '#f9f9f9'}
+                                                >
+                                                    {/* Primer renglón: Nombre completo */}
+                                                    <div style={{
+                                                        fontSize: '13px',
+                                                        fontWeight: '600',
+                                                        color: '#333',
+                                                        marginBottom: '6px',
+                                                        lineHeight: '1.3'
+                                                    }}>
+                                                        {producto.nombre}
+                                                    </div>
+                                                    
+                                                    {/* Segundo renglón: Detalles */}
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        fontSize: '11px',
+                                                        color: '#666',
+                                                        flexWrap: 'wrap',
+                                                        gap: '8px'
+                                                    }}>
+                                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                            <span style={{ fontWeight: '600', color: '#333' }}>
+                                                                Código: {producto.codpro}
+                                                            </span>
+                                                            <span>
+                                                                Lote: {producto.lote || '-'}
+                                                            </span>
+                                                            <span style={{ fontWeight: '600', color: '#ff6b35' }}>
+                                                                Unidades: {producto.unidades}
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                            <span>
+                                                                Venc: {producto.vencimiento ? formatFechaDisplay(producto.vencimiento) : '-'}
+                                                            </span>
+                                                            <span>
+                                                                Fecha: {producto.Fecha ? formatFechaDisplay(producto.Fecha) : '-'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
