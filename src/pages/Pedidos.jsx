@@ -8,7 +8,8 @@ import {
   XMarkIcon,
   CalendarDaysIcon,
   DocumentTextIcon,
-  TrashIcon
+  TrashIcon,
+  CubeIcon
 } from '@heroicons/react/24/outline';
 import Modal from '../components/Modal';
 import axiosClient from '../services/axiosClient';
@@ -31,6 +32,9 @@ const Pedidos = () => {
   const [showModal, setShowModal] = useState(false);
   const [autorizandoPedido, setAutorizandoPedido] = useState(null);
   const [eliminandoPedido, setEliminandoPedido] = useState(null);
+  const [productosPedido, setProductosPedido] = useState(null);
+  const [showModalProductos, setShowModalProductos] = useState(false);
+  const [cargandoProductos, setCargandoProductos] = useState(false);
 
   // Cargar pedidos por defecto al montar el componente
   useEffect(() => {
@@ -109,7 +113,9 @@ const Pedidos = () => {
 
   const verDetallePedido = async (numero) => {
     try {
-      const response = await axiosClient.get(`/pedidos/${numero}`);
+      // Limpiar el número del pedido (eliminar espacios al inicio y final)
+      const numeroLimpio = numero.trim();
+      const response = await axiosClient.get(`/pedidos/${numeroLimpio}`);
       const data = response.data;
 
       if (data.success) {
@@ -127,8 +133,10 @@ const Pedidos = () => {
   const autorizarPedido = async (numero) => {
     try {
       setAutorizandoPedido(numero);
+      // Limpiar el número del pedido (eliminar espacios al inicio y final)
+      const numeroLimpio = numero.trim();
 
-      const response = await axiosClient.post(`/pedidos/autorizar/${numero}`);
+      const response = await axiosClient.post(`/pedidos/autorizar/${numeroLimpio}`);
 
       const data = response.data;
 
@@ -150,8 +158,10 @@ const Pedidos = () => {
   const eliminarPedido = async (numero) => {
     try {
       setEliminandoPedido(numero);
+      // Limpiar el número del pedido (eliminar espacios al inicio y final)
+      const numeroLimpio = numero.trim();
 
-      const response = await axiosClient.delete(`/pedidos/${numero}`);
+      const response = await axiosClient.delete(`/pedidos/${numeroLimpio}`);
 
       const data = response.data;
 
@@ -167,6 +177,28 @@ const Pedidos = () => {
       showNotification('danger', 'Error de conexión al eliminar el pedido');
     } finally {
       setEliminandoPedido(null);
+    }
+  };
+
+  const verProductosPedido = async (numero) => {
+    try {
+      setCargandoProductos(true);
+      // Limpiar el número del pedido (eliminar espacios al inicio y final)
+      const numeroLimpio = numero.trim();
+      const response = await axiosClient.get(`/pedidos/${numeroLimpio}/productos`);
+      const data = response.data;
+
+      if (data.success) {
+        setProductosPedido(data.data);
+        setShowModalProductos(true);
+      } else {
+        showNotification('danger', data.error || 'Error al cargar los productos del pedido');
+      }
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      showNotification('danger', 'Error de conexión al cargar los productos');
+    } finally {
+      setCargandoProductos(false);
     }
   };
 
@@ -404,6 +436,28 @@ const Pedidos = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              verProductosPedido(pedido.Numero);
+                            }}
+                            disabled={cargandoProductos}
+                            className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                            title="Ver productos del pedido"
+                          >
+                            {cargandoProductos ? (
+                              <>
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                Cargando...
+                              </>
+                            ) : (
+                              <>
+                                <CubeIcon className="w-3 h-3" />
+                                Productos
+                              </>
+                            )}
+                          </button>
+
                           {pedido.Estado === 1 && (
                             <button
                               onClick={(e) => {
@@ -502,6 +556,18 @@ const Pedidos = () => {
                     >
                       <EyeIcon className="w-4 h-4" />
                       Ver detalle
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        verProductosPedido(pedido.Numero);
+                      }}
+                      disabled={cargandoProductos}
+                      className="flex items-center gap-1 text-indigo-600 hover:text-indigo-900 text-sm"
+                    >
+                      <CubeIcon className="w-4 h-4" />
+                      Productos
                     </button>
 
                     <div className="flex items-center gap-1 ml-auto">
@@ -712,6 +778,125 @@ const Pedidos = () => {
         )}
       </Modal>
 
+      {/* Modal de productos del pedido */}
+      <Modal
+        isOpen={showModalProductos}
+        onClose={() => setShowModalProductos(false)}
+        title={`Productos del Pedido ${productosPedido?.numero}`}
+        size="6xl"
+      >
+        {productosPedido && (
+          <div className="space-y-6">
+            {/* Resumen del pedido */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Resumen del Pedido</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <div className="font-medium text-gray-700">Total Productos</div>
+                  <div className="text-lg font-bold">{productosPedido.resumen.totalProductos}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-700">Total Cantidad</div>
+                  <div className="text-lg font-bold">{productosPedido.resumen.totalCantidad}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-700">Subtotal</div>
+                  <div className="text-lg font-bold">S/ {formatearMonto(productosPedido.resumen.subtotal)}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-700">Subtotal con Descuento</div>
+                  <div className="text-lg font-bold">S/ {formatearMonto(productosPedido.resumen.subtotalConDescuento)}</div>
+                </div>
+              </div>
+              
+              {/* Información de autorización */}
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <div className="font-medium text-gray-700">Requieren Autorización</div>
+                  <div className="text-lg font-bold text-orange-600">{productosPedido.resumen.productosRequierenAutorizacion}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-700">No Requieren Autorización</div>
+                  <div className="text-lg font-bold text-green-600">{productosPedido.resumen.productosNoRequierenAutorizacion}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-700">Porcentaje Requiere Autorización</div>
+                  <div className="text-lg font-bold text-blue-600">{productosPedido.resumen.porcentajeRequiereAutorizacion}%</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabla de productos */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Lista de Productos</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                                         <tr>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento 1</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento 2</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento 3</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Autorización</th>
+                     </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                                         {productosPedido.productos.map((producto, index) => (
+                       <tr key={index} className="hover:bg-gray-50">
+                         <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-gray-900">{producto.CodPro}</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{producto.Cantidad}</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">S/ {formatearMonto(producto.Precio)}</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                           {producto.Descuento1 ? `${producto.Descuento1}%` : '0%'}
+                         </td>
+                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                           {producto.Descuento2 ? `${producto.Descuento2}%` : '0%'}
+                         </td>
+                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                           {producto.Descuento3 ? `${producto.Descuento3}%` : '0%'}
+                         </td>
+                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">S/ {formatearMonto(producto.Subtotal)}</td>
+                         <td className="px-3 py-2 whitespace-nowrap">
+                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                             producto.RequiereAutorizacion
+                               ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                               : 'bg-green-100 text-green-800 border border-green-200'
+                           }`}>
+                             {producto.EstadoAutorizacion}
+                           </span>
+                         </td>
+                       </tr>
+                     ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Información adicional de productos */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Información Adicional</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                 <div>
+                   <h4 className="font-medium text-gray-700 mb-2">Campos de DocdetPed</h4>
+                   <div className="bg-gray-50 p-3 rounded text-xs font-mono">
+                     Numero, CodPro, Unimed, Cantidad, Precio, Descuento1, Descuento2, Descuento3, 
+                     Adicional, Unidades, Subtotal, Paquete, Editado, Autoriza, Nbonif
+                   </div>
+                 </div>
+                 <div>
+                   <h4 className="font-medium text-gray-700 mb-2">Campos Calculados</h4>
+                   <div className="bg-gray-50 p-3 rounded text-xs font-mono">
+                     SubtotalCalculado, TotalConDescuento, DescuentoTotal, RequiereAutorizacion, EstadoAutorizacion
+                   </div>
+                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
 
     </div>
   );
