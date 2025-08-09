@@ -555,7 +555,7 @@ const Pedidos = () => {
                       className="flex items-center gap-1 text-blue-600 hover:text-blue-900 text-sm"
                     >
                       <EyeIcon className="w-4 h-4" />
-                      Ver detalle
+                      Detalle
                     </button>
 
                     <button
@@ -567,7 +567,7 @@ const Pedidos = () => {
                       className="flex items-center gap-1 text-indigo-600 hover:text-indigo-900 text-sm"
                     >
                       <CubeIcon className="w-4 h-4" />
-                      Productos
+                      Prod
                     </button>
 
                     <div className="flex items-center gap-1 ml-auto">
@@ -834,11 +834,11 @@ const Pedidos = () => {
                   <thead className="bg-gray-50">
                                          <tr>
                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
-                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cant</th>
                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento 1</th>
-                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento 2</th>
-                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento 3</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desc 1</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desc 2</th>
+                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desc 3</th>
                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Autorización</th>
                      </tr>
@@ -875,25 +875,7 @@ const Pedidos = () => {
               </div>
             </div>
 
-            {/* Información adicional de productos */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Información Adicional</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                 <div>
-                   <h4 className="font-medium text-gray-700 mb-2">Campos de DocdetPed</h4>
-                   <div className="bg-gray-50 p-3 rounded text-xs font-mono">
-                     Numero, CodPro, Unimed, Cantidad, Precio, Descuento1, Descuento2, Descuento3, 
-                     Adicional, Unidades, Subtotal, Paquete, Editado, Autoriza, Nbonif
-                   </div>
-                 </div>
-                 <div>
-                   <h4 className="font-medium text-gray-700 mb-2">Campos Calculados</h4>
-                   <div className="bg-gray-50 p-3 rounded text-xs font-mono">
-                     SubtotalCalculado, TotalConDescuento, DescuentoTotal, RequiereAutorizacion, EstadoAutorizacion
-                   </div>
-                 </div>
-              </div>
-            </div>
+            <div className="flex justify-end"></div>
           </div>
         )}
       </Modal>
