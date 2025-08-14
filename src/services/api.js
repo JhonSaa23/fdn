@@ -985,6 +985,27 @@ export const obtenerClienteDocumento = async (numero) => {
   }
 };
 
+// Función para consultar ventas específicas
+export const consultarVentas = async (filtros) => {
+  try {
+    const response = await axiosClient.post('/kardex/consultar-ventas', filtros);
+    return response.data;
+  } catch (error) {
+    console.error('Error al consultar ventas:', error);
+    throw error;
+  }
+};
+
+export const obtenerVendedores = async () => {
+  try {
+    const response = await axiosClient.get('/kardex/vendedores');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener vendedores:', error);
+    throw error;
+  }
+};
+
 // ===== CONTEOS FÍSICOS =====
 
 // Guardar o actualizar conteo físico

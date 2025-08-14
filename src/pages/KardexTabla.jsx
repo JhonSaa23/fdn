@@ -4,6 +4,7 @@ import axios from '../services/axiosClient';
 import { getObservacionesDocumento, ejecutarProcedimientoKardex, getKardexTabla, obtenerDetalleDocumentoConHeaders, obtenerTodosLosProductos } from '../services/api';
 import ObservacionesModal from '../components/ObservacionesModal';
 import DocumentoDetalleModal from '../components/DocumentoDetalleModal';
+import ConsultarVentasModal from '../components/ConsultarVentasModal';
 import {
   ChevronUpIcon,
   ChevronDownIcon,
@@ -36,6 +37,9 @@ const KardexTabla = () => {
     data: null,
     loading: false
   });
+  const [ventasModal, setVentasModal] = useState({
+    isOpen: false
+  });
   const [procedureParams, setProcedureParams] = useState({
     codigo: '',
     lote: '',
@@ -52,6 +56,9 @@ const KardexTabla = () => {
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
   const [cargandoProductos, setCargandoProductos] = useState(false);
 
+  // Estado para mantener el orden original de las columnas
+  const [columnOrder, setColumnOrder] = useState([]);
+
   // Cargar datos
   useEffect(() => {
     const fetchData = async () => {
@@ -59,6 +66,11 @@ const KardexTabla = () => {
         setLoading(true);
         const response = await getKardexTabla();
         setData(response);
+        
+        // Mantener el orden original de las columnas del primer registro
+        if (response.length > 0) {
+          setColumnOrder(Object.keys(response[0]));
+        }
         
         // Obtener valores únicos para cada columna
         const values = {};
@@ -100,6 +112,11 @@ const KardexTabla = () => {
       setLoading(true);
       const response = await getKardexTabla();
       setData(response);
+      
+      // Mantener el orden original de las columnas del primer registro
+      if (response.length > 0) {
+        setColumnOrder(Object.keys(response[0]));
+      }
       
       // Obtener valores únicos para cada columna
       const values = {};
@@ -497,24 +514,35 @@ const KardexTabla = () => {
       <div className="p-2 border-b bg-gray-50">
         
         <div className="flex justify-between items-center mb-3">
-        <h3 className="text-sm font-medium text-gray-700">Consultar Kardex</h3>
-          <button
-            onClick={handleExecuteProcedure}
-            disabled={executingProcedure}
-            className="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {executingProcedure ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Ejecutando...
-              </>
-            ) : (
-              'Consultar'
-            )}
-          </button>
+          <h3 className="text-sm font-medium text-gray-700">Consultar Kardex</h3>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setVentasModal({ isOpen: true })}
+              className="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Consultar Ventas
+            </button>
+            <button
+              onClick={handleExecuteProcedure}
+              disabled={executingProcedure}
+              className="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {executingProcedure ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Ejecutando...
+                </>
+              ) : (
+                'Consultar'
+              )}
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-4 md:grid-cols-4 gap-1">
           <div className="relative">
@@ -606,7 +634,7 @@ const KardexTabla = () => {
                 <th className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                   Acciones
                 </th>
-                {Object.keys(data[0] || {}).map((columnName) => (
+                {columnOrder.map((columnName) => (
                   <th
                     key={columnName}
                     className="px-2 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider relative bg-gray-50"
@@ -742,14 +770,14 @@ const KardexTabla = () => {
                   <td className="px-2 py-1 whitespace-nowrap">
                     <div className="flex space-x-1">
                       <button
-                        onClick={() => handleVerObservaciones(row.Documento)}
+                        onClick={() => handleVerObservaciones(row.documento)}
                         className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition-colors"
                         title="Ver observaciones"
                       >
                         <EyeIcon className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleVerDetallesDocumento(row.Documento)}
+                        onClick={() => handleVerDetallesDocumento(row.documento)}
                         className="text-green-600 hover:text-green-800 hover:bg-green-50 p-1 rounded transition-colors"
                         title="Ver detalles del documento"
                       >
@@ -757,7 +785,7 @@ const KardexTabla = () => {
                       </button>
                     </div>
                   </td>
-                  {Object.keys(row).map((key) => (
+                  {columnOrder.map((key) => (
                     <td key={key} className="px-2 py-1 whitespace-nowrap text-[15px] text-gray-500">
                       {key.toLowerCase().includes('fecha') ? formatDateTime(row[key]) : row[key]?.toString() || ''}
                     </td>
@@ -799,6 +827,12 @@ const KardexTabla = () => {
         onClose={handleCloseDocumento}
         documentData={documentoModal.data}
         loading={documentoModal.loading}
+      />
+
+      {/* Modal de consultar ventas */}
+      <ConsultarVentasModal
+        isOpen={ventasModal.isOpen}
+        onClose={() => setVentasModal({ isOpen: false })}
       />
     </div>
   );
