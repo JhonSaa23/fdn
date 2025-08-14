@@ -32,7 +32,7 @@ const Saldos = () => {
   const [allSaldos, setAllSaldos] = useState([]); // Todos los datos cargados
   
   // Configuración de paginación
-  const REGISTROS_POR_PAGINA = 5; // Mostrar solo 5 registros por página
+  const REGISTROS_POR_PAGINA = 30; // Mostrar solo 5 registros por página
   
   // Estados para filtros en tiempo real
   const [filtroTiempoReal, setFiltroTiempoReal] = useState({
