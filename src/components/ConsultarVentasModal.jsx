@@ -271,9 +271,12 @@ const ConsultarVentasModal = ({ isOpen, onClose }) => {
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Total
                           </th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Vendedor
-                          </th>
+                                                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                             Cliente
+                           </th>
+                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                             Vendedor
+                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -301,9 +304,12 @@ const ConsultarVentasModal = ({ isOpen, onClose }) => {
                                                          <td className="px-3 py-2 whitespace-nowrap text-sm text-green-600 font-semibold">
                                {formatCurrency(venta.cantidad * venta.venta)}
                              </td>
-                            <td className="px-3 py-2 text-sm text-gray-500">
-                              {venta.Vendedor || 'Sin vendedor'}
-                            </td>
+                                                         <td className="px-3 py-2 text-sm text-gray-500">
+                               {venta.nombreCliente || 'Sin cliente'}
+                             </td>
+                             <td className="px-3 py-2 text-sm text-gray-500">
+                               {venta.Vendedor || 'Sin vendedor'}
+                             </td>
                           </tr>
                         ))}
                       </tbody>
