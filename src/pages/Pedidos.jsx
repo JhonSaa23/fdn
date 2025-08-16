@@ -653,6 +653,7 @@ const Pedidos = () => {
                     <span className="text-xs text-gray-500">{formatearFecha(pedidoSeleccionado.Fecha).hora}</span>
                   </div>
                   <div><strong>Vendedor:</strong> {pedidoSeleccionado.Vendedor}</div>
+                  <div><strong>Representante:</strong> {pedidoSeleccionado.NombreRepresentante ? `${pedidoSeleccionado.Representante} - ${pedidoSeleccionado.NombreRepresentante.trim()}` : (pedidoSeleccionado.Representante ? `${pedidoSeleccionado.Representante} - Sin nombre` : 'No asignado')}</div>
                   <div><strong>Días:</strong> {pedidoSeleccionado.Dias}</div>
                   <div><strong>Condición:</strong> {pedidoSeleccionado.Condicion}</div>
                 </div>

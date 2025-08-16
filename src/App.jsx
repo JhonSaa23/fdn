@@ -25,6 +25,7 @@ import Saldos from './pages/Saldos';
 import ConsultaProductos from './pages/ConsultaProductos';
 import DevolucionCanjeForm from './pages/DevolucionCanjeForm';
 import ReporteComprasLaboratorio from './pages/ReporteComprasLaboratorio';
+import TresEnRaya from './pages/TresEnRaya';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
