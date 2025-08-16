@@ -25,7 +25,8 @@ import {
   TableCellsIcon,
   GiftIcon,
   ClipboardDocumentListIcon,
-  ArchiveBoxIcon
+  ArchiveBoxIcon,
+  PuzzlePieceIcon
 } from '@heroicons/react/24/outline';
 
 const menuItems = [
@@ -60,6 +61,7 @@ const menuItems = [
     ]
   },
   { name: 'Consulta Produc', path: '/consulta-productos', icon: <MagnifyingGlassIcon className="w-6 h-6" /> },
+  { name: 'Tres en Raya', path: '/juego-tres-en-raya', icon: <PuzzlePieceIcon className="w-5 h-5" /> },
 ];
 
 function Sidebar() {
