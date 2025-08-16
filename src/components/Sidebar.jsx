@@ -55,7 +55,8 @@ const menuItems = [
       { name: 'CodPro', path: '/reporte-codpro' },
       { name: 'Picking Procter', path: '/reportes/picking-procter' },
       { name: 'Notas Loreal', path: '/reportes/loreal-notas' },
-      { name: 'Concurso', path: '/reportes/concurso' }
+      { name: 'Concurso', path: '/reportes/concurso' },
+      { name: 'Compras por Laboratorio', path: '/reportes/compras-laboratorio' }
     ]
   },
   { name: 'Consulta Produc', path: '/consulta-productos', icon: <MagnifyingGlassIcon className="w-6 h-6" /> },

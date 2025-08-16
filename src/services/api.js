@@ -1076,3 +1076,42 @@ export const generarReporteConteos = async (filtros = {}) => {
     throw error;
   }
 };
+
+// ===== REPORTES =====
+
+export const consultarComprasLaboratorio = async (codigoLaboratorio) => {
+  try {
+    const response = await axiosClient.post('/reportes/compras-laboratorio', {
+      codigoLaboratorio
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al consultar compras por laboratorio:', error);
+    throw error;
+  }
+};
+
+export const exportarComprasLaboratorio = async (codigoLaboratorio) => {
+  try {
+    const response = await axiosClient.post('/reportes/compras-laboratorio/export', {
+      codigoLaboratorio
+    }, {
+      responseType: 'blob' // Importante para descargar archivos
+    });
+    
+    // Crear URL del blob y descargar
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Compras_Laboratorio_${codigoLaboratorio}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error al exportar compras por laboratorio:', error);
+    throw error;
+  }
+};

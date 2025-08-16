@@ -24,6 +24,7 @@ import Pedidos from './pages/Pedidos';
 import Saldos from './pages/Saldos';
 import ConsultaProductos from './pages/ConsultaProductos';
 import DevolucionCanjeForm from './pages/DevolucionCanjeForm';
+import ReporteComprasLaboratorio from './pages/ReporteComprasLaboratorio';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
@@ -149,6 +150,7 @@ function App() {
                 <Route path="/reportes/picking-procter" element={<ReportePickingProcter />} />
                 <Route path="/reportes/concurso" element={<ReporteConcurso />} />
                 <Route path="/reportes/loreal-notas" element={<ReporteNotasLoreal />} />
+                <Route path="/reportes/compras-laboratorio" element={<ReporteComprasLaboratorio />} />
               </Routes>
             </div>
           </main>
