@@ -2,8 +2,8 @@ import { io } from 'socket.io-client';
 
 // Configuración para Socket.IO
 export const SOCKET_CONFIG = {
-  // URL del servidor WebSocket
-  SERVER_URL: 'http://localhost:3023',
+  // URL del servidor WebSocket - usar la misma variable de entorno que el resto del proyecto
+  SERVER_URL: import.meta.env.VITE_API_URL || 'http://localhost:3023',
   
   // Namespace para el juego Tres en Raya
   NAMESPACE: '/tresEnRaya',
@@ -28,5 +28,8 @@ export const SOCKET_CONFIG = {
 
 // Función para crear una conexión Socket.IO
 export const createSocketConnection = () => {
+  console.log('🔌 Conectando WebSocket a:', SOCKET_CONFIG.FULL_URL);
+  console.log('🌍 Entorno:', import.meta.env.MODE);
+  console.log('🏠 API URL:', import.meta.env.VITE_API_URL);
   return io(SOCKET_CONFIG.FULL_URL, SOCKET_CONFIG.CONNECTION_OPTIONS);
 };
