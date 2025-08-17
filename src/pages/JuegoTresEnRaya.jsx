@@ -28,17 +28,33 @@ const JuegoTresEnRaya = () => {
 
   // Conectar socket al montar el componente
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_API_URL);
+    const socketUrl = import.meta.env.VITE_API_URL;
+    console.log('🔌 Conectando a socket.io en:', socketUrl);
+    
+    const newSocket = io(socketUrl, {
+      transports: ['websocket', 'polling'],
+      upgrade: true,
+      rememberUpgrade: true,
+      timeout: 20000,
+      forceNew: true
+    });
     setSocket(newSocket);
 
     // Eventos del socket
     newSocket.on('connect', () => {
-      console.log('Conectado al servidor');
+      console.log('✅ Conectado al servidor socket.io');
+      console.log('🔌 Socket ID:', newSocket.id);
+      console.log('🌐 URL del servidor:', socketUrl);
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('Desconectado del servidor');
-      setError('Conexión perdida con el servidor');
+    newSocket.on('disconnect', (reason) => {
+      console.log('❌ Desconectado del servidor:', reason);
+      setError(`Conexión perdida: ${reason}`);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('🔥 Error de conexión socket.io:', error);
+      setError(`Error de conexión: ${error.message}`);
     });
 
     newSocket.on('roomUpdate', (data) => {
