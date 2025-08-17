@@ -58,16 +58,25 @@ const JuegoTresEnRaya = () => {
     });
 
     newSocket.on('roomUpdate', (data) => {
-      console.log('Actualización de sala:', data);
+      console.log('📋 Actualización de sala:', data);
       setRoom(data.room);
       setBoard(data.room.board);
       setCurrentPlayer(data.room.currentPlayer);
       setWinner(data.room.winner);
       
-      // Determinar símbolo del jugador
+      // Determinar símbolo del jugador usando el estado actual de playerName
       const player = data.room.players.find(p => p.name === playerName);
+      console.log('👤 Jugador encontrado:', {
+        playerName,
+        player,
+        allPlayers: data.room.players
+      });
+      
       if (player) {
+        console.log('✅ Asignando símbolo:', player.symbol);
         setMySymbol(player.symbol);
+      } else {
+        console.log('❌ No se encontró jugador con nombre:', playerName);
       }
       
       if (data.room.status === 'waiting') {
@@ -89,6 +98,8 @@ const JuegoTresEnRaya = () => {
       
       if (data.status === 'finished') {
         setGameState('finished');
+      } else if (data.status === 'playing') {
+        setGameState('playing');
       }
     });
 
@@ -112,7 +123,7 @@ const JuegoTresEnRaya = () => {
     return () => {
       newSocket.close();
     };
-  }, []);
+  }, [playerName]); // Agregar playerName como dependencia
 
   // Auto-scroll del chat
   useEffect(() => {
@@ -121,6 +132,17 @@ const JuegoTresEnRaya = () => {
     }
   }, [chatMessages]);
 
+  // Actualizar símbolo cuando cambie playerName (si ya estamos en una sala)
+  useEffect(() => {
+    if (playerName && room) {
+      const player = room.players.find(p => p.name === playerName);
+      if (player) {
+        console.log('🔄 Actualizando símbolo por cambio de nombre:', player.symbol);
+        setMySymbol(player.symbol);
+      }
+    }
+  }, [playerName, room]);
+
   // Actualizar isMyTurn cuando cambien las variables relevantes
   useEffect(() => {
     const newIsMyTurn = mySymbol && gameState === 'playing' && currentPlayer === mySymbol;
@@ -128,7 +150,10 @@ const JuegoTresEnRaya = () => {
       mySymbol,
       gameState,
       currentPlayer,
-      newIsMyTurn
+      newIsMyTurn,
+      'mySymbol === currentPlayer': mySymbol === currentPlayer,
+      'gameState === playing': gameState === 'playing',
+      'mySymbol existe': !!mySymbol
     });
     setIsMyTurn(newIsMyTurn);
   }, [mySymbol, currentPlayer, gameState]);
@@ -198,6 +223,7 @@ const JuegoTresEnRaya = () => {
   };
 
   const restartGame = () => {
+    console.log('🔄 Solicitando reinicio del juego');
     socket.emit('restartGame');
   };
 
@@ -222,12 +248,13 @@ const JuegoTresEnRaya = () => {
   const renderCell = (position) => {
     const value = board[position];
     const isWinningCell = false; // Podrías implementar resaltar celdas ganadoras
+    const canClick = isMyTurn && !value && gameState === 'playing';
     
     return (
       <button
         key={position}
         className={`w-20 h-20 border-2 border-gray-300 text-3xl font-bold rounded-lg transition-all hover:bg-gray-100 ${
-          isMyTurn && !value && gameState === 'playing' 
+          canClick
             ? 'cursor-pointer hover:border-blue-500' 
             : 'cursor-not-allowed'
         } ${
@@ -236,7 +263,8 @@ const JuegoTresEnRaya = () => {
           isWinningCell ? 'bg-green-200' : ''
         }`}
         onClick={() => makeMove(position)}
-        disabled={!isMyTurn || value !== null || gameState !== 'playing'}
+        disabled={!canClick}
+        title={`Posición ${position} - Clickable: ${canClick}`}
       >
         {value}
       </button>
