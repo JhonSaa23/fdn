@@ -677,6 +677,9 @@ const Saldos = () => {
                       CodPro
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      CÓD_MIF (SAP)
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Nombre
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -711,6 +714,11 @@ const Saldos = () => {
                         <td className="px-4 py-3 whitespace-nowrap">
                         <span className="text-sm font-mono text-gray-900 font-medium">
                           {saldo.codpro}
+                        </span>
+                      </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-sm font-mono text-gray-900 font-medium">
+                          {saldo.CodMifSap || '-'}
                         </span>
                       </td>
                         <td className="px-4 py-3">
@@ -892,7 +900,7 @@ const Saldos = () => {
                         {saldo.codpro}
                       </span>
                       <div className="text-xs font-semibold text-gray-500 mt-1">
-                        Almacén: {saldo.almacen || '-'} | Lote: {saldo.lote || '-'}
+                        CÓD_MIF: {saldo.CodMifSap || '-'} | Almacén: {saldo.almacen || '-'} | Lote: {saldo.lote || '-'}
                       </div>
                     </div>
                     <div className="text-right">
