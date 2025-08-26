@@ -26,6 +26,7 @@ import ConsultaProductos from './pages/ConsultaProductos';
 import DevolucionCanjeForm from './pages/DevolucionCanjeForm';
 import ReporteComprasLaboratorio from './pages/ReporteComprasLaboratorio';
 import JuegoTresEnRaya from './pages/JuegoTresEnRaya';
+import ClieVend from './pages/ClieVend';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
@@ -141,6 +142,7 @@ function App() {
                 <Route path="/pedidos" element={<Pedidos />} />
                 <Route path="/saldos" element={<Saldos />} />
                 <Route path="/clientes" element={<Clientes />} />
+                <Route path="/clie-vend" element={<ClieVend />} />
                 <Route path="/escalas" element={<Escalas />} />
                 <Route path="/kardex" element={<Kardex />} />
                 <Route path="/kardex-tabla" element={<KardexTabla />} />

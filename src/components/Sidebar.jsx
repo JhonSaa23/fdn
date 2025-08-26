@@ -44,6 +44,7 @@ const menuItems = [
   // { name: 'Pedidos', path: '/pedidos', icon: <ClipboardDocumentListIcon className="w-5 h-5" /> },
   { name: 'Saldos', path: '/saldos', icon: <ArchiveBoxIcon className="w-5 h-5" /> },
   { name: 'Clientes', path: '/clientes', icon: <UserGroupIcon className="w-5 h-5" /> },
+  { name: 'Clie_Vend', path: '/clie-vend', icon: <UserGroupIcon className="w-5 h-5" /> },
   { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-5 h-5" /> },
   { name: 'Kardex', path: '/kardex-tabla', icon: <TableCellsIcon className="w-5 h-5" /> },
   { name: 'Guías', path: '/guias', icon: <TruckIcon className="w-5 h-5" /> },
