@@ -5,6 +5,7 @@ import Modal from '../components/Modal';
 import { 
   buscarPedido, 
   invalidarPedido, 
+  eliminarProductoPedido,
   buscarGuia, 
   reusarGuia, 
   autorizarCodigos,
@@ -44,6 +45,8 @@ function MultiAccion() {
     setLoadingPedido(true);
     try {
       const data = await buscarPedido(numeroPedido);
+      console.log('📦 Datos recibidos del pedido:', data);
+      console.log('📋 Detalles del pedido:', data.detalles);
       setResultadoPedido(data);
       setShowPedidoModal(true);
     } catch (error) {
@@ -64,6 +67,19 @@ function MultiAccion() {
       setShowPedidoModal(false);
       setResultadoPedido(null);
       setNumeroPedido('');
+    } catch (error) {
+      showNotification('danger', error.message);
+    }
+  };
+
+  // Función para eliminar producto del pedido
+  const handleEliminarProducto = async (producto) => {
+    try {
+      await eliminarProductoPedido(numeroPedido, producto);
+      showNotification('success', 'Producto eliminado correctamente');
+      // Recargar los datos del pedido
+      const data = await buscarPedido(numeroPedido);
+      setResultadoPedido(data);
     } catch (error) {
       showNotification('danger', error.message);
     }
@@ -296,13 +312,13 @@ function MultiAccion() {
         </Card.Body>
       </Card>
 
-      {/* Modal para Pedidos */}
-      <Modal
-        isOpen={showPedidoModal}
-        onClose={() => setShowPedidoModal(false)}
-        title="Información del Pedido"
-        size="lg"
-      >
+             {/* Modal para Pedidos */}
+       <Modal
+         isOpen={showPedidoModal}
+         onClose={() => setShowPedidoModal(false)}
+         title="Información del Pedido"
+         size="xl"
+       >
         <Modal.Body>
           {resultadoPedido && (
             <div className="space-y-4">
@@ -375,6 +391,92 @@ function MultiAccion() {
                   <p className="mt-1 text-gray-900 bg-gray-50 p-3 rounded-lg">{resultadoPedido.Observaciones}</p>
                 </div>
               )}
+              
+              {/* Tabla de detalles del pedido */}
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="font-medium text-gray-700">Detalles del Pedido</span>
+                  {resultadoPedido.detalles && resultadoPedido.detalles.length > 0 && (
+                    <span className="text-sm text-gray-500">
+                      {resultadoPedido.detalles.length} producto(s)
+                    </span>
+                  )}
+                </div>
+                
+                {resultadoPedido.detalles && resultadoPedido.detalles.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                                             <thead className="bg-gray-50">
+                         <tr>
+                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo</th>
+                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desc. 1</th>
+                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desc. 2</th>
+                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desc. 3</th>
+                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                           <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                         </tr>
+                       </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                                                 {resultadoPedido.detalles.map((detalle, index) => (
+                           <tr key={index} className="hover:bg-gray-50">
+                             <td className="px-3 py-2 text-sm text-gray-900">
+                               <div className="flex flex-col">
+                                 <span className="font-mono text-gray-900">{detalle.Producto}</span>
+                                 {detalle.NombreProducto && (
+                                   <span className="text-xs text-gray-600 truncate max-w-xs" title={detalle.NombreProducto}>
+                                     {detalle.NombreProducto}
+                                   </span>
+                                 )}
+                               </div>
+                             </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                              {detalle.Cantidad?.toLocaleString() || '0'}
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                              S/ {detalle.Costo?.toFixed(2) || '0.00'}
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                              S/ {detalle.Descuento1?.toFixed(2) || '0.00'}
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                              S/ {detalle.Descuento2?.toFixed(2) || '0.00'}
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                              S/ {detalle.Descuento3?.toFixed(2) || '0.00'}
+                            </td>
+                                                         <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                               S/ {detalle.Subtotal?.toFixed(2) || '0.00'}
+                             </td>
+                             <td className="px-3 py-2 whitespace-nowrap text-center">
+                               <button
+                                 onClick={() => handleEliminarProducto(detalle.Producto)}
+                                 className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                                 title="Eliminar producto del pedido"
+                               >
+                                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                 </svg>
+                                 Eliminar
+                               </button>
+                             </td>
+                           </tr>
+                         ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-6 bg-gray-50 rounded-lg">
+                    <div className="mx-auto flex items-center justify-center h-8 w-8 rounded-full bg-gray-200 mb-2">
+                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-gray-500">No hay detalles de productos para este pedido</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </Modal.Body>

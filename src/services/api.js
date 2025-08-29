@@ -610,6 +610,16 @@ export const invalidarPedido = async (numero) => {
   }
 };
 
+export const eliminarProductoPedido = async (numero, producto) => {
+  try {
+    const response = await axiosClient.delete(`/multi-accion/pedido/${numero.trim()}/producto/${producto.trim()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al eliminar producto del pedido:', error);
+    throw { status: 500, message: 'Error al eliminar el producto del pedido' };
+  }
+};
+
 export const buscarGuia = async (numero) => {
   try {
     const response = await axiosClient.get(`/multi-accion/guia/${numero.trim()}`);
