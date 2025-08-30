@@ -3,7 +3,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Alert from '../components/Alert';
-import axios from 'axios';
+import axiosClient from '../services/axiosClient';
 
 const UsersBot = () => {
   const [users, setUsers] = useState([]);
@@ -39,7 +39,7 @@ const UsersBot = () => {
   const cargarUsuarios = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/usersbot');
+      const response = await axiosClient.get('/usersbot');
       if (response.data.success) {
         setUsers(response.data.data);
       }
@@ -53,7 +53,7 @@ const UsersBot = () => {
 
   const cargarLaboratorios = async () => {
     try {
-      const response = await axios.get('/api/usersbot/laboratorios/list');
+      const response = await axiosClient.get('/usersbot/laboratorios/list');
       if (response.data.success) {
         setLaboratorios(response.data.data);
       }
@@ -115,14 +115,14 @@ const UsersBot = () => {
     try {
       if (editingUser) {
         // Actualizar usuario
-        await axios.put(`/api/usersbot/${editingUser.CodUserBot}`, {
+        await axiosClient.put(`/usersbot/${editingUser.CodUserBot}`, {
           ...formData,
           modificadoPor: 'Admin'
         });
         mostrarAlerta('success', 'Usuario actualizado exitosamente');
       } else {
         // Crear usuario
-        await axios.post('/api/usersbot', {
+        await axiosClient.post('/usersbot', {
           ...formData,
           creadoPor: 'Admin'
         });
@@ -144,7 +144,7 @@ const UsersBot = () => {
     }
 
     try {
-      await axios.delete(`/api/usersbot/${user.CodUserBot}`, {
+              await axiosClient.delete(`/usersbot/${user.CodUserBot}`, {
         data: { modificadoPor: 'Admin' }
       });
       mostrarAlerta('success', 'Usuario desactivado exitosamente');
