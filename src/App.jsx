@@ -27,6 +27,7 @@ import DevolucionCanjeForm from './pages/DevolucionCanjeForm';
 import ReporteComprasLaboratorio from './pages/ReporteComprasLaboratorio';
 import JuegoTresEnRaya from './pages/JuegoTresEnRaya';
 import ClieVend from './pages/ClieVend';
+import UsersBot from './pages/UsersBot';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
@@ -155,6 +156,7 @@ function App() {
                 <Route path="/reportes/loreal-notas" element={<ReporteNotasLoreal />} />
                 <Route path="/reportes/compras-laboratorio" element={<ReporteComprasLaboratorio />} />
                 <Route path="/juego-tres-en-raya" element={<JuegoTresEnRaya />} />
+                <Route path="/usersbot" element={<UsersBot />} />
               </Routes>
             </div>
           </main>

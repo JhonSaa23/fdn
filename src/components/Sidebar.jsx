@@ -62,6 +62,7 @@ const menuItems = [
     ]
   },
   { name: 'Consulta Produc', path: '/consulta-productos', icon: <MagnifyingGlassIcon className="w-6 h-6" /> },
+  { name: 'Usuarios Bot', path: '/usersbot', icon: <UserGroupIcon className="w-5 h-5" /> },
   { name: 'Tres en Raya', path: '/juego-tres-en-raya', icon: <PuzzlePieceIcon className="w-5 h-5" /> },
 ];
 
