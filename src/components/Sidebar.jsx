@@ -45,10 +45,10 @@ const menuItems = [
   { name: 'Saldos', path: '/saldos', icon: <ArchiveBoxIcon className="w-5 h-5" /> },
   { name: 'Clientes', path: '/clientes', icon: <UserGroupIcon className="w-5 h-5" /> },
   { name: 'Clie_Vend', path: '/clie-vend', icon: <UserGroupIcon className="w-5 h-5" /> },
+  { name: 'Usuarios Bot', path: '/usersbot', icon: <UserGroupIcon className="w-5 h-5" /> },
   { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-5 h-5" /> },
   { name: 'Kardex', path: '/kardex-tabla', icon: <TableCellsIcon className="w-5 h-5" /> },
   { name: 'Guías', path: '/guias', icon: <TruckIcon className="w-5 h-5" /> },
-  { name: 'Devolución Canje', path: '/devolucion-canje', icon: <ArrowDownTrayIcon className="w-5 h-5" /> },
   { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-5 h-5" /> },
   { 
     name: 'Reportes', 
@@ -62,8 +62,8 @@ const menuItems = [
     ]
   },
   { name: 'Consulta Produc', path: '/consulta-productos', icon: <MagnifyingGlassIcon className="w-6 h-6" /> },
-  { name: 'Usuarios Bot', path: '/usersbot', icon: <UserGroupIcon className="w-5 h-5" /> },
-  { name: 'Tres en Raya', path: '/juego-tres-en-raya', icon: <PuzzlePieceIcon className="w-5 h-5" /> },
+  { name: 'Devolución Canje', path: '/devolucion-canje', icon: <ArrowDownTrayIcon className="w-5 h-5" /> },
+//  { name: 'Tres en Raya', path: '/juego-tres-en-raya', icon: <PuzzlePieceIcon className="w-5 h-5" /> },
 ];
 
 function Sidebar() {
