@@ -827,7 +827,7 @@ export const eliminarPromocionesEnMasa = async (tipificaciones) => {
 };
 
 // GUÍAS
-export const listarGuias = async (filtros = {}, page = 1, limit = 40) => {
+export const listarGuias = async (filtros = {}, page = 1, limit = 500) => {
   try {
     const params = new URLSearchParams({
       ...filtros,

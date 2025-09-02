@@ -34,7 +34,7 @@ const Guias = () => {
   const [scrollDirection, setScrollDirection] = useState('down');
   
   // Configuración de windowing
-  const WINDOW_SIZE = 3; // Mantener 3 páginas visibles (120 registros)
+  const WINDOW_SIZE = 3; // Mantener 3 páginas visibles (1500 registros)
   
   // Estados para filtros
   const [filtros, setFiltros] = useState({
@@ -75,8 +75,8 @@ const Guias = () => {
 
   // Calcular guías visibles basado en la ventana actual (copiado de clientes)
   const calcularGuiasVisibles = useCallback(() => {
-    const startIndex = (visibleStartPage - 1) * 40;
-    const endIndex = visibleEndPage * 40;
+    const startIndex = (visibleStartPage - 1) * 500;
+    const endIndex = visibleEndPage * 500;
     return allGuias.slice(startIndex, endIndex);
   }, [allGuias, visibleStartPage, visibleEndPage]);
 
@@ -90,14 +90,14 @@ const Guias = () => {
     try {
       setLoading(true);
       console.log('Enviando filtros a la API:', filtros);
-      const response = await listarGuias(filtros, 1, 40);
+      const response = await listarGuias(filtros, 1, 500);
       
       if (resetear) {
         setAllGuias(response.data);
         setGuias(response.data);
         setCurrentPage(1);
         setVisibleStartPage(1);
-        setVisibleEndPage(Math.min(WINDOW_SIZE, Math.ceil(response.pagination.total / 40)));
+        setVisibleEndPage(Math.min(WINDOW_SIZE, Math.ceil(response.pagination.total / 500)));
       }
       
       setHasMore(response.pagination.hasMore);
@@ -127,7 +127,7 @@ const Guias = () => {
       const nextPage = currentPage + 1;
       console.log('Cargando página:', nextPage);
       
-      const response = await listarGuias(filtros, nextPage, 40);
+      const response = await listarGuias(filtros, nextPage, 500);
       
       // Agregar a allGuias en lugar de guias directamente
       setAllGuias(prev => [...prev, ...response.data]);
@@ -136,7 +136,7 @@ const Guias = () => {
       
       // Expandir ventana si es necesario
       if (nextPage <= visibleEndPage + 1) {
-        setVisibleEndPage(Math.min(nextPage, Math.ceil(totalGuias / 40)));
+        setVisibleEndPage(Math.min(nextPage, Math.ceil(totalGuias / 500)));
       }
     } catch (error) {
       console.error('Error al cargar más guías:', error);
@@ -162,7 +162,7 @@ const Guias = () => {
     const scrollPercentage = scrollHeight > clientHeight ? scrollTop / (scrollHeight - clientHeight) : 0;
     
     // Estimar en qué "página" estamos basado en el scroll
-    const totalPages = Math.ceil(totalGuias / 40);
+    const totalPages = Math.ceil(totalGuias / 500);
     const estimatedPage = Math.max(1, Math.ceil(scrollPercentage * totalPages));
 
     // === WINDOWING LOGIC ===
