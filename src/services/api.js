@@ -503,8 +503,12 @@ export const actualizarVistaNotasLoreal = async (anio, mes) => {
 
 export const consultarReporteNotasLoreal = async (anio, mes) => {
   try {
+    const params = {};
+    if (anio) params.anio = anio;
+    if (mes) params.mes = mes;
+    
     const response = await axiosClient.get('/reportes/loreal-notas', {
-      params: { anio, mes }
+      params
     });
     return response.data;
   } catch (error) {
@@ -513,9 +517,10 @@ export const consultarReporteNotasLoreal = async (anio, mes) => {
   }
 };
 
-export async function descargarExcelNotasLoreal() {
+export async function descargarExcelNotasLoreal(anio, mes) {
   try {
     const response = await axiosClient.get('/reportes/loreal-notas/excel', {
+      params: { anio, mes },
       responseType: 'blob'
     });
     // Obtener el nombre del archivo del header

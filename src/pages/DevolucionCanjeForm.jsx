@@ -241,7 +241,7 @@ const DevolucionCanjeForm = () => {
         setCabecera(prev => ({ ...prev, [name]: value }));
     };
 
-    // Función para filtrar productos por código
+    // Función para filtrar productos por código Y nombre
     const handleProductoSearch = (searchTerm) => {
         setProductoSearchTerm(searchTerm);
         
@@ -250,29 +250,81 @@ const DevolucionCanjeForm = () => {
             setFilteredProductos(productosADevolver);
             setShowProductoDropdown(true);
         } else {
-            // Filtrar productos que coincidan con el código
-            const filtered = productosADevolver.filter(prod => 
-                prod.Codpro && prod.Codpro.trim().toLowerCase().includes(searchTerm.trim().toLowerCase())
-            );
+            // Filtrar productos que coincidan con el código O el nombre
+            const searchLower = searchTerm.trim().toLowerCase();
+            const filtered = productosADevolver.filter(prod => {
+                // Buscar por código del producto
+                const codigoMatch = (prod.Codpro && prod.Codpro.trim().toLowerCase().includes(searchLower)) ||
+                                  (prod.Idproducto && prod.Idproducto.trim().toLowerCase().includes(searchLower));
+                
+                // Buscar por nombre del producto
+                const nombreMatch = (prod.Nombre && prod.Nombre.trim().toLowerCase().includes(searchLower)) ||
+                                  (prod.Producto && prod.Producto.trim().toLowerCase().includes(searchLower));
+                
+                // Buscar por número de guía
+                const guiaMatch = prod.NroGuia && prod.NroGuia.trim().toLowerCase().includes(searchLower);
+                
+                // Buscar por lote
+                const loteMatch = prod.Lote && prod.Lote.trim().toLowerCase().includes(searchLower);
+                
+                // Buscar por referencia
+                const referenciaMatch = prod.Referencia && prod.Referencia.trim().toLowerCase().includes(searchLower);
+                
+                // Retornar true si coincide con cualquiera de los campos
+                return codigoMatch || nombreMatch || guiaMatch || loteMatch || referenciaMatch;
+            });
             setFilteredProductos(filtered);
             setShowProductoDropdown(true);
         }
     };
 
     // Función para seleccionar producto del dropdown
-    const handleSelectProducto = (producto) => {
+    const handleSelectProducto = (producto, dropdownIndex) => {
         setCurrentItemDetalle(prev => ({
             ...prev,
-            codpro: producto.Codpro,
-            Producto: producto.Nombre,
-            lote: producto.Lote,
-            Vencimiento: producto.Vencimiento ? new Date(producto.Vencimiento).toISOString().split('T')[0] : '',
-            GuiaDevo: producto.NroGuia,
-            Referencia: producto.Referencia,
-            TipoDoc: producto.tipodoc
+            // Campos principales
+            codpro: producto.Codpro || producto.Idproducto || '',
+            Producto: producto.Nombre || producto.Producto || '',
+            lote: producto.Lote || '',
+            Vencimiento: producto.Vencimiento ? 
+                (typeof producto.Vencimiento === 'string' ? 
+                    producto.Vencimiento : 
+                    new Date(producto.Vencimiento).toISOString().split('T')[0]
+                ) : '',
+            Cantidad: '', // Se limpia para que el usuario ingrese la cantidad
+            
+            // Campos adicionales del stored procedure
+            NroGuia: producto.NroGuia || '',
+            GuiaDevo: producto.NroGuia || '',
+            Referencia: producto.Referencia || '',
+            TipoDoc: producto.tipodoc || producto.TipoDoc || producto.Tipo || '',
+            
+            // Campos adicionales que pueden venir del stored procedure
+            Idproducto: producto.Idproducto || producto.Codpro || '',
+            FecVen: producto.Vencimiento || '',
+            cantidad: producto.Cantidad || '',
+            
+            // IDENTIFICADOR ÚNICO: Índice del dropdown + información completa
+            dropdownIndex: dropdownIndex, // Índice único del dropdown
+            uniqueId: `${dropdownIndex}-${producto.Codpro || producto.Idproducto}-${producto.Lote}-${producto.NroGuia}-${producto.Referencia}-${producto.tipodoc || producto.TipoDoc || producto.Tipo}`,
+            maxCantidad: producto.Cantidad || 0 // Cantidad máxima disponible
         }));
-        setProductoSearchTerm(producto.Codpro);
+        
+        // Mostrar el código del producto en el input de búsqueda
+        setProductoSearchTerm(producto.Codpro || producto.Idproducto || '');
         setShowProductoDropdown(false);
+        
+        console.log('✅ Producto seleccionado:', {
+            dropdownIndex: dropdownIndex,
+            codpro: producto.Codpro || producto.Idproducto,
+            nombre: producto.Nombre || producto.Producto,
+            lote: producto.Lote,
+            nroGuia: producto.NroGuia,
+            cantidad: producto.Cantidad,
+            referencia: producto.Referencia,
+            tipo: producto.tipodoc || producto.TipoDoc || producto.Tipo,
+            uniqueId: `${dropdownIndex}-${producto.Codpro || producto.Idproducto}-${producto.Lote}-${producto.NroGuia}-${producto.Referencia}-${producto.tipodoc || producto.TipoDoc || producto.Tipo}`
+        });
     };
 
     const handleDetalleChange = (e) => {
@@ -1036,33 +1088,48 @@ const DevolucionCanjeForm = () => {
         setIsError(false);
 
         const selectedProductInfo = productosADevolver.find(p =>
-            p.Codpro === currentItemDetalle.codpro &&
+            (p.Codpro === currentItemDetalle.codpro || p.Idproducto === currentItemDetalle.codpro) &&
             p.Lote === currentItemDetalle.lote &&
             p.Vencimiento === currentItemDetalle.Vencimiento
         );
 
         const newDetail = {
             ...currentItemDetalle,
+            // Campos principales
             NroGuia: cabecera.NroGuia,
-            Producto: selectedProductInfo ? selectedProductInfo.Nombre : currentItemDetalle.Producto,
+            Producto: selectedProductInfo ? (selectedProductInfo.Nombre || selectedProductInfo.Producto) : currentItemDetalle.Producto,
             Vencimiento: currentItemDetalle.Vencimiento,
-            // Asegurar que se incluyan todos los campos del producto seleccionado
-            tipodoc: selectedProductInfo ? selectedProductInfo.tipodoc : (currentItemDetalle.tipodoc || currentItemDetalle.TipoDoc),
+            
+            // Campos del stored procedure - usar datos del producto seleccionado si están disponibles
+            tipodoc: selectedProductInfo ? (selectedProductInfo.tipodoc || selectedProductInfo.TipoDoc || selectedProductInfo.Tipo) : (currentItemDetalle.tipodoc || currentItemDetalle.TipoDoc),
             Referencia: selectedProductInfo ? selectedProductInfo.Referencia : currentItemDetalle.Referencia,
-            GuiaDevo: selectedProductInfo ? selectedProductInfo.NroGuia : currentItemDetalle.GuiaDevo
+            GuiaDevo: selectedProductInfo ? selectedProductInfo.NroGuia : currentItemDetalle.GuiaDevo,
+            
+            // Campos adicionales para compatibilidad
+            Idproducto: selectedProductInfo ? (selectedProductInfo.Idproducto || selectedProductInfo.Codpro) : currentItemDetalle.Idproducto,
+            FecVen: selectedProductInfo ? selectedProductInfo.Vencimiento : currentItemDetalle.FecVen,
+            cantidad: currentItemDetalle.Cantidad, // La cantidad que ingresa el usuario
+            
+            // Asegurar que todos los campos estén presentes
+            NroGuia: selectedProductInfo ? selectedProductInfo.NroGuia : currentItemDetalle.NroGuia
         };
 
-        // Verificar si ya existe un producto igual en los detalles
+        // Verificar si ya existe un producto con el MISMO IDENTIFICADOR ÚNICO
         const existingIndex = detalles.findIndex(detalle => 
-            detalle.codpro === newDetail.codpro && 
-            detalle.lote === newDetail.lote && 
-            detalle.Vencimiento === newDetail.Vencimiento
+            detalle.uniqueId === newDetail.uniqueId
         );
 
         if (existingIndex !== -1) {
-            // Si existe, sumar la cantidad
+            // Si existe el MISMO registro (mismo uniqueId), sumar la cantidad
             const existingDetail = detalles[existingIndex];
             const newQuantity = parseFloat(existingDetail.Cantidad || 0) + parseFloat(newDetail.Cantidad || 0);
+            
+            // Verificar que no se exceda la cantidad máxima disponible
+            if (newQuantity > parseFloat(existingDetail.maxCantidad || 0)) {
+                setMessage(`❌ Error: La cantidad total (${newQuantity}) excede la cantidad disponible (${existingDetail.maxCantidad}) para este registro específico.`);
+                setIsError(true);
+                return;
+            }
             
             setDetalles(prev => prev.map((detalle, index) => 
                 index === existingIndex 
@@ -1070,18 +1137,32 @@ const DevolucionCanjeForm = () => {
                     : detalle
             ));
             
-            setMessage(`✅ Cantidad actualizada para ${newDetail.Producto}. Nueva cantidad: ${newQuantity}`);
+            setMessage(`✅ Cantidad actualizada para ${newDetail.Producto} (Registro #${newDetail.dropdownIndex + 1}). Nueva cantidad: ${newQuantity}`);
             setIsError(false);
         } else {
-            // Si no existe, agregar nuevo detalle
+            // Verificar que no se exceda la cantidad máxima disponible
+            if (parseFloat(newDetail.Cantidad) > parseFloat(newDetail.maxCantidad || 0)) {
+                setMessage(`❌ Error: La cantidad (${newDetail.Cantidad}) excede la cantidad disponible (${newDetail.maxCantidad}) para este registro específico.`);
+                setIsError(true);
+                return;
+            }
+            
+            // Si no existe, agregar nuevo detalle (cada registro es único)
             setDetalles(prev => [...prev, newDetail]);
-            setMessage(`✅ Producto agregado: ${newDetail.Producto}`);
+            setMessage(`✅ Producto agregado: ${newDetail.Producto} (Registro #${newDetail.dropdownIndex + 1})`);
             setIsError(false);
         }
 
         setCurrentItemDetalle({
+            // Campos principales
             NroGuia: '', codpro: '', Producto: '', lote: '', Vencimiento: '', Cantidad: '',
-            GuiaDevo: '', Referencia: '', tipodoc: ''
+            GuiaDevo: '', Referencia: '', tipodoc: '',
+            
+            // Campos adicionales del stored procedure
+            Idproducto: '', FecVen: '', cantidad: '', TipoDoc: '', Tipo: '',
+            
+            // Campos de identificación única
+            dropdownIndex: null, uniqueId: '', maxCantidad: 0
         });
         setProductoSearchTerm('');
         setShowProductoDropdown(false);
@@ -1553,7 +1634,7 @@ const DevolucionCanjeForm = () => {
                                         ? 'Seleccione un laboratorio primero' 
                                         : productosADevolver.length === 0 
                                             ? 'No hay productos disponibles' 
-                                            : 'Buscar por código de producto...'
+                                            : 'Buscar por código, nombre, guía, lote o referencia...'
                                 }
                                 className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 h-10 ${
                                     (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)
@@ -1657,20 +1738,61 @@ const DevolucionCanjeForm = () => {
                                 borderRadius: '6px',
                                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                                 zIndex: 1000,
-                                maxHeight: '200px',
-                                overflowY: 'auto'
+                                maxHeight: '300px',
+                                overflowY: 'auto',
+                                minWidth: '800px'
                             }}>
-                                {filteredProductos.map((prod, index) => (
+                                {/* Header del dropdown */}
+                                <div style={{
+                                    padding: '8px 12px',
+                                    backgroundColor: '#f8f9fa',
+                                    borderBottom: '2px solid #e9ecef',
+                                    fontSize: '11px',
+                                    fontWeight: '600',
+                                    color: '#495057',
+                                    display: 'grid',
+                                    gridTemplateColumns: '60px 100px 80px 200px 100px 120px 80px 100px 80px',
+                                    gap: '8px',
+                                    position: 'sticky',
+                                    top: 0,
+                                    zIndex: 1
+                                }}>
+                                    <div>#</div>
+                                    <div>NroGuia</div>
+                                    <div>IdProducto</div>
+                                    <div>Producto</div>
+                                    <div>Lote</div>
+                                    <div>FecVen</div>
+                                    <div>Cantidad</div>
+                                    <div>Referencia</div>
+                                    <div>Tipo</div>
+                                </div>
+                                
+                                {filteredProductos.map((prod, filteredIndex) => {
+                                    // Encontrar el índice original en productosADevolver
+                                    const originalIndex = productosADevolver.findIndex(originalProd => 
+                                        originalProd.Codpro === prod.Codpro && 
+                                        originalProd.Lote === prod.Lote && 
+                                        originalProd.NroGuia === prod.NroGuia &&
+                                        originalProd.Referencia === prod.Referencia &&
+                                        originalProd.tipodoc === prod.tipodoc
+                                    );
+                                    
+                                    return (
                                     <div
-                                        key={`${prod.Codpro}-${prod.Lote}-${prod.NroGuia}-${index}`}
-                                        onClick={() => handleSelectProducto(prod)}
+                                        key={`${prod.Codpro}-${prod.Lote}-${prod.NroGuia}-${originalIndex}`}
+                                        onClick={() => handleSelectProducto(prod, originalIndex)}
                                         style={{
                                             padding: '8px 12px',
                                             cursor: 'pointer',
                                             borderBottom: '1px solid #f3f4f6',
-                                            fontSize: '12px',
+                                            fontSize: '11px',
                                             transition: 'background-color 0.2s ease',
-                                            backgroundColor: 'white'
+                                            backgroundColor: 'white',
+                                            display: 'grid',
+                                            gridTemplateColumns: '60px 100px 80px 200px 100px 120px 80px 100px 80px',
+                                            gap: '8px',
+                                            alignItems: 'center'
                                         }}
                                         onMouseOver={(e) => {
                                             e.currentTarget.style.backgroundColor = '#f3f4f6';
@@ -1679,14 +1801,58 @@ const DevolucionCanjeForm = () => {
                                             e.currentTarget.style.backgroundColor = 'white';
                                         }}
                                     >
-                                        <div style={{ fontWeight: '600', color: '#374151' }}>
-                                            {prod.Codpro} - {prod.Nombre}
+                                        {/* Índice numérico - usando el índice original */}
+                                        <div style={{ fontWeight: '600', color: '#e74c3c' }}>
+                                            {originalIndex + 1}
                                         </div>
-                                        <div style={{ color: '#6b7280', fontSize: '11px' }}>
-                                            Lote: {prod.Lote} | Cant: {prod.Cantidad}
+                                        
+                                        {/* NroGuia */}
+                                        <div style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {prod.NroGuia || 'SIN REF'}
+                                        </div>
+                                        
+                                        {/* IdProducto (Codpro) */}
+                                        <div style={{ color: '#374151', fontWeight: '500' }}>
+                                            {prod.Codpro || prod.Idproducto || ''}
+                                        </div>
+                                        
+                                        {/* Producto */}
+                                        <div style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {prod.Nombre || prod.Producto || ''}
+                                        </div>
+                                        
+                                        {/* Lote */}
+                                        <div style={{ color: '#6b7280' }}>
+                                            {prod.Lote || ''}
+                                        </div>
+                                        
+                                        {/* FecVen (Vencimiento) */}
+                                        <div style={{ color: '#6b7280', fontSize: '10px' }}>
+                                            {prod.Vencimiento ? 
+                                                (typeof prod.Vencimiento === 'string' ? 
+                                                    prod.Vencimiento : 
+                                                    new Date(prod.Vencimiento).toLocaleDateString('es-ES')
+                                                ) : ''
+                                            }
+                                        </div>
+                                        
+                                        {/* Cantidad */}
+                                        <div style={{ color: '#e74c3c', fontWeight: '600', textAlign: 'center' }}>
+                                            {prod.Cantidad || ''}
+                                        </div>
+                                        
+                                        {/* Referencia */}
+                                        <div style={{ color: '#6b7280', fontSize: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {prod.Referencia || ''}
+                                        </div>
+                                        
+                                        {/* Tipo */}
+                                        <div style={{ color: '#6b7280', fontSize: '10px' }}>
+                                            {prod.tipodoc || prod.TipoDoc || prod.Tipo || ''}
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -1697,7 +1863,10 @@ const DevolucionCanjeForm = () => {
                         onChange={handleDetalleChange}
                         onKeyDown={handleKeyDown}
                         disabled={isConsultaMode}
-                        placeholder="Unidades"
+                        min="0"
+                        max={currentItemDetalle.maxCantidad || undefined}
+                        placeholder={currentItemDetalle.maxCantidad ? `Máx: ${currentItemDetalle.maxCantidad}` : "Unidades"}
+                        title={currentItemDetalle.maxCantidad ? `Cantidad máxima disponible: ${currentItemDetalle.maxCantidad}` : "Ingrese la cantidad"}
                         className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 h-10 ${
                             isConsultaMode 
                                 ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
