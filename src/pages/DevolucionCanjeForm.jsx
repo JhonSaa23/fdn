@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from '../services/axiosClient';
+import { useNotification } from '../App';
 
 const DevolucionCanjeForm = () => {
+    const { showNotification } = useNotification();
+
     // Detectar si es móvil
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-    
+
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(window.innerWidth <= 768);
         };
-        
+
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -17,27 +20,27 @@ const DevolucionCanjeForm = () => {
     // Función para formatear fechas de manera consistente
     const formatFechaConsistente = (fecha) => {
         if (!fecha) return '';
-        
+
         try {
             // Si la fecha ya es un string en formato YYYY-MM-DD, devolverla tal como está
             if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
                 return fecha;
             }
-            
+
             // Crear un objeto Date
             const date = new Date(fecha);
-            
+
             // Si la fecha es UTC (termina en Z), extraer solo la parte de fecha sin conversión de zona horaria
             if (typeof fecha === 'string' && fecha.includes('T') && fecha.endsWith('Z')) {
                 const fechaPart = fecha.split('T')[0];
                 return fechaPart;
             }
-            
+
             // Para otros casos, usar los métodos locales
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
-            
+
             return `${year}-${month}-${day}`;
         } catch (error) {
             console.error('Error formateando fecha:', error);
@@ -48,7 +51,7 @@ const DevolucionCanjeForm = () => {
     // Función para mostrar fecha en formato DD/MM/YYYY
     const formatFechaDisplay = (fecha) => {
         if (!fecha) return '';
-        
+
         try {
             // Si la fecha es UTC (termina en Z), extraer solo la parte de fecha sin conversión de zona horaria
             if (typeof fecha === 'string' && fecha.includes('T') && fecha.endsWith('Z')) {
@@ -56,13 +59,13 @@ const DevolucionCanjeForm = () => {
                 const [year, month, day] = fechaPart.split('-');
                 return `${day}/${month}/${year}`;
             }
-            
+
             // Si la fecha ya es un string en formato YYYY-MM-DD
             if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
                 const [year, month, day] = fecha.split('-');
                 return `${day}/${month}/${year}`;
             }
-            
+
             // Para otros casos, usar los métodos locales
             const date = new Date(fecha);
             return date.toLocaleDateString('es-ES', {
@@ -114,14 +117,12 @@ const DevolucionCanjeForm = () => {
     const [laboratorioSearchTerm, setLaboratorioSearchTerm] = useState('');
 
     const [isLoading, setIsLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [isError, setIsError] = useState(false);
     const [isConsultaMode, setIsConsultaMode] = useState(false);
     const [showGeneradorModal, setShowGeneradorModal] = useState(false);
     const [numeroGuiaGenerado, setNumeroGuiaGenerado] = useState('');
     const [pesoGuia, setPesoGuia] = useState('');
     const [direccionGuia, setDireccionGuia] = useState('');
-    
+
     // Estados para modal de CabGuias
     const [showCabGuiasModal, setShowCabGuiasModal] = useState(false);
     const [cabGuias, setCabGuias] = useState([]);
@@ -129,11 +130,16 @@ const DevolucionCanjeForm = () => {
     const [ultimoNumeroCabGuia, setUltimoNumeroCabGuia] = useState('');
     const [editandoNumero, setEditandoNumero] = useState(false);
     const [nuevoNumero, setNuevoNumero] = useState('');
-    
+
     // Estados para búsqueda de productos
     const [productoSearchTerm, setProductoSearchTerm] = useState('');
     const [showProductoDropdown, setShowProductoDropdown] = useState(false);
+    const [selectedProductIndex, setSelectedProductIndex] = useState(-1);
     const [filteredProductos, setFilteredProductos] = useState([]);
+    
+    // Referencias para los inputs
+    const cantidadInputRef = useRef(null);
+    const productoSearchInputRef = useRef(null);
 
     // --- FUNCIONES DE CARGA ---
     const fetchLaboratorios = async () => {
@@ -148,12 +154,10 @@ const DevolucionCanjeForm = () => {
                 }
                 setLaboratorios(response.data.data);
             } else {
-                setMessage(`Error al cargar laboratorios: ${response.data.message}`);
-                setIsError(true);
+                showNotification('danger', `Error al cargar laboratorios: ${response.data.message}`);
             }
         } catch (error) {
-            setMessage(`Error de red al cargar laboratorios: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error de red al cargar laboratorios: ${error.message}`);
         }
     };
 
@@ -199,8 +203,6 @@ const DevolucionCanjeForm = () => {
         if (selectedLaboratorio) {
             const fetchProductosADevolver = async () => {
                 setIsLoading(true);
-                setMessage('');
-                setIsError(false);
                 try {
                     // Limpiar espacios en blanco del codlab
                     const cleanCodlab = selectedLaboratorio.trim();
@@ -210,17 +212,14 @@ const DevolucionCanjeForm = () => {
                         setProductosADevolver(response.data.data);
                         setFilteredProductos(response.data.data); // Inicializar productos filtrados
                         console.log('✅ Productos cargados:', response.data.data.length, 'productos');
-                        setMessage(`Productos cargados: ${response.data.data.length} productos disponibles para devolución`);
-                        setIsError(false);
+                        showNotification('success', `Productos cargados: ${response.data.data.length} productos disponibles para devolución`);
                     } else {
-                        setMessage(`Error al cargar productos a devolver: ${response.data.message}`);
-                        setIsError(true);
+                        showNotification('danger', `Error al cargar productos a devolver: ${response.data.message}`);
                         setProductosADevolver([]); // Limpiar si hay error
                         setFilteredProductos([]); // Limpiar productos filtrados
                     }
                 } catch (error) {
-                    setMessage(`Error de red al cargar productos a devolver: ${error.message}`);
-                    setIsError(true);
+                    showNotification('danger', `Error de red al cargar productos a devolver: ${error.message}`);
                     setProductosADevolver([]); // Limpiar si hay error
                     setFilteredProductos([]); // Limpiar productos filtrados
                 } finally {
@@ -244,7 +243,8 @@ const DevolucionCanjeForm = () => {
     // Función para filtrar productos por código Y nombre
     const handleProductoSearch = (searchTerm) => {
         setProductoSearchTerm(searchTerm);
-        
+        setSelectedProductIndex(-1); // Resetear índice seleccionado
+
         if (!searchTerm.trim()) {
             // Si no hay término de búsqueda, mostrar todos los productos
             setFilteredProductos(productosADevolver);
@@ -255,21 +255,21 @@ const DevolucionCanjeForm = () => {
             const filtered = productosADevolver.filter(prod => {
                 // Buscar por código del producto
                 const codigoMatch = (prod.Codpro && prod.Codpro.trim().toLowerCase().includes(searchLower)) ||
-                                  (prod.Idproducto && prod.Idproducto.trim().toLowerCase().includes(searchLower));
-                
+                    (prod.Idproducto && prod.Idproducto.trim().toLowerCase().includes(searchLower));
+
                 // Buscar por nombre del producto
                 const nombreMatch = (prod.Nombre && prod.Nombre.trim().toLowerCase().includes(searchLower)) ||
-                                  (prod.Producto && prod.Producto.trim().toLowerCase().includes(searchLower));
-                
+                    (prod.Producto && prod.Producto.trim().toLowerCase().includes(searchLower));
+
                 // Buscar por número de guía
                 const guiaMatch = prod.NroGuia && prod.NroGuia.trim().toLowerCase().includes(searchLower);
-                
+
                 // Buscar por lote
                 const loteMatch = prod.Lote && prod.Lote.trim().toLowerCase().includes(searchLower);
-                
+
                 // Buscar por referencia
                 const referenciaMatch = prod.Referencia && prod.Referencia.trim().toLowerCase().includes(searchLower);
-                
+
                 // Retornar true si coincide con cualquiera de los campos
                 return codigoMatch || nombreMatch || guiaMatch || loteMatch || referenciaMatch;
             });
@@ -286,34 +286,43 @@ const DevolucionCanjeForm = () => {
             codpro: producto.Codpro || producto.Idproducto || '',
             Producto: producto.Nombre || producto.Producto || '',
             lote: producto.Lote || '',
-            Vencimiento: producto.Vencimiento ? 
-                (typeof producto.Vencimiento === 'string' ? 
-                    producto.Vencimiento : 
+            Vencimiento: producto.Vencimiento ?
+                (typeof producto.Vencimiento === 'string' ?
+                    producto.Vencimiento :
                     new Date(producto.Vencimiento).toISOString().split('T')[0]
                 ) : '',
             Cantidad: '', // Se limpia para que el usuario ingrese la cantidad
-            
+
             // Campos adicionales del stored procedure
             NroGuia: producto.NroGuia || '',
             GuiaDevo: producto.NroGuia || '',
             Referencia: producto.Referencia || '',
             TipoDoc: producto.tipodoc || producto.TipoDoc || producto.Tipo || '',
-            
+
             // Campos adicionales que pueden venir del stored procedure
             Idproducto: producto.Idproducto || producto.Codpro || '',
             FecVen: producto.Vencimiento || '',
             cantidad: producto.Cantidad || '',
-            
+
             // IDENTIFICADOR ÚNICO: Índice del dropdown + información completa
             dropdownIndex: dropdownIndex, // Índice único del dropdown
             uniqueId: `${dropdownIndex}-${producto.Codpro || producto.Idproducto}-${producto.Lote}-${producto.NroGuia}-${producto.Referencia}-${producto.tipodoc || producto.TipoDoc || producto.Tipo}`,
             maxCantidad: producto.Cantidad || 0 // Cantidad máxima disponible
         }));
-        
+
         // Mostrar el código del producto en el input de búsqueda
         setProductoSearchTerm(producto.Codpro || producto.Idproducto || '');
         setShowProductoDropdown(false);
-        
+        setSelectedProductIndex(-1); // Resetear índice seleccionado
+
+        // Mover el cursor al input de cantidad después de un breve delay
+        setTimeout(() => {
+            if (cantidadInputRef.current) {
+                cantidadInputRef.current.focus();
+                cantidadInputRef.current.select(); // Seleccionar todo el texto para que se pueda escribir directamente
+            }
+        }, 100);
+
         console.log('✅ Producto seleccionado:', {
             dropdownIndex: dropdownIndex,
             codpro: producto.Codpro || producto.Idproducto,
@@ -330,11 +339,11 @@ const DevolucionCanjeForm = () => {
     const handleDetalleChange = (e) => {
         const { name, value } = e.target;
         setCurrentItemDetalle(prev => ({ ...prev, [name]: value }));
-        
+
         // Si se está seleccionando un producto, cargar todos sus datos
         if (name === 'codpro' && value) {
             const productoSeleccionado = productosADevolver.find(p => p.codpro === value);
-            
+
             if (productoSeleccionado) {
                 setCurrentItemDetalle(prev => ({
                     ...prev,
@@ -351,7 +360,48 @@ const DevolucionCanjeForm = () => {
 
     // Función para manejar la tecla Enter
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
+        // Si el dropdown está abierto, manejar navegación con teclado
+        if (showProductoDropdown && filteredProductos.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedProductIndex(prev => {
+                    const newIndex = prev < filteredProductos.length - 1 ? prev + 1 : 0;
+                    // Scroll al elemento seleccionado
+                    setTimeout(() => {
+                        const selectedElement = document.querySelector(`[data-product-index="${newIndex}"]`);
+                        if (selectedElement) {
+                            selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }, 0);
+                    return newIndex;
+                });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedProductIndex(prev => {
+                    const newIndex = prev > 0 ? prev - 1 : filteredProductos.length - 1;
+                    // Scroll al elemento seleccionado
+                    setTimeout(() => {
+                        const selectedElement = document.querySelector(`[data-product-index="${newIndex}"]`);
+                        if (selectedElement) {
+                            selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }, 0);
+                    return newIndex;
+                });
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedProductIndex >= 0 && selectedProductIndex < filteredProductos.length) {
+                    const selectedProduct = filteredProductos[selectedProductIndex];
+                    // Usar el índice permanente que viene del backend
+                    const indicePermanente = selectedProduct.indice;
+                    handleSelectProducto(selectedProduct, indicePermanente);
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                setShowProductoDropdown(false);
+                setSelectedProductIndex(-1);
+            }
+        } else if (e.key === 'Enter') {
             e.preventDefault(); // Prevenir el comportamiento por defecto
             // Solo agregar si hay producto y cantidad válida
             if (currentItemDetalle.codpro && currentItemDetalle.Cantidad && currentItemDetalle.Cantidad > 0) {
@@ -364,7 +414,7 @@ const DevolucionCanjeForm = () => {
     const handleTransportistaChange = async (e) => {
         const { value } = e.target;
         setCabecera(prev => ({ ...prev, EmpTrans: value }));
-        
+
         if (value) {
             try {
                 // Buscar el transportista seleccionado para obtener su código
@@ -372,7 +422,7 @@ const DevolucionCanjeForm = () => {
                 if (transportista) {
                     const codProv = transportista.Codprov ? transportista.Codprov.trim() : '';
                     console.log('🚛 Cargando datos del transportista:', codProv);
-                    
+
                     // Si hay código válido, buscar por código
                     if (codProv && codProv !== '') {
                         const response = await axios.get(`/proveedores/detalle/${codProv}`);
@@ -380,7 +430,7 @@ const DevolucionCanjeForm = () => {
                             const datosTransportista = response.data.data;
                             console.log('✅ Datos del transportista cargados por código:', datosTransportista);
                             setTransportistaSeleccionado(datosTransportista);
-                            
+
                             // Auto-completar el RUC
                             setCabecera(prev => ({
                                 ...prev,
@@ -398,7 +448,7 @@ const DevolucionCanjeForm = () => {
                                 const datosTransportista = response.data.data;
                                 console.log('✅ Datos del transportista cargados por razón:', datosTransportista);
                                 setTransportistaSeleccionado(datosTransportista);
-                                
+
                                 // Auto-completar el RUC
                                 setCabecera(prev => ({
                                     ...prev,
@@ -433,7 +483,7 @@ const DevolucionCanjeForm = () => {
 
     const handleSeleccionarLaboratorio = async (laboratorio) => {
         console.log('🏥 Laboratorio seleccionado:', laboratorio);
-        
+
         // Ahora todos los laboratorios que llegan del backend son válidos (Mantiene=1)
         console.log('✅ Laboratorio válido para guías de canjes');
         const cleanCodlab = laboratorio.codlab.trim();
@@ -441,35 +491,52 @@ const DevolucionCanjeForm = () => {
         setSelectedLaboratorio(cleanCodlab);
         setShowLaboratorioModal(false);
         setLaboratorioSearchTerm('');
-        setMessage(`Laboratorio seleccionado: ${laboratorio.Descripcion}. Cargando datos...`);
-        setIsError(false);
-        
+        showNotification('info', `Laboratorio seleccionado: ${laboratorio.Descripcion}. Cargando datos...`);
+
         try {
             // Cargar proveedores del laboratorio
             console.log('🔍 Cargando proveedores para laboratorio:', cleanCodlab);
             const proveedoresResponse = await axios.get(`/proveedores/laboratorio/${cleanCodlab}`);
             if (proveedoresResponse.data.success) {
-                setProveedores(proveedoresResponse.data.data);
-                console.log('✅ Proveedores cargados:', proveedoresResponse.data.data.length);
+                const proveedoresCargados = proveedoresResponse.data.data;
+                setProveedores(proveedoresCargados);
+                console.log('✅ Proveedores cargados:', proveedoresCargados.length);
+                
+                // Auto-seleccionar proveedor si solo hay uno
+                if (proveedoresCargados.length === 1) {
+                    const unicoProveedor = proveedoresCargados[0];
+                    setCabecera(prev => ({
+                        ...prev,
+                        Proveedor: unicoProveedor.proveedor
+                    }));
+                    console.log('🎯 Auto-seleccionado proveedor único:', unicoProveedor.razon);
+                    showNotification('info', `Proveedor auto-seleccionado: ${unicoProveedor.razon}`);
+                } else if (proveedoresCargados.length > 1) {
+                    console.log('📋 Múltiples proveedores disponibles, selección manual requerida');
+                    showNotification('info', `${proveedoresCargados.length} proveedores disponibles. Seleccione uno.`);
+                } else {
+                    console.log('⚠️ No hay proveedores disponibles para este laboratorio');
+                    showNotification('warning', 'No hay proveedores disponibles para este laboratorio');
+                }
             } else {
                 console.log('⚠️ Error al cargar proveedores:', proveedoresResponse.data.message);
                 setProveedores([]);
+                showNotification('danger', `Error al cargar proveedores: ${proveedoresResponse.data.message}`);
             }
 
             // Auto-completar campos
             setCabecera(prev => ({
                 ...prev,
-                Destinatario: 'DISTRIBUIDORA FARMACOS DEL NORTE',
+                Destinatario: 'DISTRIBUIDORA FARMACOS DEL NORTE S.A.C.',
                 Placa: 'DISPONIBLE'
             }));
 
-            setMessage(`Laboratorio seleccionado: ${laboratorio.Descripcion}. Datos cargados correctamente.`);
+            showNotification('success', `Laboratorio seleccionado: ${laboratorio.Descripcion}. Datos cargados correctamente.`);
         } catch (error) {
             console.log('⚠️ Error al cargar datos del laboratorio:', error.message);
-            setMessage(`Laboratorio seleccionado: ${laboratorio.Descripcion}. Error al cargar algunos datos.`);
-            setIsError(true);
+            showNotification('warning', `Laboratorio seleccionado: ${laboratorio.Descripcion}. Error al cargar algunos datos.`);
         }
-        
+
         // Los productos se cargarán automáticamente por el useEffect
         // que monitorea selectedLaboratorio
     };
@@ -478,9 +545,7 @@ const DevolucionCanjeForm = () => {
     const handleNuevo = async () => {
         console.log('🔵 Botón Nuevo clickeado - Iniciando limpieza del formulario');
         setIsLoading(true);
-        setMessage('');
-        setIsError(false);
-        
+
         // Limpiar todos los estados
         setCabecera({
             NroGuia: '',
@@ -512,7 +577,7 @@ const DevolucionCanjeForm = () => {
         setSelectedGuiaBusqueda(null);
         setLaboratorioSearchTerm('');
         setIsConsultaMode(false); // Desactivar modo consulta
-        
+
         try {
             // LLAMADA CLAVE: Obtener el siguiente número de documento
             const nextNumResponse = await axios.get('/guias-canje/next-number');
@@ -520,8 +585,7 @@ const DevolucionCanjeForm = () => {
                 setCabecera(prev => ({ ...prev, NroGuia: nextNumResponse.data.nextNumber }));
                 console.log('🔢 Número de documento obtenido:', nextNumResponse.data.nextNumber);
             } else {
-                setMessage(`Advertencia: No se pudo obtener el siguiente número de documento. ${nextNumResponse.data.message || ''}`);
-                setIsError(true);
+                showNotification('warning', `Advertencia: No se pudo obtener el siguiente número de documento. ${nextNumResponse.data.message || ''}`);
             }
 
             // LLAMADA CLAVE: Cargar laboratorios y abrir modal
@@ -529,15 +593,12 @@ const DevolucionCanjeForm = () => {
             if (labResponse.data.success) {
                 setLaboratorios(labResponse.data.data);
                 setShowLaboratorioModal(true);
-                setMessage('Seleccione un laboratorio para continuar');
-                setIsError(false);
+                showNotification('info', 'Seleccione un laboratorio para continuar');
             } else {
-                setMessage(`Error al cargar laboratorios: ${labResponse.data.message}`);
-                setIsError(true);
+                showNotification('danger', `Error al cargar laboratorios: ${labResponse.data.message}`);
             }
         } catch (error) {
-            setMessage(`Error de red al inicializar formulario: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error de red al inicializar formulario: ${error.message}`);
         } finally {
             setIsLoading(false);
             console.log('🔵 Botón Nuevo completado - Formulario limpio, número obtenido y modal de laboratorios abierto');
@@ -546,18 +607,17 @@ const DevolucionCanjeForm = () => {
 
     const handleBuscarClick = async () => {
         setIsLoading(true);
+        showNotification('info', '🔍 Cargando guías disponibles...');
         try {
             const response = await axios.get('/guias-canje');
             if (response.data.success) {
                 setGuiasCanjeList(response.data.data);
                 setShowBuscarModal(true);
             } else {
-                setMessage(`Error al cargar guías para búsqueda: ${response.data.message}`);
-                setIsError(true);
+                showNotification('danger', `Error al cargar guías para búsqueda: ${response.data.message}`);
             }
         } catch (error) {
-            setMessage(`Error de red al buscar guías: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error de red al buscar guías: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -569,8 +629,7 @@ const DevolucionCanjeForm = () => {
         setIsConsultaMode(true); // Activar modo consulta
 
         setIsLoading(true);
-        setMessage('');
-        setIsError(false);
+        showNotification('info', '📋 Cargando datos de la guía seleccionada...');
         try {
             // Asegurar que los datos estén cargados antes de continuar
             if (proveedores.length === 0) {
@@ -581,7 +640,7 @@ const DevolucionCanjeForm = () => {
                 console.log('🔄 Cargando transportistas...');
                 await fetchTransportistas();
             }
-            
+
             // Cargar cabecera
             const cabeceraResponse = await axios.get(`/guias-canje/${guia.NroGuia}/cabecera`);
             if (cabeceraResponse.data.success && cabeceraResponse.data.data) {
@@ -589,7 +648,7 @@ const DevolucionCanjeForm = () => {
                 console.log('🔍 Datos de cabecera recibidos:', fetchedCabecera);
                 console.log('🔍 Proveedor código:', fetchedCabecera.Proveedor);
                 console.log('🔍 Proveedor nombre:', fetchedCabecera.ProveedorNombre);
-                
+
                 // Limpiar espacios en blanco de los datos recibidos
                 const cleanCabecera = {
                     NroGuia: fetchedCabecera.NroGuia?.trim(),
@@ -602,14 +661,14 @@ const DevolucionCanjeForm = () => {
                     PtoLlegada: fetchedCabecera.PtoLlegada?.trim(),
                     Destinatario: fetchedCabecera.Destinatario?.trim()
                 };
-                
+
                 setCabecera(cleanCabecera);
-                
+
                 // Establecer el laboratorio seleccionado y cargar proveedores
                 if (fetchedCabecera.laboratorio) {
                     const laboratorioCode = fetchedCabecera.laboratorio.trim();
                     setSelectedLaboratorio(laboratorioCode);
-                    
+
                     // Cargar proveedores del laboratorio
                     try {
                         console.log('🔍 Cargando proveedores para laboratorio:', laboratorioCode);
@@ -618,21 +677,21 @@ const DevolucionCanjeForm = () => {
                             const proveedoresCargados = proveedoresResponse.data.data;
                             setProveedores(proveedoresCargados);
                             console.log('✅ Proveedores cargados para laboratorio:', proveedoresCargados.length);
-                            
+
                             // Buscar y establecer el proveedor después de cargar los datos
                             if (cleanCabecera.Proveedor && proveedoresCargados.length > 0) {
                                 // Primero intentar buscar por código
-                                let proveedorEncontrado = proveedoresCargados.find(prov => 
+                                let proveedorEncontrado = proveedoresCargados.find(prov =>
                                     prov.proveedor === cleanCabecera.Proveedor
                                 );
-                                
+
                                 // Si no se encuentra por código, buscar por nombre (si está disponible)
                                 if (!proveedorEncontrado && fetchedCabecera.ProveedorNombre) {
-                                    proveedorEncontrado = proveedoresCargados.find(prov => 
+                                    proveedorEncontrado = proveedoresCargados.find(prov =>
                                         prov.razon === fetchedCabecera.ProveedorNombre.trim()
                                     );
                                 }
-                                
+
                                 if (proveedorEncontrado) {
                                     console.log('✅ Proveedor encontrado y establecido:', proveedorEncontrado.razon);
                                 } else {
@@ -640,6 +699,14 @@ const DevolucionCanjeForm = () => {
                                     console.log('Nombre del proveedor recibido:', fetchedCabecera.ProveedorNombre);
                                     console.log('Proveedores disponibles:', proveedoresCargados.map(p => `${p.proveedor} - ${p.razon}`));
                                 }
+                            } else if (!cleanCabecera.Proveedor && proveedoresCargados.length === 1) {
+                                // Auto-seleccionar proveedor si no hay uno establecido y solo hay uno disponible
+                                const unicoProveedor = proveedoresCargados[0];
+                                setCabecera(prev => ({
+                                    ...prev,
+                                    Proveedor: unicoProveedor.proveedor
+                                }));
+                                console.log('🎯 Auto-seleccionado proveedor único en modo consulta:', unicoProveedor.razon);
                             }
                         } else {
                             console.log('⚠️ Error al cargar proveedores:', proveedoresResponse.data.message);
@@ -650,12 +717,12 @@ const DevolucionCanjeForm = () => {
                         setProveedores([]);
                     }
                 }
-                
 
-                
+
+
                 // Buscar y establecer la empresa de transporte seleccionada
                 if (cleanCabecera.EmpTrans && transportistas.length > 0) {
-                    const transportistaEncontrado = transportistas.find(trans => 
+                    const transportistaEncontrado = transportistas.find(trans =>
                         trans.Razon === cleanCabecera.EmpTrans
                     );
                     if (transportistaEncontrado) {
@@ -674,9 +741,9 @@ const DevolucionCanjeForm = () => {
                 } else {
                     console.log('⚠️ No hay transportistas cargados o transportista vacío');
                 }
-                
+
                 console.log('🔍 Cabecera establecida:', cleanCabecera);
-                
+
                 // Esperar un poco para que los datos se establezcan y luego verificar los selects
                 setTimeout(() => {
                     console.log('🔍 Verificando selects después de establecer cabecera:');
@@ -685,8 +752,7 @@ const DevolucionCanjeForm = () => {
                     console.log('Transportistas cargados:', transportistas.length);
                 }, 100);
             } else {
-                setMessage(`Error al cargar cabecera de guía: ${cabeceraResponse.data.message}`);
-                setIsError(true);
+                showNotification('danger', `Error al cargar cabecera de guía: ${cabeceraResponse.data.message}`);
             }
 
             // Cargar detalles
@@ -697,12 +763,10 @@ const DevolucionCanjeForm = () => {
                     Vencimiento: d.Vencimiento ? new Date(d.Vencimiento).toISOString().split('T')[0] : ''
                 })));
             } else {
-                setMessage(`Error al cargar detalles de guía: ${detallesResponse.data.message}`);
-                setIsError(true);
+                showNotification('danger', `Error al cargar detalles de guía: ${detallesResponse.data.message}`);
             }
         } catch (error) {
-            setMessage(`Error de red al seleccionar guía: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error de red al seleccionar guía: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -710,18 +774,16 @@ const DevolucionCanjeForm = () => {
 
     const handleRegistrar = async () => {
         if (!cabecera.NroGuia || !cabecera.Fecha || detalles.length === 0) {
-            setMessage('Por favor, complete todos los campos de cabecera y añada al menos un detalle.');
-            setIsError(true);
+            showNotification('warning', 'Por favor, complete todos los campos de cabecera y añada al menos un detalle.');
             return;
         }
 
         setIsLoading(true);
-        setMessage('');
-        setIsError(false);
-        
+        showNotification('info', '🚀 Iniciando proceso de registro de guía de canje...');
+
         try {
             console.log('🚀 Iniciando proceso de registro de guía de canje...');
-            
+
             // Paso 1: Verificación de saldos de productos
             console.log('📊 Paso 1: Verificando saldos de productos...');
             for (const detalle of detalles) {
@@ -730,24 +792,24 @@ const DevolucionCanjeForm = () => {
                     lote: detalle.lote,
                     alma: 3 // Almacén por defecto
                 });
-                
+
                 if (!saldosResponse.data.success) {
                     throw new Error(`Error al verificar saldos del producto ${detalle.codpro}: ${saldosResponse.data.message}`);
                 }
-                
+
                 console.log(`✅ Saldos verificados para producto ${detalle.codpro}`);
             }
-            
+
             // Paso 2: Búsqueda de guía de canje existente
             console.log('🔍 Paso 2: Verificando si la guía ya existe...');
             const busquedaResponse = await axios.get(`/guias-canje/buscar/${cabecera.NroGuia}`);
-            
+
             if (busquedaResponse.data.success && busquedaResponse.data.data) {
                 throw new Error(`La guía ${cabecera.NroGuia} ya existe en el sistema.`);
             }
-            
+
             console.log('✅ Guía no existe, procediendo con el registro...');
-            
+
             // Paso 3: Inserción de nueva guía de canje
             console.log('📝 Paso 3: Insertando cabecera de guía de canje...');
             const cabeceraData = {
@@ -760,26 +822,26 @@ const DevolucionCanjeForm = () => {
                 punto: cabecera.PtoLlegada,
                 destino: cabecera.Destinatario
             };
-            
+
             console.log('📋 Datos de cabecera a enviar:', cabeceraData);
             console.log('📋 Estado actual de cabecera:', cabecera);
-            
+
             // Validar que todos los campos requeridos estén presentes
             const camposRequeridos = ['docu', 'feca', 'Prov', 'empresa', 'ruc', 'placa', 'punto', 'destino'];
             const camposFaltantes = camposRequeridos.filter(campo => !cabeceraData[campo] || cabeceraData[campo] === '');
-            
+
             if (camposFaltantes.length > 0) {
                 throw new Error(`Campos faltantes: ${camposFaltantes.join(', ')}`);
             }
-            
+
             const cabeceraResponse = await axios.post('/guias-canje/insertar-cabecera', cabeceraData);
-            
+
             if (!cabeceraResponse.data.success) {
                 throw new Error(`Error al insertar cabecera: ${cabeceraResponse.data.message}`);
             }
-            
+
             console.log('✅ Cabecera insertada correctamente');
-            
+
             // Paso 4: Inserción de detalles de la guía de canje
             console.log('📋 Paso 4: Insertando detalles de la guía...');
             for (const detalle of detalles) {
@@ -793,56 +855,54 @@ const DevolucionCanjeForm = () => {
                     referencia: detalle.Referencia || 'SIN REF',
                     tipodoc: detalle.tipodoc || 'NN'
                 };
-                
+
                 const detalleResponse = await axios.post('/guias-canje/insertar-detalle', detalleData);
-                
+
                 if (!detalleResponse.data.success) {
                     throw new Error(`Error al insertar detalle del producto ${detalle.codpro}: ${detalleResponse.data.message}`);
                 }
-                
+
                 console.log(`✅ Detalle insertado para producto ${detalle.codpro}`);
             }
-            
+
             console.log('✅ Todos los detalles insertados correctamente');
-            
+
             // Paso 5: Actualizar contador de guía de devolución para proveedor
             console.log('🔢 Paso 5: Actualizando contador de guía de devolución...');
             const actualizarContadorDevolucionResponse = await axios.post('/guias-canje/actualizar-contador-devolucion', {
                 numero: cabecera.NroGuia
             });
-            
+
             if (!actualizarContadorDevolucionResponse.data.success) {
                 throw new Error(`Error al actualizar contador de devolución: ${actualizarContadorDevolucionResponse.data.message}`);
             }
-            
+
             console.log('✅ Contador de devolución actualizado correctamente');
-            
+
             // Paso 6: Obtener número de guía de remisión electrónica
             console.log('🔢 Paso 6: Obteniendo número de guía de remisión...');
             const numeroGuiaResponse = await axios.get('/guias-venta/siguiente-numero');
-            
+
             if (!numeroGuiaResponse.data.success) {
                 throw new Error(`Error al obtener número de guía: ${numeroGuiaResponse.data.message}`);
             }
-            
+
             const numeroGuia = numeroGuiaResponse.data.numero;
             setNumeroGuiaGenerado(numeroGuia);
             setPesoGuia('0.00');
             setDireccionGuia('');
-            
+
             console.log(`✅ Número de guía obtenido: ${numeroGuia}`);
-            
+
             // Mostrar modal del generador
             setShowGeneradorModal(true);
             setIsLoading(false);
-            
-            setMessage('✅ Guía de canje registrada. Complete los datos de la guía de remisión.');
-            setIsError(false);
-            
+
+            showNotification('success', '✅ Guía de canje registrada. Complete los datos de la guía de remisión.');
+
         } catch (error) {
             console.error('❌ Error en el proceso de registro:', error);
-            setMessage(`Error al registrar guía: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error al registrar guía: ${error.message}`);
             setIsLoading(false);
         }
     };
@@ -853,28 +913,24 @@ const DevolucionCanjeForm = () => {
         }
 
         setIsLoading(true);
-        setMessage('');
-        setIsError(false);
-        
+        showNotification('info', '🗑️ Iniciando eliminación completa de guía de canje...');
+
         try {
             console.log('🗑️ Iniciando eliminación completa de guía de canje:', cabecera.NroGuia);
-            
+
             const response = await axios.delete(`/guias-canje/${cabecera.NroGuia}/completa`);
-            
+
             if (response.data.success) {
                 console.log('✅ Eliminación completada exitosamente');
-                setMessage(response.data.message);
-                setIsError(false);
+                showNotification('success', response.data.message);
                 handleNuevo();
             } else {
                 console.error('❌ Error en respuesta del servidor:', response.data.message);
-                setMessage(`Error al eliminar guía: ${response.data.message}`);
-                setIsError(true);
+                showNotification('danger', `Error al eliminar guía: ${response.data.message}`);
             }
         } catch (error) {
             console.error('❌ Error de red al eliminar guía:', error);
-            setMessage(`Error de red al eliminar guía: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error de red al eliminar guía: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -902,13 +958,11 @@ const DevolucionCanjeForm = () => {
                 setCabGuias(response.data.data);
                 console.log(`✅ Se cargaron ${response.data.data.length} cabeceras de guías`);
             } else {
-                setMessage(`Error al cargar cabeceras: ${response.data.message}`);
-                setIsError(true);
+                showNotification('danger', `Error al cargar cabeceras: ${response.data.message}`);
             }
         } catch (error) {
             console.error('❌ Error al cargar cabeceras:', error);
-            setMessage(`Error de red al cargar cabeceras: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error de red al cargar cabeceras: ${error.message}`);
         } finally {
             setLoadingCabGuias(false);
         }
@@ -938,27 +992,23 @@ const DevolucionCanjeForm = () => {
         try {
             console.log(`🗑️ Eliminando cabecera de guía: ${numero}`);
             const response = await axios.delete(`/cab-guias/${numero}`);
-            
+
             if (response.data.success) {
                 console.log('✅ Cabecera eliminada correctamente');
-                setMessage(response.data.message);
-                setIsError(false);
+                showNotification('success', response.data.message);
                 await cargarCabGuias(); // Recargar la lista
             } else {
-                setMessage(`Error al eliminar: ${response.data.message}`);
-                setIsError(true);
+                showNotification('danger', `Error al eliminar: ${response.data.message}`);
             }
         } catch (error) {
             console.error('❌ Error al eliminar cabecera:', error);
-            setMessage(`Error de red al eliminar: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error de red al eliminar: ${error.message}`);
         }
     };
 
     const handleActualizarUltimoNumero = async () => {
         if (!nuevoNumero.trim()) {
-            setMessage('El número no puede estar vacío');
-            setIsError(true);
+            showNotification('warning', 'El número no puede estar vacío');
             return;
         }
 
@@ -967,48 +1017,43 @@ const DevolucionCanjeForm = () => {
             const response = await axios.put('/cab-guias/ultimo-numero', {
                 nuevoNumero: nuevoNumero.trim()
             });
-            
+
             if (response.data.success) {
                 console.log('✅ Último número actualizado correctamente');
-                setMessage(response.data.message);
-                setIsError(false);
+                showNotification('success', response.data.message);
                 setUltimoNumeroCabGuia(nuevoNumero.trim());
                 setEditandoNumero(false);
             } else {
-                setMessage(`Error al actualizar: ${response.data.message}`);
-                setIsError(true);
+                showNotification('danger', `Error al actualizar: ${response.data.message}`);
             }
         } catch (error) {
             console.error('❌ Error al actualizar último número:', error);
-            setMessage(`Error de red al actualizar: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error de red al actualizar: ${error.message}`);
         }
     };
 
     const handleRetornarModal = async () => {
         if (!numeroGuiaGenerado) {
-            setMessage('Error: No se ha generado un número de guía válido.');
-            setIsError(true);
+            showNotification('danger', 'Error: No se ha generado un número de guía válido.');
             return;
         }
 
         setIsLoading(true);
-        setMessage('');
-        setIsError(false);
+        showNotification('info', '🔄 Iniciando proceso de retorno del modal...');
 
         try {
             console.log('🔄 Iniciando proceso de retorno del modal...');
-            
+
             // Paso 7: Búsqueda de guía de venta existente
             console.log('🔍 Paso 7: Verificando si la guía de venta ya existe...');
             const busquedaGuiaVentaResponse = await axios.get(`/guias-venta/buscar/${numeroGuiaGenerado}`);
-            
+
             if (busquedaGuiaVentaResponse.data.success && busquedaGuiaVentaResponse.data.data) {
                 throw new Error(`La guía de venta ${numeroGuiaGenerado} ya existe en el sistema.`);
             }
-            
+
             console.log('✅ Guía de venta no existe, procediendo con el registro...');
-            
+
             // Paso 8: Inserción de la cabecera de la guía de venta
             console.log('📝 Paso 8: Insertando cabecera de guía de venta...');
             const guiaVentaData = {
@@ -1023,69 +1068,64 @@ const DevolucionCanjeForm = () => {
                 destino: cabecera.Destinatario,
                 peso: parseFloat(pesoGuia) || 0.00
             };
-            
+
             const guiaVentaResponse = await axios.post('/guias-venta/insertar', guiaVentaData);
-            
+
             if (!guiaVentaResponse.data.success) {
                 throw new Error(`Error al insertar guía de venta: ${guiaVentaResponse.data.message}`);
             }
-            
+
             console.log('✅ Cabecera de guía de venta insertada correctamente');
-            
+
             // Paso 9: Preparación de datos para impresión
             console.log('🖨️ Paso 9: Preparando datos para impresión...');
             const impresionResponse = await axios.post('/guias-venta/preparar-impresion', {
                 doc: numeroGuiaGenerado
             });
-            
+
             if (!impresionResponse.data.success) {
                 throw new Error(`Error al preparar datos para impresión: ${impresionResponse.data.message}`);
             }
-            
+
             console.log('✅ Datos preparados para impresión');
-            
+
             // Paso 10: Actualización del contador de guías
             console.log('🔢 Paso 10: Actualizando contador de guías...');
             const actualizarContadorResponse = await axios.post('/guias-venta/actualizar-contador', {
                 numero: numeroGuiaGenerado
             });
-            
+
             if (!actualizarContadorResponse.data.success) {
                 throw new Error(`Error al actualizar contador: ${actualizarContadorResponse.data.message}`);
             }
-            
+
             console.log('✅ Contador actualizado correctamente');
-            
+
             // Cerrar modal y limpiar formulario
             setShowGeneradorModal(false);
             setNumeroGuiaGenerado('');
             setPesoGuia('');
             setDireccionGuia('');
-            
+
             // Limpiar formulario principal
             handleNuevo();
-            
-            setMessage(`✅ Proceso completado exitosamente. Guía de remisión ${numeroGuiaGenerado} generada.`);
-            setIsError(false);
-            
+
+            showNotification('success', `✅ Proceso completado exitosamente. Guía de remisión ${numeroGuiaGenerado} generada.`);
+
         } catch (error) {
             console.error('❌ Error en el proceso de retorno:', error);
-            setMessage(`Error al completar el proceso: ${error.message}`);
-            setIsError(true);
+            showNotification('danger', `Error al completar el proceso: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
     };
 
-        // --- Lógica para añadir/modificar/eliminar ítems de detalle en la grilla ---
+    // --- Lógica para añadir/modificar/eliminar ítems de detalle en la grilla ---
     const handleAddDetalle = () => {
         if (!currentItemDetalle.codpro || !currentItemDetalle.Cantidad) {
-            setMessage('Debe seleccionar un producto y especificar la cantidad para el detalle.');
-            setIsError(true);
+            showNotification('warning', 'Debe seleccionar un producto y especificar la cantidad para el detalle.');
             return;
         }
-        setMessage('');
-        setIsError(false);
 
         const selectedProductInfo = productosADevolver.find(p =>
             (p.Codpro === currentItemDetalle.codpro || p.Idproducto === currentItemDetalle.codpro) &&
@@ -1099,23 +1139,20 @@ const DevolucionCanjeForm = () => {
             NroGuia: cabecera.NroGuia,
             Producto: selectedProductInfo ? (selectedProductInfo.Nombre || selectedProductInfo.Producto) : currentItemDetalle.Producto,
             Vencimiento: currentItemDetalle.Vencimiento,
-            
+
             // Campos del stored procedure - usar datos del producto seleccionado si están disponibles
             tipodoc: selectedProductInfo ? (selectedProductInfo.tipodoc || selectedProductInfo.TipoDoc || selectedProductInfo.Tipo) : (currentItemDetalle.tipodoc || currentItemDetalle.TipoDoc),
             Referencia: selectedProductInfo ? selectedProductInfo.Referencia : currentItemDetalle.Referencia,
             GuiaDevo: selectedProductInfo ? selectedProductInfo.NroGuia : currentItemDetalle.GuiaDevo,
-            
+
             // Campos adicionales para compatibilidad
             Idproducto: selectedProductInfo ? (selectedProductInfo.Idproducto || selectedProductInfo.Codpro) : currentItemDetalle.Idproducto,
             FecVen: selectedProductInfo ? selectedProductInfo.Vencimiento : currentItemDetalle.FecVen,
-            cantidad: currentItemDetalle.Cantidad, // La cantidad que ingresa el usuario
-            
-            // Asegurar que todos los campos estén presentes
-            NroGuia: selectedProductInfo ? selectedProductInfo.NroGuia : currentItemDetalle.NroGuia
+            cantidad: currentItemDetalle.Cantidad // La cantidad que ingresa el usuario
         };
 
         // Verificar si ya existe un producto con el MISMO IDENTIFICADOR ÚNICO
-        const existingIndex = detalles.findIndex(detalle => 
+        const existingIndex = detalles.findIndex(detalle =>
             detalle.uniqueId === newDetail.uniqueId
         );
 
@@ -1123,49 +1160,53 @@ const DevolucionCanjeForm = () => {
             // Si existe el MISMO registro (mismo uniqueId), sumar la cantidad
             const existingDetail = detalles[existingIndex];
             const newQuantity = parseFloat(existingDetail.Cantidad || 0) + parseFloat(newDetail.Cantidad || 0);
-            
+
             // Verificar que no se exceda la cantidad máxima disponible
             if (newQuantity > parseFloat(existingDetail.maxCantidad || 0)) {
-                setMessage(`❌ Error: La cantidad total (${newQuantity}) excede la cantidad disponible (${existingDetail.maxCantidad}) para este registro específico.`);
-                setIsError(true);
+                showNotification('danger', `❌ Error: La cantidad total (${newQuantity}) excede la cantidad disponible (${existingDetail.maxCantidad}) para este registro específico.`);
                 return;
             }
-            
-            setDetalles(prev => prev.map((detalle, index) => 
-                index === existingIndex 
+
+            setDetalles(prev => prev.map((detalle, index) =>
+                index === existingIndex
                     ? { ...detalle, Cantidad: newQuantity.toString() }
                     : detalle
             ));
-            
-            setMessage(`✅ Cantidad actualizada para ${newDetail.Producto} (Registro #${newDetail.dropdownIndex + 1}). Nueva cantidad: ${newQuantity}`);
-            setIsError(false);
+
+            showNotification('success', `✅ Cantidad actualizada para ${newDetail.Producto} (Registro #${newDetail.dropdownIndex + 1}). Nueva cantidad: ${newQuantity}`);
         } else {
             // Verificar que no se exceda la cantidad máxima disponible
             if (parseFloat(newDetail.Cantidad) > parseFloat(newDetail.maxCantidad || 0)) {
-                setMessage(`❌ Error: La cantidad (${newDetail.Cantidad}) excede la cantidad disponible (${newDetail.maxCantidad}) para este registro específico.`);
-                setIsError(true);
+                showNotification('danger', `❌ Error: La cantidad (${newDetail.Cantidad}) excede la cantidad disponible (${newDetail.maxCantidad}) para este registro específico.`);
                 return;
             }
-            
+
             // Si no existe, agregar nuevo detalle (cada registro es único)
             setDetalles(prev => [...prev, newDetail]);
-            setMessage(`✅ Producto agregado: ${newDetail.Producto} (Registro #${newDetail.dropdownIndex + 1})`);
-            setIsError(false);
+            showNotification('success', `✅ Producto agregado: ${newDetail.Producto} (Registro #${newDetail.dropdownIndex + 1})`);
         }
 
         setCurrentItemDetalle({
             // Campos principales
             NroGuia: '', codpro: '', Producto: '', lote: '', Vencimiento: '', Cantidad: '',
             GuiaDevo: '', Referencia: '', tipodoc: '',
-            
+
             // Campos adicionales del stored procedure
             Idproducto: '', FecVen: '', cantidad: '', TipoDoc: '', Tipo: '',
-            
+
             // Campos de identificación única
             dropdownIndex: null, uniqueId: '', maxCantidad: 0
         });
         setProductoSearchTerm('');
         setShowProductoDropdown(false);
+        setSelectedProductIndex(-1); // Resetear índice seleccionado
+
+        // Regresar el cursor al input de búsqueda después de un breve delay
+        setTimeout(() => {
+            if (productoSearchInputRef.current) {
+                productoSearchInputRef.current.focus();
+            }
+        }, 100);
     };
 
     const handleRemoveDetalle = (indexToRemove) => {
@@ -1175,10 +1216,10 @@ const DevolucionCanjeForm = () => {
     // Función para editar cantidad directamente en la tabla
     const handleEditCantidad = (index, newCantidad) => {
         const cantidad = parseFloat(newCantidad);
-        
+
         if (newCantidad === '' || cantidad >= 0) {
-            setDetalles(prev => prev.map((detalle, i) => 
-                i === index 
+            setDetalles(prev => prev.map((detalle, i) =>
+                i === index
                     ? { ...detalle, Cantidad: newCantidad }
                     : detalle
             ));
@@ -1187,14 +1228,15 @@ const DevolucionCanjeForm = () => {
 
     // Estilos comunes para inputs responsivos - basado en Saldos.jsx
     const inputStyles = {
-        padding: '8px 12px',
+        padding: '6px 10px',
         border: '1px solid #d1d5db',
         borderRadius: '6px',
         fontSize: '14px',
         transition: 'border-color 0.3s ease',
         width: '100%',
         boxSizing: 'border-box',
-        outline: 'none'
+        outline: 'none',
+        height: '32px'
     };
 
     const selectStyles = {
@@ -1228,14 +1270,13 @@ const DevolucionCanjeForm = () => {
 
     // --- RENDERIZADO DE LA UI ---
     return (
-        <div style={{ 
-            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', 
+        <div style={{
+            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
             backgroundColor: '#f8f9fa',
-            minHeight: '100vh',
             maxWidth: '100%',
             overflowX: 'hidden',
         }}>
-            
+
             {/* Estilos CSS para animación de recarga */}
             <style>
                 {`
@@ -1246,79 +1287,51 @@ const DevolucionCanjeForm = () => {
                 `}
             </style>
 
-            {isLoading && (
-                <div style={{
-                    textAlign: 'center',
-                    padding: '20px',
-                    backgroundColor: '#e3f2fd',
-                    borderRadius: '8px',
-                    marginBottom: '20px',
-                    color: '#1976d2',
-                    fontWeight: '500'
-                }}>
-                    ⏳ Cargando...
-                </div>
-            )}
-            
-            {message && (
-                <div style={{ 
-                    color: isError ? '#d32f2f' : '#2e7d32', 
-                    fontWeight: '500', 
-                    marginBottom: '15px',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    backgroundColor: isError ? '#ffebee' : '#e8f5e9',
-                    border: `1px solid ${isError ? '#ffcdd2' : '#c8e6c9'}`,
-                    fontSize: '14px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}>
-                    {message}
-                </div>
-            )}
+
 
             {/* Cabecera del Documento - Estilo moderno */}
-            <div style={{ 
-                backgroundColor: 'white', 
-                padding: isMobile ? '16px' : '25px', 
-                marginBottom: '25px', 
-                borderRadius: '12px', 
+            <div style={{
+                backgroundColor: 'white',
+                padding: isMobile ? '15px' : '15px',
+                marginBottom: '10px',
+                borderRadius: '12px',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 border: '1px solid #e0e0e0'
             }}>
-                <div style={{ 
-                    display: 'flex', 
+                <div style={{
+                    display: 'flex',
                     flexDirection: isMobile ? 'column' : 'row',
-                    justifyContent: isMobile ? 'flex-start' : 'space-between', 
+                    justifyContent: isMobile ? 'flex-start' : 'space-between',
                     alignItems: isMobile ? 'stretch' : 'center',
                     marginBottom: isMobile ? '25px' : '20px',
                     borderBottom: '2px solid #3498db',
-                    paddingBottom: '10px',
+                    paddingBottom: '5px',
                     gap: isMobile ? '20px' : '0'
                 }}>
-                    <h3 style={{ 
-                        fontWeight: '600', 
-                        color: '#2c3e50', 
+                    <h3 style={{
+                        fontWeight: '600',
+                        color: '#2c3e50',
                         fontSize: isMobile ? '16px' : '18px',
                         margin: '0',
                         textAlign: isMobile ? 'center' : 'left'
                     }}>
                         📄 Cabecera del Documento
                     </h3>
-                    
+
                     {/* Botones de Acción */}
-                    <div style={{ 
-                        display: 'flex', 
+                    <div style={{
+                        display: 'flex',
                         gap: isMobile ? '12px' : '8px',
                         flexWrap: isMobile ? 'wrap' : 'nowrap',
                         justifyContent: isMobile ? 'center' : 'flex-end',
                         width: isMobile ? '100%' : 'auto'
                     }}>
-                        <button onClick={handleNuevo} style={{ 
-                            backgroundColor: '#2196f3', 
-                            color: 'white', 
-                            border: 'none', 
-                            padding: isMobile ? '12px 16px' : '8px 16px', 
-                            cursor: 'pointer', 
+                        <button onClick={handleNuevo} style={{
+                            backgroundColor: '#2196f3',
+                            color: 'white',
+                            border: 'none',
+                            padding: isMobile ? '12px 16px' : '8px 16px',
+                            cursor: 'pointer',
                             borderRadius: '6px',
                             fontWeight: '600',
                             fontSize: isMobile ? '14px' : '12px',
@@ -1327,21 +1340,46 @@ const DevolucionCanjeForm = () => {
                             flex: isMobile ? '1' : 'none',
                             minWidth: isMobile ? '80px' : 'auto'
                         }}
-                        onMouseOver={(e) => {
-                            e.target.style.transform = 'translateY(-1px)';
-                            e.target.style.boxShadow = '0 4px 8px rgba(33,150,243,0.4)';
-                        }}
-                        onMouseOut={(e) => {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = '0 2px 4px rgba(33,150,243,0.3)';
-                        }}
-                        >🆕 Nuevo</button>
-                        <button onClick={handleBuscarClick} style={{ 
-                            backgroundColor: '#4caf50', 
-                            color: 'white', 
-                            border: 'none', 
-                            padding: isMobile ? '12px 16px' : '8px 16px', 
-                            cursor: 'pointer', 
+                            onMouseOver={(e) => {
+                                e.target.style.transform = 'translateY(-1px)';
+                                e.target.style.boxShadow = '0 4px 8px rgba(33,150,243,0.4)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = '0 2px 4px rgba(33,150,243,0.3)';
+                            }}
+                        >Nuevo</button>
+                            <button
+                                onClick={handleCabGuiasClick}
+                                style={{
+                                    backgroundColor: '#9b59b6',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: isMobile ? '12px 16px' : '8px 16px',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    fontWeight: '600',
+                                    fontSize: isMobile ? '14px' : '12px',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 2px 4px rgba(155,89,182,0.3)',
+                                    flex: isMobile ? '1' : 'none',
+                                    minWidth: isMobile ? '80px' : 'auto'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.target.style.transform = 'translateY(-1px)';
+                                    e.target.style.boxShadow = '0 4px 8px rgba(155,89,182,0.4)';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = '0 2px 4px rgba(155,89,182,0.3)';
+                                }}
+                            >Guias</button>
+                        <button onClick={handleBuscarClick} style={{
+                            backgroundColor: '#4caf50',
+                            color: 'white',
+                            border: 'none',
+                            padding: isMobile ? '12px 16px' : '8px 16px',
+                            cursor: 'pointer',
                             borderRadius: '6px',
                             fontWeight: '600',
                             fontSize: isMobile ? '14px' : '12px',
@@ -1350,51 +1388,26 @@ const DevolucionCanjeForm = () => {
                             flex: isMobile ? '1' : 'none',
                             minWidth: isMobile ? '80px' : 'auto'
                         }}
-                        onMouseOver={(e) => {
-                            e.target.style.transform = 'translateY(-1px)';
-                            e.target.style.boxShadow = '0 4px 8px rgba(76,175,80,0.4)';
-                        }}
-                        onMouseOut={(e) => {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = '0 2px 4px rgba(76,175,80,0.3)';
-                        }}
-                        >🔍 Busca</button>
-                        
-                        <button 
-                            onClick={handleCabGuiasClick}
-                            style={{ 
-                                backgroundColor: '#9b59b6', 
-                                color: 'white', 
-                                border: 'none', 
-                                padding: isMobile ? '12px 16px' : '8px 16px', 
-                                cursor: 'pointer', 
-                                borderRadius: '6px',
-                                fontWeight: '600',
-                                fontSize: isMobile ? '14px' : '12px',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 2px 4px rgba(155,89,182,0.3)',
-                                flex: isMobile ? '1' : 'none',
-                                minWidth: isMobile ? '80px' : 'auto'
+                            onMouseOver={(e) => {
+                                e.target.style.transform = 'translateY(-1px)';
+                                e.target.style.boxShadow = '0 4px 8px rgba(76,175,80,0.4)';
                             }}
-                        onMouseOver={(e) => {
-                            e.target.style.transform = 'translateY(-1px)';
-                            e.target.style.boxShadow = '0 4px 8px rgba(155,89,182,0.4)';
-                        }}
-                        onMouseOut={(e) => {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = '0 2px 4px rgba(155,89,182,0.3)';
-                        }}
-                        >📋 CabGuias</button>
-                        
-                        <button 
-                            onClick={handleEliminar} 
+                            onMouseOut={(e) => {
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = '0 2px 4px rgba(76,175,80,0.3)';
+                            }}
+                        >Facturas</button>
+
+
+                        <button
+                            onClick={handleEliminar}
                             disabled={!isConsultaMode}
-                            style={{ 
-                                backgroundColor: !isConsultaMode ? '#bdc3c7' : '#f44336', 
-                                color: 'white', 
-                                border: 'none', 
-                                padding: isMobile ? '12px 16px' : '8px 16px', 
-                                cursor: !isConsultaMode ? 'not-allowed' : 'pointer', 
+                            style={{
+                                backgroundColor: !isConsultaMode ? '#bdc3c7' : '#f44336',
+                                color: 'white',
+                                border: 'none',
+                                padding: isMobile ? '12px 16px' : '8px 16px',
+                                cursor: !isConsultaMode ? 'not-allowed' : 'pointer',
                                 borderRadius: '6px',
                                 fontWeight: '600',
                                 fontSize: isMobile ? '14px' : '12px',
@@ -1403,52 +1416,51 @@ const DevolucionCanjeForm = () => {
                                 flex: isMobile ? '1' : 'none',
                                 minWidth: isMobile ? '80px' : 'auto'
                             }}
-                        onMouseOver={(e) => {
-                            if (isConsultaMode) {
-                                e.target.style.transform = 'translateY(-1px)';
-                                e.target.style.boxShadow = '0 4px 8px rgba(244,67,54,0.4)';
-                            }
-                        }}
-                        onMouseOut={(e) => {
-                            if (isConsultaMode) {
-                                e.target.style.transform = 'translateY(0)';
-                                e.target.style.boxShadow = '0 2px 4px rgba(244,67,54,0.3)';
-                            }
-                        }}
-                        >🗑️ Eliminar</button>
+                            onMouseOver={(e) => {
+                                if (isConsultaMode) {
+                                    e.target.style.transform = 'translateY(-1px)';
+                                    e.target.style.boxShadow = '0 4px 8px rgba(244,67,54,0.4)';
+                                }
+                            }}
+                            onMouseOut={(e) => {
+                                if (isConsultaMode) {
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = '0 2px 4px rgba(244,67,54,0.3)';
+                                }
+                            }}
+                        >Eliminar</button>
                     </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
-                    <input 
-                        type="text" 
-                        name="NroGuia" 
-                        value={cabecera.NroGuia} 
-                        onChange={handleCabeceraChange} 
+                    <input
+                        type="text"
+                        name="NroGuia"
+                        value={cabecera.NroGuia}
+                        onChange={handleCabeceraChange}
                         readOnly={true}
                         placeholder="Nro Docum"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        className="w-full px-3 py-1 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 h-8"
                     />
-                    
-                    <input 
-                        type="date" 
-                        name="Fecha" 
-                        value={formatFechaConsistente(cabecera.Fecha)} 
+
+                    <input
+                        type="date"
+                        name="Fecha"
+                        value={formatFechaConsistente(cabecera.Fecha)}
                         onChange={handleCabeceraChange}
                         disabled={true}
                         placeholder="Fecha Emisión"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        className="w-full px-3 py-1 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 h-8"
                     />
-                    
-                    <select 
-                        name="Proveedor" 
-                        value={cabecera.Proveedor} 
+
+                    <select
+                        name="Proveedor"
+                        value={cabecera.Proveedor}
                         onChange={handleCabeceraChange}
                         disabled={isConsultaMode}
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isConsultaMode 
-                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
+                        className={`w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-8 ${isConsultaMode
+                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
                                 : 'bg-white text-gray-900 cursor-pointer'
-                        }`}
+                            }`}
                     >
                         <option value="">Proveedor</option>
                         {proveedores.map(prov => (
@@ -1457,17 +1469,16 @@ const DevolucionCanjeForm = () => {
                             </option>
                         ))}
                     </select>
-                    
-                    <select 
-                        name="EmpTrans" 
-                        value={cabecera.EmpTrans} 
+
+                    <select
+                        name="EmpTrans"
+                        value={cabecera.EmpTrans}
                         onChange={handleTransportistaChange}
                         disabled={isConsultaMode}
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isConsultaMode 
-                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
+                        className={`w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-8 ${isConsultaMode
+                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
                                 : 'bg-white text-gray-900 cursor-pointer'
-                        }`}
+                            }`}
                     >
                         <option value="">Empresa Transporte</option>
                         {transportistas.map(trans => (
@@ -1476,16 +1487,16 @@ const DevolucionCanjeForm = () => {
                             </option>
                         ))}
                     </select>
-                    
-                    <input 
-                        type="text" 
-                        name="RucTrans" 
-                        value={cabecera.RucTrans} 
+
+                    <input
+                        type="text"
+                        name="RucTrans"
+                        value={cabecera.RucTrans}
                         onChange={handleCabeceraChange}
                         readOnly
                         placeholder="RUC Transportista"
                         style={{
-                            padding: '8px 12px',
+                            padding: '6px 10px',
                             border: '1px solid #d1d5db',
                             borderRadius: '6px',
                             fontSize: '14px',
@@ -1494,67 +1505,71 @@ const DevolucionCanjeForm = () => {
                             color: '#495057',
                             width: '100%',
                             boxSizing: 'border-box',
-                            outline: 'none'
+                            outline: 'none',
+                            height: '32px'
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#3498db'}
                         onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
                     />
-                    
-                    <input 
-                        type="text" 
-                        name="Placa" 
-                        value={cabecera.Placa} 
+
+                    <input
+                        type="text"
+                        name="Placa"
+                        value={cabecera.Placa}
                         onChange={handleCabeceraChange}
                         disabled={isConsultaMode}
                         placeholder="Placa Vehículo"
                         style={{
-                            padding: '12px',
+                            padding: '6px 10px',
                             border: '2px solid #e0e0e0',
                             borderRadius: '8px',
                             fontSize: '14px',
                             transition: 'border-color 0.3s ease',
                             backgroundColor: isConsultaMode ? '#f5f5f5' : 'white',
-                            cursor: isConsultaMode ? 'not-allowed' : 'auto'
+                            cursor: isConsultaMode ? 'not-allowed' : 'auto',
+                            height: '32px'
                         }}
                         onFocus={(e) => !isConsultaMode && (e.target.style.borderColor = '#3498db')}
                         onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
                     />
-                    
-                    <input 
-                        type="text" 
-                        name="PtoLlegada" 
-                        value={cabecera.PtoLlegada} 
+
+                    <input
+                        type="text"
+                        name="PtoLlegada"
+                        value={cabecera.PtoLlegada}
                         onChange={handleCabeceraChange}
                         disabled={isConsultaMode}
                         placeholder="Punto de llegada"
                         style={{
-                            padding: '12px',
+                            padding: '6px 10px',
                             border: '2px solid #e0e0e0',
                             borderRadius: '8px',
                             fontSize: '14px',
                             transition: 'border-color 0.3s ease',
                             backgroundColor: isConsultaMode ? '#f5f5f5' : 'white',
-                            cursor: isConsultaMode ? 'not-allowed' : 'auto'
+                            cursor: isConsultaMode ? 'not-allowed' : 'auto',
+                            height: '32px'
                         }}
                         onFocus={(e) => !isConsultaMode && (e.target.style.borderColor = '#3498db')}
                         onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
                     />
-                    
-                    <input 
-                        type="text" 
-                        name="Destinatario" 
-                        value={cabecera.Destinatario} 
+
+                    <input
+                        type="text"
+                        name="Destinatario"
+                        value={cabecera.Destinatario}
                         onChange={handleCabeceraChange}
                         disabled={isConsultaMode}
                         placeholder="Destinatario"
                         style={{
-                            padding: '12px',
+                            padding: '6px 10px',
                             border: '2px solid #e0e0e0',
                             borderRadius: '8px',
                             fontSize: '14px',
                             transition: 'border-color 0.3s ease',
                             backgroundColor: isConsultaMode ? '#f5f5f5' : 'white',
-                            cursor: isConsultaMode ? 'not-allowed' : 'auto'
+                            cursor: isConsultaMode ? 'not-allowed' : 'auto',
+                            height: '32px'
                         }}
                         onFocus={(e) => !isConsultaMode && (e.target.style.borderColor = '#3498db')}
                         onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
@@ -1563,31 +1578,31 @@ const DevolucionCanjeForm = () => {
             </div>
 
             {/* Detalles de la Guia (para añadir/editar un item) - Estilo moderno */}
-            <div style={{ 
-                backgroundColor: 'white', 
-                padding: '16px', 
-                marginBottom: '25px', 
-                borderRadius: '12px', 
+            <div style={{
+                backgroundColor: 'white',
+                padding: '16px',
+                marginBottom: '25px',
+                borderRadius: '12px',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 border: '1px solid #e0e0e0'
             }}>
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     marginBottom: '20px',
                     borderBottom: '2px solid #e74c3c',
                     paddingBottom: '10px'
                 }}>
-                    <h3 style={{ 
-                        fontWeight: '600', 
-                        color: '#2c3e50', 
+                    <h3 style={{
+                        fontWeight: '600',
+                        color: '#2c3e50',
                         fontSize: '18px',
                         margin: '0'
                     }}>
-                        ➕ Detalles de la Guía (Agregar Item)
+                        ➕ Detalles Guía
                     </h3>
-                    <button 
+                    <button
                         onClick={handleAddDetalle}
                         disabled={isConsultaMode || !currentItemDetalle.codpro || !currentItemDetalle.Cantidad || currentItemDetalle.Cantidad <= 0}
                         style={{
@@ -1615,64 +1630,88 @@ const DevolucionCanjeForm = () => {
                             }
                         }}
                     >
-                        ➕ Agregar Detalle
+                        Agregar
                     </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '60px 1fr 120px 100px 100px 1fr 100px 100px', 
+                    gap: '16px', 
+                    alignItems: 'center' 
+                }}>
+                    {/* Input de autocompletado - Número del Índice (más pequeño) */}
+                    <input
+                        type="text"
+                        name="dropdownIndex"
+                        value={currentItemDetalle.dropdownIndex !== undefined ? `#${currentItemDetalle.dropdownIndex}` : ''}
+                        readOnly
+                        placeholder="#"
+                        style={{
+                            padding: '6px 8px',
+                            border: '2px solid #e0e0e0',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            backgroundColor: '#f5f5f5',
+                            color: '#666',
+                            height: '32px',
+                            width: '60px',
+                            textAlign: 'center'
+                        }}
+                    />
+
                     {/* Input de búsqueda de productos con autocompletado */}
                     <div style={{ position: 'relative' }} className="producto-dropdown-container">
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                            <input 
-                                type="text" 
+
+
+
+                            <input
+                                ref={productoSearchInputRef}
+                                type="text"
                                 value={productoSearchTerm}
                                 onChange={(e) => handleProductoSearch(e.target.value)}
                                 onFocus={() => setShowProductoDropdown(true)}
                                 onKeyDown={handleKeyDown}
                                 disabled={isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0}
                                 placeholder={
-                                    !selectedLaboratorio 
-                                        ? 'Seleccione un laboratorio primero' 
-                                        : productosADevolver.length === 0 
-                                            ? 'No hay productos disponibles' 
+                                    !selectedLaboratorio
+                                        ? 'Seleccione un laboratorio primero'
+                                        : productosADevolver.length === 0
+                                            ? 'No hay productos disponibles'
                                             : 'Buscar por código, nombre, guía, lote o referencia...'
                                 }
-                                className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 h-10 ${
-                                    (isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)
-                                        ? 'bg-gray-100 text-gray-600 cursor-not-allowed opacity-60' 
+                                className={`w-full px-3 py-1 pr-10 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 h-8 ${(isConsultaMode || !selectedLaboratorio || productosADevolver.length === 0)
+                                        ? 'bg-gray-100 text-gray-600 cursor-not-allowed opacity-60'
                                         : 'bg-white text-gray-900'
-                                }`}
+                                    }`}
                             />
-                            
+
                             {/* Botón de recarga */}
                             {selectedLaboratorio && !isConsultaMode && (
                                 <button
                                     onClick={async () => {
                                         try {
                                             setIsLoading(true);
-                                            setMessage('');
-                                            setIsError(false);
-                                            
+                                            showNotification('info', '🔄 Recargando productos disponibles...');
+
                                             const cleanCodlab = selectedLaboratorio.trim();
                                             console.log('🔄 Recargando productos para laboratorio:', cleanCodlab);
-                                            
+
                                             const response = await axios.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
                                             if (response.data.success) {
                                                 setProductosADevolver(response.data.data);
                                                 setFilteredProductos(response.data.data);
                                                 setProductoSearchTerm('');
                                                 setShowProductoDropdown(false);
-                                                
+
                                                 console.log('✅ Productos recargados:', response.data.data.length, 'productos');
-                                                setMessage(`✅ Productos actualizados: ${response.data.data.length} productos disponibles`);
-                                                setIsError(false);
+                                                showNotification('success', `✅ Productos actualizados: ${response.data.data.length} productos disponibles`);
                                             } else {
-                                                setMessage(`❌ Error al recargar productos: ${response.data.message}`);
-                                                setIsError(true);
+                                                showNotification('danger', `❌ Error al recargar productos: ${response.data.message}`);
                                             }
                                         } catch (error) {
                                             console.error('❌ Error al recargar productos:', error);
-                                            setMessage(`❌ Error de red al recargar productos: ${error.message}`);
-                                            setIsError(true);
+                                            showNotification('danger', `❌ Error de red al recargar productos: ${error.message}`);
                                         } finally {
                                             setIsLoading(false);
                                         }
@@ -1704,28 +1743,28 @@ const DevolucionCanjeForm = () => {
                                     }}
                                     title="Recargar productos disponibles"
                                 >
-                                    <svg 
-                                        width="16" 
-                                        height="16" 
-                                        viewBox="0 0 24 24" 
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        strokeWidth="2" 
-                                        strokeLinecap="round" 
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
                                         strokeLinejoin="round"
                                         style={{
                                             color: '#6b7280',
                                             animation: isLoading ? 'spin 1s linear infinite' : 'none'
                                         }}
                                     >
-                                        <path d="M23 4v6h-6"/>
-                                        <path d="M1 20v-6h6"/>
-                                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                                        <path d="M23 4v6h-6" />
+                                        <path d="M1 20v-6h6" />
+                                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
                                     </svg>
                                 </button>
                             )}
                         </div>
-                        
+
                         {/* Dropdown de productos filtrados */}
                         {showProductoDropdown && !isConsultaMode && selectedLaboratorio && filteredProductos.length > 0 && (
                             <div style={{
@@ -1767,99 +1806,103 @@ const DevolucionCanjeForm = () => {
                                     <div>Referencia</div>
                                     <div>Tipo</div>
                                 </div>
-                                
+
+
                                 {filteredProductos.map((prod, filteredIndex) => {
-                                    // Encontrar el índice original en productosADevolver
-                                    const originalIndex = productosADevolver.findIndex(originalProd => 
-                                        originalProd.Codpro === prod.Codpro && 
-                                        originalProd.Lote === prod.Lote && 
-                                        originalProd.NroGuia === prod.NroGuia &&
-                                        originalProd.Referencia === prod.Referencia &&
-                                        originalProd.tipodoc === prod.tipodoc
-                                    );
+                                    // Usar el índice permanente que viene del backend
+                                    const indicePermanente = prod.indice;
+
+                                    const isSelected = filteredIndex === selectedProductIndex;
                                     
                                     return (
-                                    <div
-                                        key={`${prod.Codpro}-${prod.Lote}-${prod.NroGuia}-${originalIndex}`}
-                                        onClick={() => handleSelectProducto(prod, originalIndex)}
-                                        style={{
-                                            padding: '8px 12px',
-                                            cursor: 'pointer',
-                                            borderBottom: '1px solid #f3f4f6',
-                                            fontSize: '11px',
-                                            transition: 'background-color 0.2s ease',
-                                            backgroundColor: 'white',
-                                            display: 'grid',
-                                            gridTemplateColumns: '60px 100px 80px 200px 100px 120px 80px 100px 80px',
-                                            gap: '8px',
-                                            alignItems: 'center'
-                                        }}
-                                        onMouseOver={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                        }}
-                                        onMouseOut={(e) => {
-                                            e.currentTarget.style.backgroundColor = 'white';
-                                        }}
-                                    >
-                                        {/* Índice numérico - usando el índice original */}
-                                        <div style={{ fontWeight: '600', color: '#e74c3c' }}>
-                                            {originalIndex + 1}
+                                        <div
+                                            key={`${prod.Codpro}-${prod.Lote}-${prod.NroGuia}-${indicePermanente}`}
+                                            data-product-index={filteredIndex}
+                                            onClick={() => handleSelectProducto(prod, indicePermanente)}
+                                            style={{
+                                                padding: '8px 12px',
+                                                cursor: 'pointer',
+                                                borderBottom: '1px solid #f3f4f6',
+                                                fontSize: '11px',
+                                                transition: 'background-color 0.2s ease',
+                                                backgroundColor: isSelected ? '#e3f2fd' : 'white',
+                                                border: isSelected ? '2px solid #2196f3' : 'none',
+                                                display: 'grid',
+                                                gridTemplateColumns: '60px 100px 80px 200px 100px 120px 80px 100px 80px',
+                                                gap: '8px',
+                                                alignItems: 'center'
+                                            }}
+                                            onMouseOver={(e) => {
+                                                if (!isSelected) {
+                                                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                                }
+                                            }}
+                                            onMouseOut={(e) => {
+                                                if (!isSelected) {
+                                                    e.currentTarget.style.backgroundColor = 'white';
+                                                }
+                                            }}
+                                        >
+                                            {/* Índice numérico - usando el índice permanente del backend */}
+                                            <div style={{ fontWeight: '600', color: '#e74c3c' }}>
+                                                {indicePermanente}
+                                            </div>
+
+                                            {/* NroGuia */}
+                                            <div style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {prod.NroGuia || 'SIN REF'}
+                                            </div>
+
+                                            {/* IdProducto (Codpro) */}
+                                            <div style={{ color: '#374151', fontWeight: '500' }}>
+                                                {prod.Codpro || prod.Idproducto || ''}
+                                            </div>
+
+                                            {/* Producto */}
+                                            <div style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {prod.Nombre || prod.Producto || ''}
+                                            </div>
+
+                                            {/* Lote */}
+                                            <div style={{ color: '#6b7280' }}>
+                                                {prod.Lote || ''}
+                                            </div>
+
+                                            {/* FecVen (Vencimiento) */}
+                                            <div style={{ color: '#6b7280', fontSize: '10px' }}>
+                                                {prod.Vencimiento ?
+                                                    (typeof prod.Vencimiento === 'string' ?
+                                                        prod.Vencimiento :
+                                                        new Date(prod.Vencimiento).toLocaleDateString('es-ES')
+                                                    ) : ''
+                                                }
+                                            </div>
+
+                                            {/* Cantidad */}
+                                            <div style={{ color: '#e74c3c', fontWeight: '600', textAlign: 'center' }}>
+                                                {prod.Cantidad || ''}
+                                            </div>
+
+                                            {/* Referencia */}
+                                            <div style={{ color: '#6b7280', fontSize: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {prod.Referencia || ''}
+                                            </div>
+
+                                            {/* Tipo */}
+                                            <div style={{ color: '#6b7280', fontSize: '10px' }}>
+                                                {prod.tipodoc || prod.TipoDoc || prod.Tipo || ''}
+                                            </div>
                                         </div>
-                                        
-                                        {/* NroGuia */}
-                                        <div style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {prod.NroGuia || 'SIN REF'}
-                                        </div>
-                                        
-                                        {/* IdProducto (Codpro) */}
-                                        <div style={{ color: '#374151', fontWeight: '500' }}>
-                                            {prod.Codpro || prod.Idproducto || ''}
-                                        </div>
-                                        
-                                        {/* Producto */}
-                                        <div style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {prod.Nombre || prod.Producto || ''}
-                                        </div>
-                                        
-                                        {/* Lote */}
-                                        <div style={{ color: '#6b7280' }}>
-                                            {prod.Lote || ''}
-                                        </div>
-                                        
-                                        {/* FecVen (Vencimiento) */}
-                                        <div style={{ color: '#6b7280', fontSize: '10px' }}>
-                                            {prod.Vencimiento ? 
-                                                (typeof prod.Vencimiento === 'string' ? 
-                                                    prod.Vencimiento : 
-                                                    new Date(prod.Vencimiento).toLocaleDateString('es-ES')
-                                                ) : ''
-                                            }
-                                        </div>
-                                        
-                                        {/* Cantidad */}
-                                        <div style={{ color: '#e74c3c', fontWeight: '600', textAlign: 'center' }}>
-                                            {prod.Cantidad || ''}
-                                        </div>
-                                        
-                                        {/* Referencia */}
-                                        <div style={{ color: '#6b7280', fontSize: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {prod.Referencia || ''}
-                                        </div>
-                                        
-                                        {/* Tipo */}
-                                        <div style={{ color: '#6b7280', fontSize: '10px' }}>
-                                            {prod.tipodoc || prod.TipoDoc || prod.Tipo || ''}
-                                        </div>
-                                    </div>
                                     );
                                 })}
                             </div>
                         )}
                     </div>
-                    <input 
-                        type="number" 
-                        name="Cantidad" 
-                        value={currentItemDetalle.Cantidad} 
+                    <input
+                        ref={cantidadInputRef}
+                        type="number"
+                        name="Cantidad"
+                        value={currentItemDetalle.Cantidad}
                         onChange={handleDetalleChange}
                         onKeyDown={handleKeyDown}
                         disabled={isConsultaMode}
@@ -1867,64 +1910,102 @@ const DevolucionCanjeForm = () => {
                         max={currentItemDetalle.maxCantidad || undefined}
                         placeholder={currentItemDetalle.maxCantidad ? `Máx: ${currentItemDetalle.maxCantidad}` : "Unidades"}
                         title={currentItemDetalle.maxCantidad ? `Cantidad máxima disponible: ${currentItemDetalle.maxCantidad}` : "Ingrese la cantidad"}
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 h-10 ${
-                            isConsultaMode 
-                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
+                        className={`w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 h-8 ${isConsultaMode
+                                ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
                                 : 'bg-white text-gray-900'
-                        }`}
+                            }`}
                     />
-                    <input 
-                        type="text" 
-                        name="lote" 
-                        value={currentItemDetalle.lote} 
-                        onChange={handleDetalleChange} 
+                    <input
+                        type="text"
+                        name="lote"
+                        value={currentItemDetalle.lote}
+                        onChange={handleDetalleChange}
                         readOnly
                         placeholder="Lote"
                         style={{
-                            padding: '8px 12px',
+                            padding: '6px 10px',
                             border: '2px solid #e0e0e0',
                             borderRadius: '8px',
                             fontSize: '14px',
                             backgroundColor: '#f5f5f5',
                             color: '#666',
-                            height: '40px'
+                            height: '32px'
                         }}
                     />
-                    
-                    <input 
-                        type="date" 
-                        name="Vencimiento" 
-                        value={formatFechaConsistente(currentItemDetalle.Vencimiento)} 
-                        onChange={handleDetalleChange} 
+
+                    <input
+                        type="date"
+                        name="Vencimiento"
+                        value={formatFechaConsistente(currentItemDetalle.Vencimiento)}
+                        onChange={handleDetalleChange}
                         readOnly
                         placeholder="Vencimiento"
                         style={{
-                            padding: '8px 12px',
+                            padding: '6px 10px',
                             border: '2px solid #e0e0e0',
                             borderRadius: '8px',
                             fontSize: '14px',
                             backgroundColor: '#f5f5f5',
                             color: '#666',
-                            height: '40px'
+                            height: '32px'
                         }}
                     />
-                    
-                   
+
+                    {/* Input de autocompletado - Nombre del Producto (ancho dinámico) */}
+                    <input
+                        type="text"
+                        name="Producto"
+                        value={currentItemDetalle.Producto || ''}
+                        readOnly
+                        placeholder="Nombre del Producto"
+                        style={{
+                            padding: '6px 10px',
+                            border: '2px solid #e0e0e0',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            backgroundColor: '#f5f5f5',
+                            color: '#666',
+                            height: '32px',
+                            width: '100%',
+                            minWidth: '200px'
+                        }}
+                    />
+
+
+                    {/* Input de autocompletado - Número de Guía Seleccionada */}
+                    <input
+                        type="text"
+                        name="GuiaDevo"
+                        value={currentItemDetalle.GuiaDevo || ''}
+                        readOnly
+                        placeholder="Número de Guía"
+                        style={{
+                            padding: '6px 10px',
+                            border: '2px solid #e0e0e0',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            backgroundColor: '#f5f5f5',
+                            color: '#666',
+                            height: '32px',
+                            width: '100%'
+                        }}
+                    />
+
                 </div>
             </div>
 
             {/* Grilla de Detalles de la Guia - Estilo moderno */}
-            <div style={{ 
-                backgroundColor: 'white', 
-                padding: '16px', 
-                marginBottom: '25px', 
-                borderRadius: '12px', 
+            <div style={{
+                backgroundColor: 'white',
+                padding: '16px',
+                marginBottom: '25px',
+                borderRadius: '12px',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 border: '1px solid #e0e0e0'
             }}>
-                <h3 style={{ 
-                    fontWeight: '600', 
-                    color: '#2c3e50', 
+                <h3 style={{
+                    fontWeight: '600',
+                    color: '#2c3e50',
                     marginBottom: '20px',
                     fontSize: '18px',
                     borderBottom: '2px solid #9b59b6',
@@ -1950,67 +2031,67 @@ const DevolucionCanjeForm = () => {
                         borderRadius: '8px',
                         border: '1px solid #e0e0e0'
                     }}>
-                        <table style={{ 
-                            width: '100%', 
+                        <table style={{
+                            width: '100%',
                             borderCollapse: 'collapse',
                             fontSize: '14px'
                         }}>
                             <thead>
-                                <tr style={{ 
-                                    backgroundColor: '#9b59b6', 
+                                <tr style={{
+                                    backgroundColor: '#9b59b6',
                                     color: 'white',
                                     fontWeight: '600'
                                 }}>
-                                    <th style={{ 
-                                        padding: '15px 12px', 
+                                    <th style={{
+                                        padding: '15px 12px',
                                         border: '1px solid #8e44ad',
                                         textAlign: 'left',
                                         fontSize: '13px'
                                     }}>NroGuia (Devo)</th>
-                                    <th style={{ 
-                                        padding: '15px 12px', 
+                                    <th style={{
+                                        padding: '15px 12px',
                                         border: '1px solid #8e44ad',
                                         textAlign: 'left',
                                         fontSize: '13px'
                                     }}>CodPro</th>
-                                    <th style={{ 
-                                        padding: '15px 12px', 
+                                    <th style={{
+                                        padding: '15px 12px',
                                         border: '1px solid #8e44ad',
                                         textAlign: 'left',
                                         fontSize: '13px'
                                     }}>Producto</th>
-                                    <th style={{ 
-                                        padding: '15px 12px', 
+                                    <th style={{
+                                        padding: '15px 12px',
                                         border: '1px solid #8e44ad',
                                         textAlign: 'left',
                                         fontSize: '13px'
                                     }}>Lote</th>
-                                    <th style={{ 
-                                        padding: '15px 12px', 
+                                    <th style={{
+                                        padding: '15px 12px',
                                         border: '1px solid #8e44ad',
                                         textAlign: 'left',
                                         fontSize: '13px'
                                     }}>Vencimiento</th>
-                                    <th style={{ 
-                                        padding: '15px 12px', 
+                                    <th style={{
+                                        padding: '15px 12px',
                                         border: '1px solid #8e44ad',
                                         textAlign: 'left',
                                         fontSize: '13px'
                                     }}>Cantidad</th>
-                                    <th style={{ 
-                                        padding: '15px 12px', 
+                                    <th style={{
+                                        padding: '15px 12px',
                                         border: '1px solid #8e44ad',
                                         textAlign: 'left',
                                         fontSize: '13px'
                                     }}>Referencia</th>
-                                    <th style={{ 
-                                        padding: '15px 12px', 
+                                    <th style={{
+                                        padding: '15px 12px',
                                         border: '1px solid #8e44ad',
                                         textAlign: 'left',
                                         fontSize: '13px'
                                     }}>Tipo Doc</th>
-                                    <th style={{ 
-                                        padding: '15px 12px', 
+                                    <th style={{
+                                        padding: '15px 12px',
                                         border: '1px solid #8e44ad',
                                         textAlign: 'center',
                                         fontSize: '13px'
@@ -2019,43 +2100,43 @@ const DevolucionCanjeForm = () => {
                             </thead>
                             <tbody>
                                 {detalles.map((item, index) => (
-                                    <tr key={index} style={{ 
+                                    <tr key={index} style={{
                                         backgroundColor: index % 2 === 0 ? '#f8f9fa' : '#ffffff',
                                         transition: 'background-color 0.2s ease'
                                     }}
-                                    onMouseOver={(e) => e.target.parentElement.style.backgroundColor = '#e8f4fd'}
-                                    onMouseOut={(e) => e.target.parentElement.style.backgroundColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff'}
+                                        onMouseOver={(e) => e.target.parentElement.style.backgroundColor = '#e8f4fd'}
+                                        onMouseOut={(e) => e.target.parentElement.style.backgroundColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff'}
                                     >
-                                        <td style={{ 
-                                            padding: '12px', 
+                                        <td style={{
+                                            padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px',
                                             fontWeight: '500'
                                         }}>{item.GuiaDevo}</td>
-                                        <td style={{ 
-                                            padding: '12px', 
+                                        <td style={{
+                                            padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px',
                                             fontWeight: '500'
                                         }}>{item.codpro}</td>
-                                        <td style={{ 
-                                            padding: '12px', 
+                                        <td style={{
+                                            padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px'
                                         }}>{item.Producto}</td>
-                                        <td style={{ 
-                                            padding: '12px', 
+                                        <td style={{
+                                            padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px',
                                             fontWeight: '500'
                                         }}>{item.lote}</td>
-                                        <td style={{ 
-                                            padding: '12px', 
+                                        <td style={{
+                                            padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px'
                                         }}>{formatFechaDisplay(item.Vencimiento)}</td>
-                                        <td style={{ 
-                                            padding: '12px', 
+                                        <td style={{
+                                            padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px',
                                             fontWeight: '600',
@@ -2088,32 +2169,32 @@ const DevolucionCanjeForm = () => {
                                                 onBlur={(e) => e.target.style.borderColor = '#ddd'}
                                             />
                                         </td>
-                                        <td style={{ 
-                                            padding: '12px', 
+                                        <td style={{
+                                            padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px',
                                             fontWeight: '500'
                                         }}>{item.Referencia || ''}</td>
-                                        <td style={{ 
-                                            padding: '12px', 
+                                        <td style={{
+                                            padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px',
                                             fontWeight: '500'
                                         }}>{item.tipodoc || item.TipoDoc || ''}</td>
-                                        <td style={{ 
-                                            padding: '12px', 
+                                        <td style={{
+                                            padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             textAlign: 'center'
                                         }}>
-                                            <button 
-                                                onClick={() => handleRemoveDetalle(index)} 
+                                            <button
+                                                onClick={() => handleRemoveDetalle(index)}
                                                 disabled={isConsultaMode}
-                                                style={{ 
-                                                    backgroundColor: isConsultaMode ? '#bdc3c7' : '#e74c3c', 
-                                                    color: 'white', 
-                                                    border: 'none', 
-                                                    padding: '8px 16px', 
-                                                    cursor: isConsultaMode ? 'not-allowed' : 'pointer', 
+                                                style={{
+                                                    backgroundColor: isConsultaMode ? '#bdc3c7' : '#e74c3c',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    padding: '8px 16px',
+                                                    cursor: isConsultaMode ? 'not-allowed' : 'pointer',
                                                     borderRadius: '6px',
                                                     fontSize: '12px',
                                                     fontWeight: '600',
@@ -2145,9 +2226,9 @@ const DevolucionCanjeForm = () => {
             </div>
 
             {/* Panel de Botones Inferiores - Estilo moderno */}
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'flex-end', 
+            <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
                 gap: '15px',
                 padding: '25px',
                 backgroundColor: 'white',
@@ -2156,11 +2237,11 @@ const DevolucionCanjeForm = () => {
                 border: '1px solid #e0e0e0',
                 marginTop: '20px'
             }}>
-                <button 
-                    onClick={handleRegistrar} 
+                <button
+                    onClick={handleRegistrar}
                     disabled={isConsultaMode}
-                    style={{ 
-                        backgroundColor: isConsultaMode ? '#bdc3c7' : '#27ae60', 
+                    style={{
+                        backgroundColor: isConsultaMode ? '#bdc3c7' : '#27ae60',
                         color: 'white',
                         border: 'none',
                         padding: '15px 30px',
@@ -2186,10 +2267,10 @@ const DevolucionCanjeForm = () => {
                 >
                     💾 Registrar
                 </button>
-                <button 
-                    onClick={handleCancelar} 
-                    style={{ 
-                        backgroundColor: '#f39c12', 
+                <button
+                    onClick={handleCancelar}
+                    style={{
+                        backgroundColor: '#f39c12',
                         color: 'white',
                         border: 'none',
                         padding: '15px 30px',
@@ -2211,12 +2292,12 @@ const DevolucionCanjeForm = () => {
                 >
                     ❌ Cancelar
                 </button>
-                
+
             </div>
 
             {/* Modal de Búsqueda de Guías de Canje - Estilo moderno */}
             {showBuscarModal && (
-                <div 
+                <div
                     style={{
                         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                         backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex',
@@ -2225,14 +2306,14 @@ const DevolucionCanjeForm = () => {
                     }}
                     onClick={() => setShowBuscarModal(false)}
                 >
-                    <div 
+                    <div
                         style={{
-                            backgroundColor: 'white', 
-                            padding: isMobile ? '20px' : '30px', 
+                            backgroundColor: 'white',
+                            padding: isMobile ? '20px' : '30px',
                             borderRadius: '16px',
-                            width: isMobile ? '95%' : '90%', 
-                            maxWidth: '1200px', 
-                            maxHeight: isMobile ? '90%' : '85%', 
+                            width: isMobile ? '95%' : '90%',
+                            maxWidth: '1200px',
+                            maxHeight: isMobile ? '90%' : '85%',
                             overflowY: 'auto',
                             boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
                             border: '1px solid #e0e0e0',
@@ -2249,7 +2330,7 @@ const DevolucionCanjeForm = () => {
                             borderBottom: '3px solid #27ae60',
                             paddingBottom: '15px'
                         }}>
-                            <h3 style={{ 
+                            <h3 style={{
                                 color: '#2c3e50',
                                 fontSize: isMobile ? '20px' : '24px',
                                 fontWeight: '600',
@@ -2267,7 +2348,7 @@ const DevolucionCanjeForm = () => {
                                     (FF01 - Junio 2025 en adelante)
                                 </span>
                             </h3>
-                            <button 
+                            <button
                                 onClick={() => setShowBuscarModal(false)}
                                 style={{
                                     backgroundColor: '#e74c3c',
@@ -2310,21 +2391,21 @@ const DevolucionCanjeForm = () => {
                                 border: '1px solid #e0e0e0',
                                 borderRadius: '8px'
                             }}>
-                                <table style={{ 
-                                    width: '100%', 
+                                <table style={{
+                                    width: '100%',
                                     borderCollapse: 'collapse',
                                     fontSize: isMobile ? '12px' : '14px'
                                 }}>
                                     <thead>
-                                        <tr style={{ 
-                                            backgroundColor: '#27ae60', 
+                                        <tr style={{
+                                            backgroundColor: '#27ae60',
                                             color: 'white',
                                             position: 'sticky',
                                             top: 0,
                                             zIndex: 10
                                         }}>
-                                            <th style={{ 
-                                                padding: isMobile ? '12px 8px' : '15px 12px', 
+                                            <th style={{
+                                                padding: isMobile ? '12px 8px' : '15px 12px',
                                                 border: '1px solid #1e8449',
                                                 textAlign: 'left',
                                                 fontWeight: '600',
@@ -2332,8 +2413,8 @@ const DevolucionCanjeForm = () => {
                                             }}>
                                                 📄 Nro Guía
                                             </th>
-                                            <th style={{ 
-                                                padding: isMobile ? '12px 8px' : '15px 12px', 
+                                            <th style={{
+                                                padding: isMobile ? '12px 8px' : '15px 12px',
                                                 border: '1px solid #1e8449',
                                                 textAlign: 'left',
                                                 fontWeight: '600',
@@ -2341,8 +2422,8 @@ const DevolucionCanjeForm = () => {
                                             }}>
                                                 📅 Fecha
                                             </th>
-                                            <th style={{ 
-                                                padding: isMobile ? '12px 8px' : '15px 12px', 
+                                            <th style={{
+                                                padding: isMobile ? '12px 8px' : '15px 12px',
                                                 border: '1px solid #1e8449',
                                                 textAlign: 'left',
                                                 fontWeight: '600',
@@ -2350,8 +2431,8 @@ const DevolucionCanjeForm = () => {
                                             }}>
                                                 🏢 Proveedor
                                             </th>
-                                            <th style={{ 
-                                                padding: isMobile ? '12px 8px' : '15px 12px', 
+                                            <th style={{
+                                                padding: isMobile ? '12px 8px' : '15px 12px',
                                                 border: '1px solid #1e8449',
                                                 textAlign: 'center',
                                                 fontWeight: '600',
@@ -2363,17 +2444,17 @@ const DevolucionCanjeForm = () => {
                                     </thead>
                                     <tbody>
                                         {guiasCanjeList.map((guia, index) => (
-                                            <tr 
-                                                key={index} 
-                                                style={{ 
+                                            <tr
+                                                key={index}
+                                                style={{
                                                     backgroundColor: index % 2 === 0 ? '#f8f9fa' : '#ffffff',
                                                     transition: 'background-color 0.2s ease'
                                                 }}
                                                 onMouseOver={(e) => e.target.parentElement.style.backgroundColor = '#e8f5e8'}
                                                 onMouseOut={(e) => e.target.parentElement.style.backgroundColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff'}
                                             >
-                                                <td style={{ 
-                                                    padding: isMobile ? '10px 8px' : '12px 10px', 
+                                                <td style={{
+                                                    padding: isMobile ? '10px 8px' : '12px 10px',
                                                     border: '1px solid #e0e0e0',
                                                     fontWeight: '600',
                                                     color: '#2c3e50',
@@ -2381,15 +2462,15 @@ const DevolucionCanjeForm = () => {
                                                 }}>
                                                     {guia.NroGuia}
                                                 </td>
-                                                <td style={{ 
-                                                    padding: isMobile ? '10px 8px' : '12px 10px', 
+                                                <td style={{
+                                                    padding: isMobile ? '10px 8px' : '12px 10px',
                                                     border: '1px solid #e0e0e0',
                                                     color: '#34495e'
                                                 }}>
                                                     {formatFechaDisplay(guia.Fecha)}
                                                 </td>
-                                                <td style={{ 
-                                                    padding: isMobile ? '10px 8px' : '12px 10px', 
+                                                <td style={{
+                                                    padding: isMobile ? '10px 8px' : '12px 10px',
                                                     border: '1px solid #e0e0e0',
                                                     color: '#34495e',
                                                     maxWidth: isMobile ? '150px' : '300px',
@@ -2397,23 +2478,23 @@ const DevolucionCanjeForm = () => {
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap'
                                                 }}
-                                                title={guia.Razon}
+                                                    title={guia.Razon}
                                                 >
                                                     {guia.Razon}
                                                 </td>
-                                                <td style={{ 
-                                                    padding: isMobile ? '10px 8px' : '12px 10px', 
+                                                <td style={{
+                                                    padding: isMobile ? '10px 8px' : '12px 10px',
                                                     border: '1px solid #e0e0e0',
                                                     textAlign: 'center'
                                                 }}>
-                                                    <button 
-                                                        onClick={() => handleSeleccionarGuiaBusqueda(guia)} 
-                                                        style={{ 
-                                                            backgroundColor: '#3498db', 
-                                                            color: 'white', 
-                                                            border: 'none', 
-                                                            padding: isMobile ? '6px 12px' : '8px 16px', 
-                                                            cursor: 'pointer', 
+                                                    <button
+                                                        onClick={() => handleSeleccionarGuiaBusqueda(guia)}
+                                                        style={{
+                                                            backgroundColor: '#3498db',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            padding: isMobile ? '6px 12px' : '8px 16px',
+                                                            cursor: 'pointer',
                                                             borderRadius: '6px',
                                                             fontSize: isMobile ? '11px' : '12px',
                                                             fontWeight: '500',
@@ -2452,7 +2533,7 @@ const DevolucionCanjeForm = () => {
                             color: '#6c757d',
                             textAlign: 'center'
                         }}>
-                            <strong>Total de guías encontradas:</strong> {guiasCanjeList.length} | 
+                            <strong>Total de guías encontradas:</strong> {guiasCanjeList.length} |
                             <strong> Filtro aplicado:</strong> FF01 - Junio 2025 en adelante
                         </div>
                     </div>
@@ -2461,7 +2542,7 @@ const DevolucionCanjeForm = () => {
 
             {/* Modal de Selección de Laboratorio - Estilo moderno */}
             {showLaboratorioModal && (
-                <div 
+                <div
                     style={{
                         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                         backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex',
@@ -2470,14 +2551,14 @@ const DevolucionCanjeForm = () => {
                     }}
                     onClick={() => setShowLaboratorioModal(false)}
                 >
-                    <div 
+                    <div
                         style={{
-                            backgroundColor: 'white', 
-                            padding: isMobile ? '20px' : '30px', 
+                            backgroundColor: 'white',
+                            padding: isMobile ? '20px' : '30px',
                             borderRadius: '16px',
-                            width: isMobile ? '95%' : '90%', 
-                            maxWidth: '1000px', 
-                            maxHeight: isMobile ? '90%' : '85%', 
+                            width: isMobile ? '95%' : '90%',
+                            maxWidth: '1000px',
+                            maxHeight: isMobile ? '90%' : '85%',
                             overflowY: 'auto',
                             boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
                             border: '1px solid #e0e0e0',
@@ -2494,7 +2575,7 @@ const DevolucionCanjeForm = () => {
                             borderBottom: '3px solid #3498db',
                             paddingBottom: '15px'
                         }}>
-                            <h3 style={{ 
+                            <h3 style={{
                                 color: '#2c3e50',
                                 fontSize: isMobile ? '20px' : '24px',
                                 fontWeight: '600',
@@ -2502,7 +2583,7 @@ const DevolucionCanjeForm = () => {
                             }}>
                                 🏥 Selección de Laboratorio
                             </h3>
-                            <button 
+                            <button
                                 onClick={() => setShowLaboratorioModal(false)}
                                 style={{
                                     backgroundColor: '#e74c3c',
@@ -2532,7 +2613,7 @@ const DevolucionCanjeForm = () => {
                                 ✕
                             </button>
                         </div>
-                        
+
                         {/* Campo de búsqueda */}
                         <div style={{ marginBottom: '20px' }}>
                             <input
@@ -2578,44 +2659,44 @@ const DevolucionCanjeForm = () => {
                                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                                 backgroundColor: 'white'
                             }}>
-                                <table style={{ 
-                                    width: '100%', 
+                                <table style={{
+                                    width: '100%',
                                     borderCollapse: 'collapse',
                                     fontSize: isMobile ? '12px' : '14px',
                                     minWidth: isMobile ? '600px' : 'auto'
                                 }}>
                                     <thead>
-                                        <tr style={{ 
-                                            backgroundColor: '#3498db', 
+                                        <tr style={{
+                                            backgroundColor: '#3498db',
                                             color: 'white',
                                             fontWeight: '600',
                                             position: 'sticky',
                                             top: '0',
                                             zIndex: '1'
                                         }}>
-                                            <th style={{ 
-                                                padding: isMobile ? '10px 8px' : '15px 12px', 
+                                            <th style={{
+                                                padding: isMobile ? '10px 8px' : '15px 12px',
                                                 border: '1px solid #2980b9',
                                                 textAlign: 'left',
                                                 fontSize: isMobile ? '12px' : '14px',
                                                 minWidth: isMobile ? '80px' : 'auto'
                                             }}>Codlab</th>
-                                            <th style={{ 
-                                                padding: isMobile ? '10px 8px' : '15px 12px', 
+                                            <th style={{
+                                                padding: isMobile ? '10px 8px' : '15px 12px',
                                                 border: '1px solid #2980b9',
                                                 textAlign: 'left',
                                                 fontSize: isMobile ? '12px' : '14px',
                                                 minWidth: isMobile ? '200px' : 'auto'
                                             }}>Descripción</th>
-                                            <th style={{ 
-                                                padding: isMobile ? '10px 8px' : '15px 12px', 
+                                            <th style={{
+                                                padding: isMobile ? '10px 8px' : '15px 12px',
                                                 border: '1px solid #2980b9',
                                                 textAlign: 'center',
                                                 fontSize: isMobile ? '12px' : '14px',
                                                 minWidth: isMobile ? '100px' : 'auto'
                                             }}>Estado</th>
-                                            <th style={{ 
-                                                padding: isMobile ? '10px 8px' : '15px 12px', 
+                                            <th style={{
+                                                padding: isMobile ? '10px 8px' : '15px 12px',
                                                 border: '1px solid #2980b9',
                                                 textAlign: 'center',
                                                 fontSize: isMobile ? '12px' : '14px',
@@ -2625,42 +2706,42 @@ const DevolucionCanjeForm = () => {
                                     </thead>
                                     <tbody>
                                         {laboratorios
-                                            .filter(lab => 
+                                            .filter(lab =>
                                                 lab.Descripcion.toLowerCase().includes(laboratorioSearchTerm.toLowerCase()) ||
                                                 lab.codlab.toString().includes(laboratorioSearchTerm)
                                             )
                                             .map((laboratorio, index) => (
-                                                <tr key={laboratorio.codlab} style={{ 
+                                                <tr key={laboratorio.codlab} style={{
                                                     backgroundColor: index % 2 === 0 ? '#f8f9fa' : '#ffffff',
                                                     transition: 'background-color 0.2s ease'
                                                 }}
-                                                onMouseOver={(e) => e.target.parentElement.style.backgroundColor = '#e8f4fd'}
-                                                onMouseOut={(e) => e.target.parentElement.style.backgroundColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff'}
+                                                    onMouseOver={(e) => e.target.parentElement.style.backgroundColor = '#e8f4fd'}
+                                                    onMouseOut={(e) => e.target.parentElement.style.backgroundColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff'}
                                                 >
-                                                    <td style={{ 
-                                                        padding: isMobile ? '8px 6px' : '12px', 
+                                                    <td style={{
+                                                        padding: isMobile ? '8px 6px' : '12px',
                                                         border: '1px solid #e0e0e0',
                                                         fontSize: isMobile ? '11px' : '13px',
                                                         fontWeight: '600',
                                                         whiteSpace: 'nowrap'
                                                     }}>{laboratorio.codlab}</td>
-                                                    <td style={{ 
-                                                        padding: isMobile ? '8px 6px' : '12px', 
+                                                    <td style={{
+                                                        padding: isMobile ? '8px 6px' : '12px',
                                                         border: '1px solid #e0e0e0',
                                                         fontSize: isMobile ? '11px' : '13px',
                                                         wordBreak: 'break-word',
                                                         maxWidth: isMobile ? '180px' : 'auto'
                                                     }}>{laboratorio.Descripcion}</td>
-                                                    <td style={{ 
-                                                        padding: isMobile ? '8px 6px' : '12px', 
+                                                    <td style={{
+                                                        padding: isMobile ? '8px 6px' : '12px',
                                                         border: '1px solid #e0e0e0',
                                                         fontSize: isMobile ? '11px' : '13px',
                                                         textAlign: 'center',
                                                         fontWeight: '600',
                                                         whiteSpace: 'nowrap'
                                                     }}>
-                                                        <span style={{ 
-                                                            color: '#27ae60', 
+                                                        <span style={{
+                                                            color: '#27ae60',
                                                             backgroundColor: '#d5f4e6',
                                                             padding: isMobile ? '2px 4px' : '4px 8px',
                                                             borderRadius: '4px',
@@ -2669,20 +2750,20 @@ const DevolucionCanjeForm = () => {
                                                             ✅ Disponible
                                                         </span>
                                                     </td>
-                                                    <td style={{ 
-                                                        padding: isMobile ? '8px 6px' : '12px', 
+                                                    <td style={{
+                                                        padding: isMobile ? '8px 6px' : '12px',
                                                         border: '1px solid #e0e0e0',
                                                         textAlign: 'center',
                                                         whiteSpace: 'nowrap'
                                                     }}>
-                                                        <button 
-                                                            onClick={() => handleSeleccionarLaboratorio(laboratorio)} 
-                                                            style={{ 
-                                                                backgroundColor: '#27ae60', 
-                                                                color: 'white', 
-                                                                border: 'none', 
-                                                                padding: '10px 20px', 
-                                                                cursor: 'pointer', 
+                                                        <button
+                                                            onClick={() => handleSeleccionarLaboratorio(laboratorio)}
+                                                            style={{
+                                                                backgroundColor: '#27ae60',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                padding: '10px 20px',
+                                                                cursor: 'pointer',
                                                                 borderRadius: '8px',
                                                                 fontWeight: '600',
                                                                 fontSize: '13px',
@@ -2714,22 +2795,22 @@ const DevolucionCanjeForm = () => {
 
             {/* Modal del Generador del Número de Guía */}
             {showGeneradorModal && (
-                <div 
+                <div
                     style={{
                         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                         backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex',
                         alignItems: 'center', justifyContent: 'center', zIndex: 1000,
                         backdropFilter: 'blur(5px)'
                     }}
-                    // NO se puede cerrar haciendo clic fuera - solo con botones
+                // NO se puede cerrar haciendo clic fuera - solo con botones
                 >
-                    <div 
+                    <div
                         style={{
-                            backgroundColor: 'white', 
-                            padding: isMobile ? '20px' : '30px', 
+                            backgroundColor: 'white',
+                            padding: isMobile ? '20px' : '30px',
                             borderRadius: '16px',
-                            width: isMobile ? '95%' : '500px', 
-                            maxHeight: isMobile ? '90%' : 'auto', 
+                            width: isMobile ? '95%' : '500px',
+                            maxHeight: isMobile ? '90%' : 'auto',
                             overflowY: 'auto',
                             boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
                             border: '1px solid #e0e0e0',
@@ -2746,7 +2827,7 @@ const DevolucionCanjeForm = () => {
                             borderBottom: '3px solid #9b59b6',
                             paddingBottom: '15px'
                         }}>
-                            <h3 style={{ 
+                            <h3 style={{
                                 color: '#2c3e50',
                                 fontSize: isMobile ? '20px' : '24px',
                                 fontWeight: '600',
@@ -2757,7 +2838,7 @@ const DevolucionCanjeForm = () => {
                             }}>
                                 🔢 Generador del Número de Guía
                             </h3>
-                            <button 
+                            <button
                                 onClick={() => setShowGeneradorModal(false)}
                                 style={{
                                     backgroundColor: '#e74c3c',
@@ -2874,10 +2955,10 @@ const DevolucionCanjeForm = () => {
                             gap: '15px',
                             justifyContent: 'flex-end'
                         }}>
-                            <button 
+                            <button
                                 onClick={() => setShowGeneradorModal(false)}
-                                style={{ 
-                                    backgroundColor: '#95a5a6', 
+                                style={{
+                                    backgroundColor: '#95a5a6',
                                     color: 'white',
                                     border: 'none',
                                     padding: '12px 24px',
@@ -2899,11 +2980,11 @@ const DevolucionCanjeForm = () => {
                             >
                                 ❌ Cancelar
                             </button>
-                            <button 
+                            <button
                                 onClick={handleRetornarModal}
                                 disabled={isLoading}
-                                style={{ 
-                                    backgroundColor: isLoading ? '#bdc3c7' : '#9b59b6', 
+                                style={{
+                                    backgroundColor: isLoading ? '#bdc3c7' : '#9b59b6',
                                     color: 'white',
                                     border: 'none',
                                     padding: '12px 24px',
@@ -2936,7 +3017,7 @@ const DevolucionCanjeForm = () => {
 
             {/* Modal de CabGuias */}
             {showCabGuiasModal && (
-                <div 
+                <div
                     style={{
                         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                         backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex',
@@ -2944,14 +3025,14 @@ const DevolucionCanjeForm = () => {
                         backdropFilter: 'blur(5px)'
                     }}
                 >
-                    <div 
+                    <div
                         style={{
-                            backgroundColor: 'white', 
-                            padding: isMobile ? '20px' : '30px', 
+                            backgroundColor: 'white',
+                            padding: isMobile ? '20px' : '30px',
                             borderRadius: '16px',
-                            width: isMobile ? '95%' : '90%', 
+                            width: isMobile ? '95%' : '90%',
                             maxWidth: '1200px',
-                            maxHeight: isMobile ? '90%' : '85%', 
+                            maxHeight: isMobile ? '90%' : '85%',
                             overflowY: 'auto',
                             boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
                             border: '1px solid #e0e0e0',
@@ -2968,7 +3049,7 @@ const DevolucionCanjeForm = () => {
                             borderBottom: '3px solid #9b59b6',
                             paddingBottom: '15px'
                         }}>
-                            <h3 style={{ 
+                            <h3 style={{
                                 color: '#2c3e50',
                                 fontSize: isMobile ? '20px' : '24px',
                                 fontWeight: '600',
@@ -2979,7 +3060,7 @@ const DevolucionCanjeForm = () => {
                             }}>
                                 📋 Cabeceras de Guías (DoccabGuia)
                             </h3>
-                            <button 
+                            <button
                                 onClick={() => setShowCabGuiasModal(false)}
                                 style={{
                                     backgroundColor: '#e74c3c',
@@ -3154,7 +3235,7 @@ const DevolucionCanjeForm = () => {
                                     {loadingCabGuias ? '⏳ Cargando...' : '🔄 Actualizar'}
                                 </button>
                             </div>
-                            
+
                             {loadingCabGuias ? (
                                 <div style={{
                                     padding: '40px',

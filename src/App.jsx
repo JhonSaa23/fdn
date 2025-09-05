@@ -111,11 +111,11 @@ function App() {
     };
     
     return (
-      <div className={`flex items-center px-4 py-3 ${bgColor[type]} border rounded-md fixed top-4 right-4 max-w-md shadow-lg z-50 transition-all`}>
-        <div className="flex-grow">{message}</div>
+      <div className={`flex items-center px-4 py-3 ${bgColor[type]} border rounded-md fixed top-4 right-4 max-w-md shadow-2xl z-[9999] transition-all duration-300 transform animate-in slide-in-from-right-full`}>
+        <div className="flex-grow text-sm font-medium">{message}</div>
         <button 
           onClick={onClose} 
-          className="flex-shrink-0 ml-2 rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
+          className="flex-shrink-0 ml-2 rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:bg-gray-200 transition-colors"
         >
           <XMarkIcon className="h-4 w-4" />
         </button>
