@@ -524,11 +524,12 @@ const DevolucionCanjeForm = () => {
                 showNotification('danger', `Error al cargar proveedores: ${proveedoresResponse.data.message}`);
             }
 
-            // Auto-completar campos
+            // Auto-completar campos solo si están vacíos
             setCabecera(prev => ({
                 ...prev,
-                Destinatario: 'DISTRIBUIDORA FARMACOS DEL NORTE S.A.C.',
-                Placa: 'DISPONIBLE'
+                Destinatario: prev.Destinatario || 'DISTRIBUIDORA FARMACOS DEL NORTE S.A.C.',
+                Placa: prev.Placa || 'DISPONIBLE',
+                PtoLlegada: prev.PtoLlegada || 'DISTRIBUIDORA FARMACOS DEL NORTE S.A.C.'
             }));
 
             showNotification('success', `Laboratorio seleccionado: ${laboratorio.Descripcion}. Datos cargados correctamente.`);
