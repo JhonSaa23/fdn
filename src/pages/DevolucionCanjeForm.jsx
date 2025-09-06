@@ -104,6 +104,8 @@ const DevolucionCanjeForm = () => {
         TipoDoc: ''
     });
     const [productosADevolver, setProductosADevolver] = useState([]);
+    const [productosOriginales, setProductosOriginales] = useState([]); // Copia original del backend
+    const [productosSeleccionados, setProductosSeleccionados] = useState(new Set()); // Índices de productos ya seleccionados
     const [laboratorios, setLaboratorios] = useState([]);
     const [selectedLaboratorio, setSelectedLaboratorio] = useState('');
     const [proveedores, setProveedores] = useState([]);
@@ -209,19 +211,26 @@ const DevolucionCanjeForm = () => {
                     console.log('🔍 Cargando productos para laboratorio:', cleanCodlab);
                     const response = await axios.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
                     if (response.data.success) {
+                        // Guardar copia original del backend
+                        setProductosOriginales(response.data.data);
                         setProductosADevolver(response.data.data);
                         setFilteredProductos(response.data.data); // Inicializar productos filtrados
+                        setProductosSeleccionados(new Set()); // Limpiar selecciones
                         console.log('✅ Productos cargados:', response.data.data.length, 'productos');
                         showNotification('success', `Productos cargados: ${response.data.data.length} productos disponibles para devolución`);
                     } else {
                         showNotification('danger', `Error al cargar productos a devolver: ${response.data.message}`);
+                        setProductosOriginales([]); // Limpiar copia original
                         setProductosADevolver([]); // Limpiar si hay error
                         setFilteredProductos([]); // Limpiar productos filtrados
+                        setProductosSeleccionados(new Set()); // Limpiar selecciones
                     }
                 } catch (error) {
                     showNotification('danger', `Error de red al cargar productos a devolver: ${error.message}`);
+                    setProductosOriginales([]); // Limpiar copia original
                     setProductosADevolver([]); // Limpiar si hay error
                     setFilteredProductos([]); // Limpiar productos filtrados
+                    setProductosSeleccionados(new Set()); // Limpiar selecciones
                 } finally {
                     setIsLoading(false);
                 }
@@ -229,10 +238,43 @@ const DevolucionCanjeForm = () => {
             fetchProductosADevolver();
         } else {
             // Si no hay laboratorio seleccionado, limpia la lista de productos a devolver
+            setProductosOriginales([]); // Limpiar copia original
             setProductosADevolver([]);
             setFilteredProductos([]); // Limpiar productos filtrados
+            setProductosSeleccionados(new Set()); // Limpiar selecciones
         }
     }, [selectedLaboratorio]);
+
+    // Función para reconstruir la lista de productos disponibles
+    const reconstruirListaProductos = (searchTerm = null) => {
+        // Filtrar productos que no han sido completamente seleccionados
+        const productosDisponibles = productosOriginales.filter(producto => 
+            !productosSeleccionados.has(producto.indice)
+        );
+        
+        setProductosADevolver(productosDisponibles);
+        
+        // Usar el searchTerm pasado como parámetro o el estado actual
+        const terminoBusqueda = searchTerm !== null ? searchTerm : productoSearchTerm;
+        
+        // Si hay filtro activo, aplicarlo también
+        if (terminoBusqueda && terminoBusqueda.trim()) {
+            const searchLower = terminoBusqueda.trim().toLowerCase();
+            const filtered = productosDisponibles.filter(prod => {
+                const codigoMatch = (prod.Codpro && prod.Codpro.trim().toLowerCase().includes(searchLower)) ||
+                    (prod.Idproducto && prod.Idproducto.trim().toLowerCase().includes(searchLower));
+                const nombreMatch = (prod.Nombre && prod.Nombre.trim().toLowerCase().includes(searchLower)) ||
+                    (prod.Producto && prod.Producto.trim().toLowerCase().includes(searchLower));
+                const guiaMatch = prod.NroGuia && prod.NroGuia.trim().toLowerCase().includes(searchLower);
+                const loteMatch = prod.Lote && prod.Lote.trim().toLowerCase().includes(searchLower);
+                const referenciaMatch = prod.Referencia && prod.Referencia.trim().toLowerCase().includes(searchLower);
+                return codigoMatch || nombreMatch || guiaMatch || loteMatch || referenciaMatch;
+            });
+            setFilteredProductos(filtered);
+        } else {
+            setFilteredProductos(productosDisponibles);
+        }
+    };
 
     // --- MANEJADORES DE CAMBIO DE INPUTS ---
     const handleCabeceraChange = (e) => {
@@ -245,37 +287,9 @@ const DevolucionCanjeForm = () => {
         setProductoSearchTerm(searchTerm);
         setSelectedProductIndex(-1); // Resetear índice seleccionado
 
-        if (!searchTerm.trim()) {
-            // Si no hay término de búsqueda, mostrar todos los productos
-            setFilteredProductos(productosADevolver);
-            setShowProductoDropdown(true);
-        } else {
-            // Filtrar productos que coincidan con el código O el nombre
-            const searchLower = searchTerm.trim().toLowerCase();
-            const filtered = productosADevolver.filter(prod => {
-                // Buscar por código del producto
-                const codigoMatch = (prod.Codpro && prod.Codpro.trim().toLowerCase().includes(searchLower)) ||
-                    (prod.Idproducto && prod.Idproducto.trim().toLowerCase().includes(searchLower));
-
-                // Buscar por nombre del producto
-                const nombreMatch = (prod.Nombre && prod.Nombre.trim().toLowerCase().includes(searchLower)) ||
-                    (prod.Producto && prod.Producto.trim().toLowerCase().includes(searchLower));
-
-                // Buscar por número de guía
-                const guiaMatch = prod.NroGuia && prod.NroGuia.trim().toLowerCase().includes(searchLower);
-
-                // Buscar por lote
-                const loteMatch = prod.Lote && prod.Lote.trim().toLowerCase().includes(searchLower);
-
-                // Buscar por referencia
-                const referenciaMatch = prod.Referencia && prod.Referencia.trim().toLowerCase().includes(searchLower);
-
-                // Retornar true si coincide con cualquiera de los campos
-                return codigoMatch || nombreMatch || guiaMatch || loteMatch || referenciaMatch;
-            });
-            setFilteredProductos(filtered);
-            setShowProductoDropdown(true);
-        }
+        // Reconstruir la lista con el nuevo filtro
+        reconstruirListaProductos(searchTerm);
+        setShowProductoDropdown(true);
     };
 
     // Función para seleccionar producto del dropdown
@@ -529,7 +543,7 @@ const DevolucionCanjeForm = () => {
                 ...prev,
                 Destinatario: prev.Destinatario || 'DISTRIBUIDORA FARMACOS DEL NORTE S.A.C.',
                 Placa: prev.Placa || 'DISPONIBLE',
-                PtoLlegada: prev.PtoLlegada || 'DISTRIBUIDORA FARMACOS DEL NORTE S.A.C.'
+                PtoLlegada: prev.PtoLlegada || ''
             }));
 
             showNotification('success', `Laboratorio seleccionado: ${laboratorio.Descripcion}. Datos cargados correctamente.`);
@@ -1187,6 +1201,53 @@ const DevolucionCanjeForm = () => {
             showNotification('success', `✅ Producto agregado: ${newDetail.Producto} (Registro #${newDetail.dropdownIndex + 1})`);
         }
 
+        // Marcar el producto como seleccionado si se agotó completamente
+        const cantidadSeleccionada = parseFloat(newDetail.Cantidad);
+        const productoOriginal = productosOriginales.find(p => p.indice === newDetail.dropdownIndex);
+        
+        if (productoOriginal) {
+            const cantidadOriginal = parseFloat(productoOriginal.Cantidad || 0);
+            
+            // Calcular la cantidad total seleccionada de este producto (incluyendo el nuevo detalle)
+            const cantidadTotalSeleccionada = detalles.reduce((total, detalle) => {
+                if (detalle.dropdownIndex === newDetail.dropdownIndex) {
+                    return total + parseFloat(detalle.Cantidad || 0);
+                }
+                return total;
+            }, 0) + cantidadSeleccionada;
+            
+            if (cantidadTotalSeleccionada >= cantidadOriginal) {
+                // Si se agotó completamente, marcarlo como seleccionado
+                setProductosSeleccionados(prev => {
+                    const newSet = new Set([...prev, newDetail.dropdownIndex]);
+                    
+                    // Reconstruir la lista DESPUÉS de actualizar el estado
+                    setTimeout(() => {
+                        reconstruirListaProductos('');
+                    }, 0);
+                    
+                    return newSet;
+                });
+            } else {
+                // Si no se agotó, reconstruir la lista inmediatamente
+                reconstruirListaProductos('');
+            }
+        } else {
+            // Si no se encuentra el producto, reconstruir la lista
+            reconstruirListaProductos('');
+        }
+        
+        // Limpiar el filtro de búsqueda
+        setProductoSearchTerm('');
+        setShowProductoDropdown(false);
+        
+        // Limpiar directamente el input para que se vea vacío (con pequeño delay)
+        setTimeout(() => {
+            if (productoSearchInputRef.current) {
+                productoSearchInputRef.current.value = '';
+            }
+        }, 10);
+
         setCurrentItemDetalle({
             // Campos principales
             NroGuia: '', codpro: '', Producto: '', lote: '', Vencimiento: '', Cantidad: '',
@@ -1211,19 +1272,79 @@ const DevolucionCanjeForm = () => {
     };
 
     const handleRemoveDetalle = (indexToRemove) => {
+        const detalleToRemove = detalles[indexToRemove];
+        
+        if (detalleToRemove) {
+            // Remover el producto de la lista de seleccionados para que vuelva a estar disponible
+            setProductosSeleccionados(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(detalleToRemove.dropdownIndex);
+                return newSet;
+            });
+            
+            // Reconstruir la lista de productos disponibles
+            reconstruirListaProductos();
+        }
+        
         setDetalles(prev => prev.filter((_, index) => index !== indexToRemove));
     };
 
     // Función para editar cantidad directamente en la tabla
     const handleEditCantidad = (index, newCantidad) => {
         const cantidad = parseFloat(newCantidad);
+        const detalleActual = detalles[index];
 
-        if (newCantidad === '' || cantidad >= 0) {
+        // Buscar el producto original para obtener la cantidad máxima disponible
+        const productoOriginal = productosOriginales.find(p => p.indice === detalleActual.dropdownIndex);
+        const cantidadMaximaDisponible = productoOriginal ? parseFloat(productoOriginal.Cantidad || 0) : 0;
+
+        if (newCantidad === '' || (cantidad >= 0 && cantidad <= cantidadMaximaDisponible)) {
+            // Calcular la diferencia de cantidad
+            const cantidadAnterior = parseFloat(detalleActual.Cantidad || 0);
+            const diferencia = cantidad - cantidadAnterior;
+
+            // Actualizar el detalle
             setDetalles(prev => prev.map((detalle, i) =>
                 i === index
                     ? { ...detalle, Cantidad: newCantidad }
                     : detalle
             ));
+
+            // Actualizar las cantidades disponibles si hay diferencia
+            if (diferencia !== 0) {
+                if (productoOriginal) {
+                    const cantidadOriginal = parseFloat(productoOriginal.Cantidad || 0);
+                    
+                    // Calcular la cantidad total seleccionada de este producto (sumando todos los detalles)
+                    const cantidadTotalSeleccionada = detalles.reduce((total, detalle) => {
+                        if (detalle.dropdownIndex === detalleActual.dropdownIndex) {
+                            return total + parseFloat(detalle.Cantidad || 0);
+                        }
+                        return total;
+                    }, 0);
+                    
+                    // Agregar la nueva cantidad (ya actualizada en el estado)
+                    const cantidadTotalConNueva = cantidadTotalSeleccionada + diferencia;
+                    
+                    if (cantidadTotalConNueva >= cantidadOriginal) {
+                        // Si se agotó completamente, marcarlo como seleccionado
+                        setProductosSeleccionados(prev => new Set([...prev, detalleActual.dropdownIndex]));
+                    } else {
+                        // Si aún hay cantidad, remover de seleccionados si estaba ahí
+                        setProductosSeleccionados(prev => {
+                            const newSet = new Set(prev);
+                            newSet.delete(detalleActual.dropdownIndex);
+                            return newSet;
+                        });
+                    }
+                    
+                    // Reconstruir la lista de productos disponibles
+                    reconstruirListaProductos();
+                }
+            }
+        } else if (cantidad > cantidadMaximaDisponible) {
+            // Mostrar mensaje de error si excede la cantidad máxima
+            showNotification('warning', `La cantidad no puede exceder ${cantidadMaximaDisponible} unidades disponibles para este producto`);
         }
     };
 
@@ -2048,6 +2169,12 @@ const DevolucionCanjeForm = () => {
                                         border: '1px solid #8e44ad',
                                         textAlign: 'left',
                                         fontSize: '13px'
+                                    }}>Índice</th>
+                                    <th style={{
+                                        padding: '15px 12px',
+                                        border: '1px solid #8e44ad',
+                                        textAlign: 'left',
+                                        fontSize: '13px'
                                     }}>NroGuia (Devo)</th>
                                     <th style={{
                                         padding: '15px 12px',
@@ -2112,6 +2239,15 @@ const DevolucionCanjeForm = () => {
                                             padding: '12px',
                                             border: '1px solid #e0e0e0',
                                             fontSize: '13px',
+                                            fontWeight: '600',
+                                            backgroundColor: '#f0f0f0',
+                                            color: '#8e44ad',
+                                            textAlign: 'center'
+                                        }}>{item.dropdownIndex}</td>
+                                        <td style={{
+                                            padding: '12px',
+                                            border: '1px solid #e0e0e0',
+                                            fontSize: '13px',
                                             fontWeight: '500'
                                         }}>{item.GuiaDevo}</td>
                                         <td style={{
@@ -2154,6 +2290,7 @@ const DevolucionCanjeForm = () => {
                                                 }}
                                                 disabled={isConsultaMode}
                                                 min="0"
+                                                max={productosOriginales.find(p => p.indice === item.dropdownIndex)?.Cantidad || 0}
                                                 step="1"
                                                 style={{
                                                     width: '60px',

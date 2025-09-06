@@ -48,6 +48,11 @@ const Saldos = () => {
   const [editandoConteo, setEditandoConteo] = useState(null); // Registro que se está editando
   const [guardandoConteo, setGuardandoConteo] = useState({}); // Mapa de estados de guardado
   const [valorTemporal, setValorTemporal] = useState({}); // Valores temporales durante la edición
+
+  // Estados para selección de cantidades
+  const [cantidadesSeleccionadas, setCantidadesSeleccionadas] = useState({}); // Mapa de cantidades seleccionadas por clave única
+  const [editandoSeleccion, setEditandoSeleccion] = useState(null); // Registro que se está editando para selección
+  const [valorTemporalSeleccion, setValorTemporalSeleccion] = useState({}); // Valores temporales durante la edición de selección
   
   // Ref para el container de scroll
   const tableContainerRef = useRef(null);
@@ -211,11 +216,14 @@ const Saldos = () => {
       if (editandoConteo && !event.target.closest('.conteo-editor')) {
         cerrarEdicion(editandoConteo);
       }
+      if (editandoSeleccion && !event.target.closest('.seleccion-editor')) {
+        cerrarEdicionSeleccion(editandoSeleccion);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [editandoConteo]);
+  }, [editandoConteo, editandoSeleccion]);
 
   // Función para filtrar saldos en tiempo real - solo filtrar si hay datos en los inputs
   const hayFiltrosActivos = Object.values(filtroTiempoReal).some(valor => valor.trim() !== '');
@@ -362,6 +370,93 @@ const Saldos = () => {
     setEditandoConteo(null);
     // Limpiar valor temporal
     setValorTemporal(prev => {
+      const newState = { ...prev };
+      delete newState[clave];
+      return newState;
+    });
+  };
+
+  // Funciones para manejar selección de cantidades
+  const obtenerCantidadSeleccionada = (saldo) => {
+    const clave = generarClaveSaldo(saldo);
+    
+    // Si hay un valor temporal durante la edición, usarlo
+    if (valorTemporalSeleccion[clave] !== undefined) {
+      const valor = parseFloat(valorTemporalSeleccion[clave]);
+      return isNaN(valor) ? 0 : valor;
+    }
+    
+    // Si hay una cantidad seleccionada guardada, usarla
+    const cantidadActual = cantidadesSeleccionadas[clave];
+    if (cantidadActual !== undefined) {
+      const valor = parseFloat(cantidadActual);
+      return isNaN(valor) ? 0 : valor;
+    }
+    
+    // Por defecto, 0
+    return 0;
+  };
+
+  const obtenerSaldoRestante = (saldo) => {
+    const saldoOriginal = parseFloat(saldo.saldo) || 0;
+    const cantidadSeleccionada = obtenerCantidadSeleccionada(saldo);
+    return Math.max(0, saldoOriginal - cantidadSeleccionada);
+  };
+
+  const obtenerColorSaldo = (saldo) => {
+    const cantidadSeleccionada = obtenerCantidadSeleccionada(saldo);
+    const saldoOriginal = parseFloat(saldo.saldo) || 0;
+    
+    if (cantidadSeleccionada === 0) {
+      return 'text-gray-900'; // Sin selección
+    } else if (cantidadSeleccionada >= saldoOriginal) {
+      return 'text-red-600'; // Selección completa (faltante)
+    } else {
+      return 'text-yellow-600'; // Selección parcial
+    }
+  };
+
+  const handleSeleccionChange = (saldo, incremento) => {
+    const clave = generarClaveSaldo(saldo);
+    const cantidadActual = obtenerCantidadSeleccionada(saldo);
+    const saldoOriginal = parseFloat(saldo.saldo) || 0;
+    const nuevaCantidad = Math.max(0, Math.min(saldoOriginal, cantidadActual + incremento));
+    
+    // Actualizar valor temporal inmediatamente
+    setValorTemporalSeleccion(prev => ({
+      ...prev,
+      [clave]: nuevaCantidad
+    }));
+    
+    // Guardar en el estado local
+    setCantidadesSeleccionadas(prev => ({
+      ...prev,
+      [clave]: nuevaCantidad
+    }));
+  };
+
+  const handleSeleccionInput = (saldo, valor) => {
+    const clave = generarClaveSaldo(saldo);
+    const saldoOriginal = parseFloat(saldo.saldo) || 0;
+    const nuevaCantidad = Math.max(0, Math.min(saldoOriginal, parseFloat(valor) || 0));
+    
+    // Actualizar valor temporal
+    setValorTemporalSeleccion(prev => ({
+      ...prev,
+      [clave]: nuevaCantidad
+    }));
+    
+    // Guardar en el estado local
+    setCantidadesSeleccionadas(prev => ({
+      ...prev,
+      [clave]: nuevaCantidad
+    }));
+  };
+
+  const cerrarEdicionSeleccion = (clave) => {
+    setEditandoSeleccion(null);
+    // Limpiar valor temporal
+    setValorTemporalSeleccion(prev => {
       const newState = { ...prev };
       delete newState[clave];
       return newState;
@@ -692,7 +787,7 @@ const Saldos = () => {
                       Vencimiento
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Saldo
+                      Selección / Saldo
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Físico
@@ -735,9 +830,97 @@ const Saldos = () => {
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                         {formatearFecha(saldo.vencimiento)}
                       </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        <span className="font-medium">{formatearNumero(saldo.saldo)}</span>
-                      </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <div className="flex items-center space-x-1">
+                            {editandoSeleccion === clave ? (
+                              <div className="flex items-center space-x-1 bg-blue-50 rounded-md p-1 seleccion-editor">
+                                <button
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleSeleccionChange(saldo, -1);
+                                  }}
+                                  className="text-red-600 hover:text-red-800 p-1 rounded"
+                                  title="Decrementar selección"
+                                >
+                                  <MinusIcon className="w-4 h-4" />
+                                </button>
+                                
+                                <input
+                                  type="number"
+                                  value={obtenerCantidadSeleccionada(saldo)}
+                                  onChange={(e) => {
+                                    const clave = generarClaveSaldo(saldo);
+                                    const valor = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                                    setValorTemporalSeleccion(prev => ({
+                                      ...prev,
+                                      [clave]: valor
+                                    }));
+                                  }}
+                                  onBlur={(e) => {
+                                    setTimeout(() => {
+                                      if (document.activeElement?.closest('.seleccion-editor')) {
+                                        return;
+                                      }
+                                      handleSeleccionInput(saldo, e.target.value);
+                                      cerrarEdicionSeleccion(generarClaveSaldo(saldo));
+                                    }, 100);
+                                  }}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      handleSeleccionInput(saldo, e.target.value);
+                                      cerrarEdicionSeleccion(generarClaveSaldo(saldo));
+                                    }
+                                  }}
+                                  className="w-16 text-center text-sm border border-gray-300 rounded px-1 py-0.5"
+                                  step="0.01"
+                                  autoFocus
+                                  min="0"
+                                  max={saldo.saldo}
+                                />
+                                
+                                <button
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleSeleccionChange(saldo, 1);
+                                  }}
+                                  className="text-green-600 hover:text-green-800 p-1 rounded"
+                                  title="Incrementar selección"
+                                >
+                                  <PlusIcon className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2">
+                                <div className="text-right">
+                                  <div className={`font-medium ${obtenerColorSaldo(saldo)}`}>
+                                    {formatearNumero(obtenerCantidadSeleccionada(saldo))}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    / {formatearNumero(saldo.saldo)}
+                                  </div>
+                                  {obtenerSaldoRestante(saldo) > 0 && (
+                                    <div className="text-xs text-gray-400">
+                                      Restante: {formatearNumero(obtenerSaldoRestante(saldo))}
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setEditandoSeleccion(clave);
+                                    setValorTemporalSeleccion(prev => ({
+                                      ...prev,
+                                      [clave]: obtenerCantidadSeleccionada(saldo)
+                                    }));
+                                  }}
+                                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition-colors"
+                                  title="Seleccionar cantidad"
+                                >
+                                  <PencilSquareIcon className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">
                           <div className="flex items-center space-x-1">
                             {editando ? (
@@ -904,9 +1087,14 @@ const Saldos = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-medium text-gray-900">
-                          Saldo: {formatearNumero(saldo.saldo)}
+                      <div className={`text-sm font-medium ${obtenerColorSaldo(saldo)}`}>
+                        Selección: {formatearNumero(obtenerCantidadSeleccionada(saldo))} / {formatearNumero(saldo.saldo)}
                       </div>
+                      {obtenerSaldoRestante(saldo) > 0 && (
+                        <div className="text-xs text-gray-500">
+                          Restante: {formatearNumero(obtenerSaldoRestante(saldo))}
+                        </div>
+                      )}
                       <div className="text-xs text-gray-500">
                         {formatearFecha(saldo.vencimiento)}
                       </div>
@@ -915,6 +1103,87 @@ const Saldos = () => {
                   
                   <div className="mb-2">
                     <div className="text-sm text-gray-900">{saldo.NombreProducto || 'Sin nombre'}</div>
+                  </div>
+                  
+                  {/* Controles de selección */}
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-xs text-gray-600">
+                      Selección de cantidad
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {editandoSeleccion === clave ? (
+                        <div className="flex items-center space-x-1 bg-blue-50 rounded-md p-1 seleccion-editor">
+                          <button
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSeleccionChange(saldo, -1);
+                            }}
+                            className="text-red-600 hover:text-red-800 p-1 rounded"
+                            title="Decrementar selección"
+                          >
+                            <MinusIcon className="w-4 h-4" />
+                          </button>
+                          
+                          <input
+                            type="number"
+                            value={obtenerCantidadSeleccionada(saldo)}
+                            onChange={(e) => {
+                              const clave = generarClaveSaldo(saldo);
+                              const valor = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                              setValorTemporalSeleccion(prev => ({
+                                ...prev,
+                                [clave]: valor
+                              }));
+                            }}
+                            onBlur={(e) => {
+                              setTimeout(() => {
+                                if (document.activeElement?.closest('.seleccion-editor')) {
+                                  return;
+                                }
+                                handleSeleccionInput(saldo, e.target.value);
+                                cerrarEdicionSeleccion(generarClaveSaldo(saldo));
+                              }, 100);
+                            }}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSeleccionInput(saldo, e.target.value);
+                                cerrarEdicionSeleccion(generarClaveSaldo(saldo));
+                              }
+                            }}
+                            className="w-16 text-center text-sm border border-gray-300 rounded px-1 py-0.5"
+                            step="0.01"
+                            autoFocus
+                            min="0"
+                            max={saldo.saldo}
+                          />
+                          
+                          <button
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSeleccionChange(saldo, 1);
+                            }}
+                            className="text-green-600 hover:text-green-800 p-1 rounded"
+                            title="Incrementar selección"
+                          >
+                            <PlusIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditandoSeleccion(clave);
+                            setValorTemporalSeleccion(prev => ({
+                              ...prev,
+                              [clave]: obtenerCantidadSeleccionada(saldo)
+                            }));
+                          }}
+                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition-colors"
+                          title="Seleccionar cantidad"
+                        >
+                          <PencilSquareIcon className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
                     {/* Información de conteo físico */}
