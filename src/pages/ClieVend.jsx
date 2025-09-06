@@ -130,13 +130,7 @@ const ClieVend = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Clientes por Vendedor</h1>
-        <p className="text-gray-600">
-          Selecciona un vendedor para ver sus clientes y filtrar por RUC o nombre
-        </p>
-      </div>
+      
 
       {/* Controles principales */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

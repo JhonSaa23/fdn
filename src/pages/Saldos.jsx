@@ -11,6 +11,7 @@ import {
   MinusIcon
 } from '@heroicons/react/24/outline';
 import axiosClient from '../services/axiosClient';
+import { obtenerLaboratorios } from '../services/api';
 
 const Saldos = () => {
   const { showNotification } = useNotification();
@@ -22,9 +23,9 @@ const Saldos = () => {
   
   // Estados para filtros de búsqueda inicial
   const [filtros, setFiltros] = useState({
-    codigoProducto: '00'
+    laboratorio: ''
   });
-  const [codigosDisponibles, setCodigosDisponibles] = useState([]);
+  const [laboratorios, setLaboratorios] = useState([]);
 
   // Estados para datos
   const [currentPage, setCurrentPage] = useState(1);
@@ -85,21 +86,19 @@ const Saldos = () => {
 
 
 
-  // Cargar códigos disponibles al montar el componente
+  // Cargar laboratorios al montar el componente
   useEffect(() => {
-    cargarCodigosDisponibles();
+    cargarLaboratorios();
   }, []);
 
-  const cargarCodigosDisponibles = async () => {
+  const cargarLaboratorios = async () => {
     try {
-      const response = await axiosClient.get('/saldos/codigos-disponibles');
-      const data = response.data;
-      
-      if (data.success) {
-        setCodigosDisponibles(data.data);
-      }
+      const data = await obtenerLaboratorios();
+      setLaboratorios(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error al cargar códigos disponibles:', error);
+      console.error('Error al cargar laboratorios:', error);
+      showNotification('error', 'Error al cargar laboratorios');
+      setLaboratorios([]);
     }
   };
 
@@ -427,14 +426,15 @@ const Saldos = () => {
             <FunnelIcon className="w-5 h-5 text-gray-600" />
             <h3 className="text-sm font-medium text-gray-700">Filtros de búsqueda</h3>
             <select
-                value={filtros.codigoProducto}
-                onChange={(e) => setFiltros({...filtros, codigoProducto: e.target.value})}
-                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[100px]"
-                style={{ maxWidth: 90 }}
+                value={filtros.laboratorio}
+                onChange={(e) => setFiltros({...filtros, laboratorio: e.target.value})}
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+                style={{ maxWidth: 250 }}
               >
-                {codigosDisponibles.map(codigo => (
-                  <option key={codigo} value={codigo}>
-                    {codigo}
+                <option value="">Todos los laboratorios</option>
+                {laboratorios.map(lab => (
+                  <option key={lab.CodLab} value={lab.CodLab}>
+                    {lab.CodLab} - {lab.Descripcion}
                   </option>
                 ))}
               </select>
@@ -668,7 +668,7 @@ const Saldos = () => {
             {/* Vista desktop */}
             <div 
               ref={tableContainerRef}
-              className="hidden md:block overflow-x-auto max-h-[calc(100vh-300px)]"
+              className="hidden md:block overflow-x-auto max-h-[calc(100vh-240px)]"
             >
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
