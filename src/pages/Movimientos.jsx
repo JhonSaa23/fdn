@@ -828,7 +828,7 @@ const Movimientos = () => {
                             onClick={() => seleccionarSaldo(saldo)}
                           >
                             <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
-                              {index + 1}
+                              {saldo.almacenNumero}
                             </td>
                             <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-200">
                               {saldo.almacen}
