@@ -43,6 +43,7 @@ const menuItems = [
   { name: 'Bonificaciones', path: '/bonificaciones', icon: <GiftIcon className="w-5 h-5" /> },
   // { name: 'Pedidos', path: '/pedidos', icon: <ClipboardDocumentListIcon className="w-5 h-5" /> },
   { name: 'Saldos', path: '/saldos', icon: <ArchiveBoxIcon className="w-5 h-5" /> },
+  { name: 'Movimientos', path: '/movimientos', icon: <ArrowDownTrayIcon className="w-5 h-5" /> },
   { name: 'Clientes', path: '/clientes', icon: <UserGroupIcon className="w-5 h-5" /> },
   { name: 'Clie_Vend', path: '/clie-vend', icon: <UserGroupIcon className="w-5 h-5" /> },
   { name: 'Usuarios Bot', path: '/usersbot', icon: <UserGroupIcon className="w-5 h-5" /> },

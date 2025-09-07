@@ -28,6 +28,7 @@ import ReporteComprasLaboratorio from './pages/ReporteComprasLaboratorio';
 import JuegoTresEnRaya from './pages/JuegoTresEnRaya';
 import ClieVend from './pages/ClieVend';
 import UsersBot from './pages/UsersBot';
+import Movimientos from './pages/Movimientos';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
@@ -104,14 +105,14 @@ function App() {
   // Componente de notificación
   const Notification = ({ type, message, onClose }) => {
     const bgColor = {
-      success: 'bg-green-100 border-green-400 text-green-700',
-      warning: 'bg-yellow-100 border-yellow-400 text-yellow-700',
-      danger: 'bg-red-100 border-red-400 text-red-700',
-      info: 'bg-blue-100 border-blue-400 text-blue-700',
+      success: 'bg-white border-green-400 text-green-700',
+      warning: 'bg-white border-yellow-400 text-yellow-700',
+      danger: 'bg-white border-red-400 text-red-700',
+      info: 'bg-white border-blue-400 text-blue-700',
     };
     
     return (
-      <div className={`flex items-center px-4 py-3 ${bgColor[type]} border rounded-md fixed top-4 right-4 max-w-md shadow-2xl z-[9999] transition-all duration-300 transform animate-in slide-in-from-right-full`}>
+      <div className={`flex items-center px-4 py-3 ${bgColor[type]} border rounded-md fixed top-4 right-4 max-w-md shadow-2xl z-[9999] transition-all duration-300 transform animate-in slide-in-from-right-full backdrop-blur-none`} style={{backgroundColor: 'white'}}>
         <div className="flex-grow text-sm font-medium">{message}</div>
         <button 
           onClick={onClose} 
@@ -157,6 +158,7 @@ function App() {
                 <Route path="/reportes/compras-laboratorio" element={<ReporteComprasLaboratorio />} />
                 <Route path="/juego-tres-en-raya" element={<JuegoTresEnRaya />} />
                 <Route path="/usersbot" element={<UsersBot />} />
+                <Route path="/movimientos" element={<Movimientos />} />
               </Routes>
             </div>
           </main>
