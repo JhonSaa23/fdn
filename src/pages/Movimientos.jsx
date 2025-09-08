@@ -15,7 +15,13 @@ const Movimientos = () => {
   // Estados principales
   const [loading, setLoading] = useState(false);
   const [numeroMovimiento, setNumeroMovimiento] = useState('');
-  const [fechaMovimiento, setFechaMovimiento] = useState(new Date().toISOString().split('T')[0]);
+  const [fechaMovimiento, setFechaMovimiento] = useState(() => {
+    const hoy = new Date();
+    const año = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    return `${año}-${mes}-${dia}`;
+  });
   
   // Estados para modales
   const [showOpcionesSalida, setShowOpcionesSalida] = useState(false);
@@ -61,7 +67,11 @@ const Movimientos = () => {
         console.log('✅ Número generado:', numero);
         
         setNumeroMovimiento(numero);
-        setFechaMovimiento(new Date().toISOString().split('T')[0]);
+        const hoy = new Date();
+        const año = hoy.getFullYear();
+        const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoy.getDate()).padStart(2, '0');
+        setFechaMovimiento(`${año}-${mes}-${dia}`);
         // NO limpiar productosAgregados - mantener los productos ya agregados
         setOpcionSeleccionada(null);
         setProductoEncontrado(null);
