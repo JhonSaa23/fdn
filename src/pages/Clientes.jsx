@@ -66,7 +66,8 @@ const Clientes = () => {
   const [filtros, setFiltros] = useState({
     codlab: '',
     cliente: '',
-    tipificacion: ''
+    tipificacion: '',
+    activo: ''
   });
 
   // Estados para el formulario
@@ -292,7 +293,7 @@ const Clientes = () => {
 
   // Resetear paginación cuando cambien los filtros
   useEffect(() => {
-    if (JSON.stringify(filtros) !== JSON.stringify({ codlab: '', cliente: '', tipificacion: '' })) {
+    if (JSON.stringify(filtros) !== JSON.stringify({ codlab: '', cliente: '', tipificacion: '', activo: '' })) {
       setCurrentPage(1);
       setHasMore(true);
       setVisibleStartPage(1);
@@ -306,7 +307,8 @@ const Clientes = () => {
     setFiltros({
       codlab: '',
       cliente: '',
-      tipificacion: ''
+      tipificacion: '',
+      activo: ''
     });
     setFiltroCliente('');
     setCurrentPage(1);
@@ -623,7 +625,7 @@ const Clientes = () => {
             </div>
           </div>
           <form className="space-y-4">
-            <div className="grid grid-cols-4 gap-x-4 gap-y-4">
+            <div className="grid grid-cols-5 gap-x-4 gap-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Laboratorio
@@ -673,6 +675,21 @@ const Clientes = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Estado
+                </label>
+                <select
+                  name="activo"
+                  value={filtros.activo}
+                  onChange={handleFilterChange}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                >
+                  <option value="">Todos</option>
+                  <option value="1">Activo</option>
+                  <option value="0">Inactivo</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Filtro Cliente
                 </label>
                 <input
@@ -704,19 +721,20 @@ const Clientes = () => {
                     <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipificación</th>
                     <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">En T</th>
                     <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">En D</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-20">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center">
+                      <td colSpan="7" className="px-6 py-4 text-center">
                         Cargando...
                       </td>
                     </tr>
                   ) : clientesFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center">
+                      <td colSpan="7" className="px-6 py-4 text-center">
                         No hay datos disponibles
                       </td>
                     </tr>
@@ -749,6 +767,17 @@ const Clientes = () => {
                             cliente.en_d ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}>
                             {cliente.en_d ? '✓' : '✗'}
+                          </span>
+                        </td>
+                        <td className="text-center py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            cliente.Activo === true || cliente.Activo === 1 ? 'bg-green-100 text-green-800' : 
+                            cliente.Activo === false || cliente.Activo === 0 ? 'bg-red-100 text-red-800' : 
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {cliente.Activo === true || cliente.Activo === 1 ? 'Activo' : 
+                             cliente.Activo === false || cliente.Activo === 0 ? 'Inactivo' : 
+                             cliente.EstadoDescripcion || 'Sin info'}
                           </span>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white z-20">
