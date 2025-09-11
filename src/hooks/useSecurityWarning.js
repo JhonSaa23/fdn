@@ -16,7 +16,6 @@ export const useSecurityWarning = () => {
     console.log('%c• Tu actividad está siendo monitoreada', 'color: #ffff00; font-size: 12px;');
     console.log('%c• Tu IP ha sido registrada', 'color: #ffff00; font-size: 12px;');
     console.log('%c• Se ha generado un reporte de seguridad', 'color: #ffff00; font-size: 12px;');
-    console.log('%c• Las autoridades han sido notificadas', 'color: #ffff00; font-size: 12px;');
     console.log('%c', 'color: #ff0000; font-size: 14px;');
     console.log('%c🚫 CERRAR INMEDIATAMENTE ESTA VENTANA 🚫', 'color: #ff0000; font-size: 16px; font-weight: bold; background: #000000; padding: 10px; border: 2px solid #ff0000;');
     console.log('%c', 'color: #ff0000; font-size: 14px;');
