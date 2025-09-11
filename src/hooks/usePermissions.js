@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
+import axiosClient from '../services/axiosClient';
 
 export const usePermissions = () => {
   const { usuario, loading: authLoading } = useAuth();
@@ -26,19 +27,17 @@ export const usePermissions = () => {
       setLoading(true);
       
       // Cargar todas las vistas del sistema
-      const vistasResponse = await fetch('/api/vistas');
-      const vistasData = await vistasResponse.json();
+      const vistasResponse = await axiosClient.get('/vistas');
       
-      if (vistasData.success) {
-        setVistasSistema(vistasData.data);
+      if (vistasResponse.data.success) {
+        setVistasSistema(vistasResponse.data.data);
       }
 
       // Cargar vistas permitidas para el usuario
-      const usuarioVistasResponse = await fetch(`/api/vistas/usuario/${usuario.idus}`);
-      const usuarioVistasData = await usuarioVistasResponse.json();
+      const usuarioVistasResponse = await axiosClient.get(`/vistas/usuario/${usuario.idus}`);
       
-      if (usuarioVistasData.success) {
-        setVistasUsuario(usuarioVistasData.data);
+      if (usuarioVistasResponse.data.success) {
+        setVistasUsuario(usuarioVistasResponse.data.data);
       }
     } catch (error) {
       console.error('Error cargando vistas:', error);
