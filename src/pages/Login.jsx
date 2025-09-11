@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { validarDocumento, enviarCodigo, verificarCodigo } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import DatabaseStatus from '../components/DatabaseStatus';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -99,9 +100,21 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Error en validación:', error);
-      setErrors({ 
-        documento: error.response?.data?.message || 'Error de conexión' 
-      });
+      
+      // Manejar diferentes tipos de errores
+      let errorMessage = 'Error de conexión';
+      
+      if (error.response?.status === 503) {
+        errorMessage = 'Servicio temporalmente no disponible. La base de datos no está conectada.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Usuario no encontrado o no tiene permisos para este tipo de acceso';
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.message || 'Datos inválidos';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      setErrors({ documento: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -247,6 +260,11 @@ const Login = () => {
                  className="h-16 object-contain"
                />
              </div>
+           </div>
+           
+           {/* Estado de la base de datos */}
+           <div className="flex justify-center mb-4">
+             <DatabaseStatus />
            </div>
             
             {/* Tabs */}

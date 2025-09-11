@@ -13,7 +13,15 @@ export const usePermissions = () => {
   // Cargar vistas del sistema y del usuario
   useEffect(() => {
     if (usuario && !authLoading) {
-      cargarVistas();
+      // Verificar que el usuario tenga un token válido antes de cargar vistas
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        cargarVistas();
+      } else {
+        setVistasSistema([]);
+        setVistasUsuario([]);
+        setLoading(false);
+      }
     } else if (!authLoading && !usuario) {
       // Si no hay usuario y auth terminó de cargar, limpiar vistas
       setVistasSistema([]);

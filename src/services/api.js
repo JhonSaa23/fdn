@@ -784,6 +784,16 @@ export const verificarCodigo = async (idus, codigo, mantenerSesion = false) => {
   }
 };
 
+export const verificarEstadoDB = async () => {
+  try {
+    const response = await axiosClient.get('/auth/db-status');
+    return response.data;
+  } catch (error) {
+    console.error('Error verificando estado de la base de datos:', error);
+    throw error;
+  }
+};
+
 export const cerrarSesion = async (idus) => {
   try {
     const response = await axiosClient.post('/auth/logout', {
