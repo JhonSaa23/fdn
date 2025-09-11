@@ -1189,7 +1189,7 @@ export const exportarComprasLaboratorio = async (codigoLaboratorio) => {
 
 export const obtenerListaClientes = async () => {
   try {
-    const response = await axiosClient.get('/clientes-lista');
+    const response = await axiosClient.get('/historial-cliente/clientes-lista');
     return response.data;
   } catch (error) {
     console.error('Error obteniendo lista de clientes:', error);

@@ -39,7 +39,6 @@ const GestionUsuarios = () => {
     Bloqueado: false
   });
   const [selectedPermissions, setSelectedPermissions] = useState([]);
-  const [vistasDisponibles, setVistasDisponibles] = useState([]);
   const [errors, setErrors] = useState({});
   const [filtros, setFiltros] = useState({
     nombre: '',
@@ -51,22 +50,10 @@ const GestionUsuarios = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  // Cargar usuarios y vistas al montar el componente
+  // Cargar usuarios al montar el componente
   useEffect(() => {
     cargarUsuarios();
-    cargarVistasDisponibles();
   }, []);
-
-  const cargarVistasDisponibles = async () => {
-    try {
-      const response = await axiosClient.get('/vistas');
-      if (response.data.success) {
-        setVistasDisponibles(response.data.data || []);
-      }
-    } catch (error) {
-      console.error('Error cargando vistas:', error);
-    }
-  };
 
   const cargarUsuarios = async () => {
     try {
@@ -742,7 +729,7 @@ const GestionUsuarios = () => {
                       Vistas Permitidas
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-40 md:max-h-64 overflow-y-auto border border-gray-300 rounded-md p-2 md:p-3 bg-gray-50">
-                      {vistasDisponibles.map((vista) => (
+                      {getVistasSistema().map((vista) => (
                         <label key={vista.ID} className="flex items-start space-x-2 text-xs md:text-sm p-2 hover:bg-white rounded border border-transparent hover:border-gray-200 transition-colors">
                           <input
                             type="checkbox"
