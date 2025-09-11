@@ -3,7 +3,7 @@ export const checkDatabaseConnection = async () => {
   const URL_BASE = import.meta.env.VITE_API_URL;
   try {
     const url = `${URL_BASE}/api/health`;
-    console.log('Llamando a:', url);
+
     const response = await fetch(url, {
       headers: {
         'ngrok-skip-browser-warning': 'true'

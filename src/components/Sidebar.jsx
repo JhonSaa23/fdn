@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { useSidebar } from '../App';
 import { createPortal } from 'react-dom';
+import { useAuth } from '../hooks/useAuth';
+import { usePermissions } from '../hooks/usePermissions';
 
 // Iconos importados de heroicons
 import { 
@@ -26,50 +28,38 @@ import {
   GiftIcon,
   ClipboardDocumentListIcon,
   ArchiveBoxIcon,
-  PuzzlePieceIcon
+  PuzzlePieceIcon,
+  ArrowRightOnRectangleIcon,
+  ShoppingCartIcon,
+  FolderIcon
 } from '@heroicons/react/24/outline';
 
-const menuItems = [
-  { name: 'Dashboard', path: '/', icon: <HomeIcon className="w-5 h-5" /> },
-  { 
-    name: 'Importar', 
-    icon: <ArrowUpTrayIcon className="w-5 h-5" />,
-    submenu: [
-      { name: 'Medifarma', path: '/medifarma' },
-      { name: 'BCP', path: '/bcp' }
-    ]
-  },
-  { name: 'Promociones', path: '/promociones', icon: <TagIcon className="w-5 h-5" /> },
-  { name: 'Bonificaciones', path: '/bonificaciones', icon: <GiftIcon className="w-5 h-5" /> },
-  // { name: 'Pedidos', path: '/pedidos', icon: <ClipboardDocumentListIcon className="w-5 h-5" /> },
-  { name: 'Saldos', path: '/saldos', icon: <ArchiveBoxIcon className="w-5 h-5" /> },
-  { name: 'Movimientos', path: '/movimientos', icon: <ArrowDownTrayIcon className="w-5 h-5" /> },
-  { name: 'Clientes', path: '/clientes', icon: <UserGroupIcon className="w-5 h-5" /> },
-  { name: 'Clie_Vend', path: '/clie-vend', icon: <UserGroupIcon className="w-5 h-5" /> },
-  { name: 'Usuarios Bot', path: '/usersbot', icon: <UserGroupIcon className="w-5 h-5" /> },
-  { name: 'Escalas', path: '/escalas', icon: <ChartBarIcon className="w-5 h-5" /> },
-  { name: 'Kardex', path: '/kardex-tabla', icon: <TableCellsIcon className="w-5 h-5" /> },
-  { name: 'Guías', path: '/guias', icon: <TruckIcon className="w-5 h-5" /> },
-  { name: 'Multi Acción', path: '/multi-accion', icon: <Bars3Icon className="w-5 h-5" /> },
-  { 
-    name: 'Reportes', 
-    icon: <DocumentTextIcon className="w-5 h-5" />,
-    submenu: [
-      { name: 'CodPro', path: '/reporte-codpro' },
-      { name: 'Picking Procter', path: '/reportes/picking-procter' },
-      { name: 'Notas Loreal', path: '/reportes/loreal-notas' },
-      { name: 'Concurso', path: '/reportes/concurso' },
-      { name: 'Compras por Laboratorio', path: '/reportes/compras-laboratorio' }
-    ]
-  },
-  { name: 'Consulta Produc', path: '/consulta-productos', icon: <MagnifyingGlassIcon className="w-6 h-6" /> },
-  { name: 'Devolución Canje', path: '/devolucion-canje', icon: <ArrowDownTrayIcon className="w-5 h-5" /> },
-//  { name: 'Tres en Raya', path: '/juego-tres-en-raya', icon: <PuzzlePieceIcon className="w-5 h-5" /> },
-];
+// Mapeo de iconos para renderizar dinámicamente
+const iconMap = {
+  'HomeIcon': HomeIcon,
+  'ArrowUpTrayIcon': ArrowUpTrayIcon,
+  'TagIcon': TagIcon,
+  'GiftIcon': GiftIcon,
+  'ArchiveBoxIcon': ArchiveBoxIcon,
+  'ArrowDownTrayIcon': ArrowDownTrayIcon,
+  'UserGroupIcon': UserGroupIcon,
+  'ChartBarIcon': ChartBarIcon,
+  'TableCellsIcon': TableCellsIcon,
+  'TruckIcon': TruckIcon,
+  'Bars3Icon': Bars3Icon,
+  'DocumentTextIcon': DocumentTextIcon,
+  'MagnifyingGlassIcon': MagnifyingGlassIcon,
+  'PuzzlePieceIcon': PuzzlePieceIcon,
+  'ShoppingCartIcon': ShoppingCartIcon,
+  'FolderIcon': FolderIcon
+};
 
 function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isSidebarOpen, setIsSidebarOpen, toggleSidebar, isSidebarCollapsed, toggleSidebarCollapse } = useSidebar();
+  const { usuario, logout } = useAuth();
+  const { getMenuItems, loading } = usePermissions();
   const [openMenus, setOpenMenus] = useState(new Set());
   const [hoveredItem, setHoveredItem] = useState(null);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, left: 0 });
@@ -92,6 +82,11 @@ function Sidebar() {
     else {
       toggleSidebarCollapse();
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
   
   const isMenuOpen = (menuPath) => openMenus.has(menuPath);
@@ -144,26 +139,30 @@ function Sidebar() {
   const renderMenuItem = (item, parentPath = '') => {
     const currentPath = parentPath ? `${parentPath}.${item.name}` : item.name;
     
+    // Renderizar icono dinámicamente
+    const IconComponent = iconMap[item.icon];
+    const iconElement = IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+    
     if (item.submenu) {
       return (
         <div key={item.name}>
           <button
             onClick={(e) => toggleMenu(currentPath, e)}
             className={clsx(
-              "w-full flex items-center px-4 py-2.5 text-slate-700 rounded-lg hover:bg-slate-200/60 transition-all duration-200 border border-transparent hover:border-slate-300/40 hover:shadow-sm group",
+              "w-full flex items-center px-4 py-1.5 text-white rounded-lg hover:bg-white/30 transition-all duration-200 border border-transparent hover:border-white/40 hover:shadow-md group",
               (location.pathname === item.path || 
                item.submenu?.some(subItem => location.pathname === subItem.path)) && 
-               "bg-slate-200/80 text-slate-800 border-slate-300/50 shadow-sm",
+               "bg-white/40 text-white border-white/50 shadow-md",
               isSidebarCollapsed && "justify-center"
             )}
           >
-            {item.icon && <span className="flex-shrink-0 text-slate-600 group-hover:text-slate-700">{item.icon}</span>}
+            {iconElement && <span className="flex-shrink-0 text-white group-hover:text-white">{iconElement}</span>}
             {!isSidebarCollapsed && (
               <>
                 <span className="ml-3 flex-grow text-left font-medium">{item.name}</span>
                 <ChevronDownIcon 
                   className={clsx(
-                    "w-4 h-4 transform transition-transform duration-200 text-slate-500",
+                    "w-3 h-3 transform transition-transform duration-200 text-white",
                     isMenuOpen(currentPath) ? "rotate-180" : ""
                   )}
                 />
@@ -172,17 +171,17 @@ function Sidebar() {
           </button>
           
           {!isSidebarCollapsed && isMenuOpen(currentPath) && (
-            <div className="ml-4 mt-1 space-y-1 relative">
+            <div className="ml-4 mt-0.5 space-y-0.5 relative">
               {/* Línea conectora principal */}
-              <div className="absolute left-4 top-0 w-0.5 bg-slate-400 rounded-full opacity-60" style={{ height: `${item.submenu.length * 40}px` }}></div>
+              <div className="absolute left-4 top-0 w-0.5 bg-white/60 rounded-full" style={{ height: `${item.submenu.length * 32}px` }}></div>
               
               {item.submenu.map((subItem, index) => (
                 <div key={subItem.name} className="relative">
                   {/* Línea horizontal conectora */}
-                  <div className="absolute left-4 top-4 w-3 h-0.5 bg-slate-400 rounded-full opacity-60"></div>
+                  <div className="absolute left-4 top-3 w-3 h-0.5 bg-white/60 rounded-full"></div>
                   
                   {/* Punto de conexión */}
-                  <div className="absolute left-3.5 top-3.5 w-1.5 h-1.5 bg-slate-500 rounded-full shadow-sm"></div>
+                  <div className="absolute left-3.5 top-2.5 w-1.5 h-1.5 bg-white/80 rounded-full shadow-sm"></div>
                   
                   {subItem.submenu ? 
                     <div className="ml-6">
@@ -191,8 +190,8 @@ function Sidebar() {
                     <Link
                       to={subItem.path}
                       className={clsx(
-                        "block px-3 py-2 ml-6 text-sm text-slate-600 rounded-md hover:bg-slate-100 transition-all duration-200 hover:text-slate-700 border border-transparent hover:border-slate-200 text-left",
-                        location.pathname === subItem.path && "text-slate-700 font-medium bg-slate-100/80 border-slate-200/60"
+                        "block px-3 py-1 ml-6 text-sm text-white/90 rounded-md hover:bg-white/20 transition-all duration-200 hover:text-white border border-transparent hover:border-white/30 text-left",
+                        location.pathname === subItem.path && "text-white font-medium bg-white/30 border-white/40"
                       )}
                     >
                       {subItem.name}
@@ -211,13 +210,13 @@ function Sidebar() {
         key={item.name}
         to={item.path}
         className={clsx(
-          "flex items-center px-4 py-2.5 text-slate-700 rounded-lg hover:bg-slate-200/60 transition-all duration-200 border border-transparent hover:border-slate-300/40 hover:shadow-sm group",
-          location.pathname === item.path && "bg-slate-200/80 text-slate-800 border-slate-300/50 shadow-sm",
+          "flex items-center px-4 py-1.5 text-white rounded-lg hover:bg-white/30 transition-all duration-200 border border-transparent hover:border-white/40 hover:shadow-md group",
+          location.pathname === item.path && "bg-white/40 text-white border-white/50 shadow-md",
           isSidebarCollapsed && "justify-center"
         )}
         title={isSidebarCollapsed ? item.name : ""}
       >
-        {item.icon && <span className="flex-shrink-0 text-slate-600 group-hover:text-slate-700">{item.icon}</span>}
+        {iconElement && <span className="flex-shrink-0 text-white group-hover:text-white">{iconElement}</span>}
         {!isSidebarCollapsed && <span className="ml-3 font-medium text-left">{item.name}</span>}
       </Link>
     );
@@ -235,22 +234,26 @@ function Sidebar() {
       
       {/* Sidebar */}
       <aside className={clsx(
-        "sidebar fixed inset-y-0 left-0 bg-gradient-to-b from-slate-50 to-slate-100 border-r border-slate-300/60 transition-all duration-300 ease-in-out z-40 shadow-xl",
+        "sidebar fixed inset-y-0 left-0 border-r border-blue-200/60 transition-all duration-300 ease-in-out z-40 shadow-xl",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         "md:translate-x-0",
         "w-64", // Ancho fijo para móvil
         isSidebarCollapsed ? "md:w-20" : "md:w-64",
         "overflow-hidden flex flex-col"  // Flex column para que el contenido se distribuya correctamente
-      )}>
-        <div className="sidebar-header border-b border-slate-300/60 flex justify-between items-center h-16 px-4 bg-gradient-to-r from-slate-100/80 to-slate-200/80">
+      )} style={{ backgroundColor: 'var(--color-primary)' }}>
+        <div className="sidebar-header border-b border-white/20 flex justify-between items-center h-16 px-4 backdrop-blur-sm" style={{ backgroundColor: 'rgba(0, 0, 0, 0.15)' }}>
           {!isSidebarCollapsed && (
             <>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent">
-                FDN
-              </h1>
+              <div className="flex items-center bg-white/60 rounded-lg px-3 py-2 backdrop-blur-sm shadow-md">
+                <img 
+                  src="/locoFDN_3-R.png" 
+                  alt="Fármacos del Norte" 
+                  className="h-8 w-auto object-contain"
+                />
+              </div>
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-md p-2 text-slate-500 hover:bg-slate-200/60 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all"
+                className="inline-flex items-center justify-center rounded-md p-2 text-white hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
                 onClick={handleMenuClick}
                 title="Colapsar sidebar"
               >
@@ -260,12 +263,16 @@ function Sidebar() {
           )}
           {isSidebarCollapsed && (
             <div className="w-full flex flex-col items-center space-y-2">
-              <span className="text-lg font-bold bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent">
-                FDN
-              </span>
+              <div className="bg-white/40 rounded-lg p-2 backdrop-blur-sm shadow-md">
+                <img 
+                  src="/logoFDN.png" 
+                  alt="FDN" 
+                  className="h-6 w-6 object-contain"
+                />
+              </div>
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-md p-1.5 text-slate-500 hover:bg-slate-200/60 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all"
+                className="inline-flex items-center justify-center rounded-md p-1.5 text-white hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
                 onClick={handleMenuClick}
                 title="Expandir sidebar"
               >
@@ -275,25 +282,75 @@ function Sidebar() {
           )}
         </div>
         
-        <div className="sidebar-content flex-1 overflow-y-auto">
-          <ul className="space-y-2 py-4 px-2">
-            {menuItems.map((item, index) => (
-              <li key={item.name} 
-                  className="relative"
-                  ref={el => itemRefs.current[index] = el}
-                  onMouseEnter={() => handleMouseEnter(index)} 
-                  onMouseLeave={handleMouseLeave}>
-                {renderMenuItem(item)}
-              </li>
-            ))}
-          </ul>
+        <div className="sidebar-content flex-1 overflow-y-auto sidebar-scroll">
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          ) : (
+            <ul className="space-y-1 py-3 px-2">
+              {getMenuItems().map((item, index) => (
+                <li key={item.name} 
+                    className="relative truncate"
+                    ref={el => itemRefs.current[index] = el}
+                    onMouseEnter={() => handleMouseEnter(index)} 
+                    onMouseLeave={handleMouseLeave}>
+                  {renderMenuItem(item)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        
+        {/* Footer del sidebar con información del usuario y logout */}
+        <div className="sidebar-footer border-t border-white/20 p-3 backdrop-blur-sm" style={{ backgroundColor: 'rgba(0, 0, 0, 0.15)' }}>
+          {usuario && (
+            <div>
+              {!isSidebarCollapsed ? (
+                <div className="p-3 rounded-xl bg-white/10 border shadow-lg backdrop-blur-sm">
+                  {/* Información del usuario con botón de logout al lado derecho */}
+                  <div className="flex items-center justify-between">
+                    {/* Información del usuario */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-white truncate">
+                        {usuario.nombres}
+                      </div>
+                      <div className="text-xs text-white/90 truncate">
+                        {usuario.rol}
+                      </div>
+                    </div>
+                    
+                    {/* Botón de logout al lado derecho */}
+                    <button
+                      onClick={handleLogout}
+                      className="ml-3 flex items-center justify-center w-8 h-8 text-white rounded-lg hover:bg-red-500/30 hover:text-red-200 transition-all duration-200 border border-transparent hover:border-red-300/60 hover:shadow-md group flex-shrink-0"
+                      title="Cerrar sesión"
+                    >
+                      <ArrowRightOnRectangleIcon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Solo botón de logout cuando está colapsado */
+                <div className="flex justify-center">
+                  <button
+                    onClick={handleLogout}
+                    className="w-8 h-8 flex items-center justify-center text-white rounded-lg hover:bg-red-500/30 hover:text-red-200 transition-all duration-200 border border-transparent hover:border-red-300/60 hover:shadow-md group"
+                    title="Cerrar sesión"
+                  >
+                    <ArrowRightOnRectangleIcon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </aside>
       
       {/* Portal para renderizar el submenú flotante fuera del flujo normal del DOM */}
-      {isSidebarCollapsed && hoveredItem !== null && menuItems[hoveredItem]?.submenu && createPortal(
+      {isSidebarCollapsed && hoveredItem !== null && getMenuItems()[hoveredItem]?.submenu && createPortal(
         <div 
-          className="fixed bg-slate-50/95 backdrop-blur-md rounded-lg shadow-xl border border-slate-300/60 z-[9999] w-56"
+          className="fixed bg-blue-50/95 backdrop-blur-md rounded-lg shadow-xl border border-blue-300/60 z-[9999] w-56"
           style={{
             top: `${submenuPosition.top}px`,
             left: `${submenuPosition.left}px`,
@@ -302,21 +359,21 @@ function Sidebar() {
           onMouseLeave={handleMouseLeave}
         >
           <div className="p-3">
-            <div className="px-4 py-3 text-sm font-semibold text-slate-700 border-b border-slate-200/60 rounded-t-lg bg-slate-100/60">
-              {menuItems[hoveredItem].name}
+            <div className="px-4 py-3 text-sm font-semibold text-blue-700 border-b border-blue-200/60 rounded-t-lg bg-blue-100/60">
+              {getMenuItems()[hoveredItem].name}
             </div>
             <div className="mt-2 space-y-1 relative">
               {/* Línea conectora principal para el menú flotante */}
-              <div className="absolute left-4 top-0 w-0.5 bg-slate-400 rounded-full opacity-60" style={{ height: `${menuItems[hoveredItem].submenu.length * 40 - 8}px` }}></div>
+              <div className="absolute left-4 top-0 w-0.5 bg-blue-400 rounded-full opacity-60" style={{ height: `${getMenuItems()[hoveredItem].submenu.length * 40 - 8}px` }}></div>
               
-              {menuItems[hoveredItem].submenu.map((subItem, index) => (
+              {getMenuItems()[hoveredItem].submenu.map((subItem, index) => (
                 <div key={subItem.name} className="relative">
                   {subItem.submenu ? (
                     <div className="px-2 py-1">
                       {/* Línea horizontal conectora */}
-                      <div className="absolute left-4 top-4 w-3 h-0.5 bg-slate-400 rounded-full opacity-60"></div>
+                      <div className="absolute left-4 top-4 w-3 h-0.5 bg-blue-400 rounded-full opacity-60"></div>
                       {/* Punto de conexión */}
-                      <div className="absolute left-3.5 top-3.5 w-1.5 h-1.5 bg-slate-500 rounded-full shadow-sm"></div>
+                      <div className="absolute left-3.5 top-3.5 w-1.5 h-1.5 bg-blue-500 rounded-full shadow-sm"></div>
                       
                       <div className="font-medium text-sm text-slate-700 ml-6 mb-1 px-2 py-1 rounded-md bg-slate-100/60">
                         {subItem.name}
@@ -335,8 +392,8 @@ function Sidebar() {
                             <Link
                               to={subSubItem.path}
                               className={clsx(
-                                "block px-3 py-1.5 ml-5 text-sm text-slate-600 hover:bg-slate-200/60 transition-all duration-200 hover:text-slate-700 border border-transparent hover:border-slate-200 rounded-md",
-                                location.pathname === subSubItem.path && "text-slate-700 font-medium bg-slate-200/80 border-slate-200/60"
+                                "block px-3 py-1.5 ml-5 text-sm text-blue-700 hover:bg-blue-100/60 transition-all duration-200 hover:text-blue-800 border border-transparent hover:border-blue-200 rounded-md",
+                                location.pathname === subSubItem.path && "text-blue-800 font-medium bg-blue-100/80 border-blue-200/60"
                               )}
                             >
                               {subSubItem.name}
@@ -355,8 +412,8 @@ function Sidebar() {
                       <Link
                         to={subItem.path}
                         className={clsx(
-                          "block px-3 py-2 ml-6 text-sm text-slate-600 hover:bg-slate-200/60 transition-all duration-200 hover:text-slate-700 border border-transparent hover:border-slate-300/40 rounded-md",
-                          location.pathname === subItem.path && "bg-slate-200/80 text-slate-700 border-slate-300/50 font-medium"
+                          "block px-3 py-2 ml-6 text-sm text-blue-700 hover:bg-blue-100/60 transition-all duration-200 hover:text-blue-800 border border-transparent hover:border-blue-200/40 rounded-md",
+                          location.pathname === subItem.path && "bg-blue-100/80 text-blue-800 border-blue-200/50 font-medium"
                         )}
                       >
                         {subItem.name}

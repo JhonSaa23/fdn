@@ -9,34 +9,40 @@ const axiosClient = axios.create({
   }
 });
 
-// Interceptor para debug
+// Interceptor para requests
 axiosClient.interceptors.request.use((config) => {
-  console.log('🚀 Request:', {
-    url: config.url,
-    method: config.method,
-    data: config.data,
-    headers: config.headers
-  });
   return config;
 });
 
 axiosClient.interceptors.response.use(
   (response) => {
-    console.log('✅ Response:', response.status, response.data);
     return response;
   },
   (error) => {
-    console.error('❌ Response Error:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      headers: error.response?.headers,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.config?.data
-      }
-    });
+    // No mostrar logs para errores 404 esperados de autenticación
+    const isAuth404Error = error.response?.status === 404 && 
+                          (error.config?.url?.includes('/auth/validar-documento') ||
+                           error.config?.url?.includes('/api/auth/validar-documento'));
+    
+    // No mostrar logs para errores de permisos esperados (404 o 403)
+    const isPermissionError = (error.response?.status === 404 || error.response?.status === 403) &&
+                             (error.config?.url?.includes('/auth/') ||
+                              error.response?.data?.message?.includes('no tiene permisos') ||
+                              error.response?.data?.message?.includes('Usuario no encontrado'));
+    
+    if (!isAuth404Error && !isPermissionError) {
+      console.error('❌ Response Error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          data: error.config?.data
+        }
+      });
+    }
     
     // Log específico para el endpoint de autorizar
     if (error.config?.url?.includes('/multi-accion/autorizar')) {

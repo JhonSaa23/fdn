@@ -148,12 +148,7 @@ const DevolucionCanjeForm = () => {
         try {
             const response = await axios.get('/laboratorios');
             if (response.data.success) {
-                console.log('🔍 Datos de laboratorios recibidos:', response.data.data);
                 // Verificar la estructura del primer laboratorio
-                if (response.data.data.length > 0) {
-                    console.log('🔍 Estructura del primer laboratorio:', response.data.data[0]);
-                    console.log('🔍 Campos disponibles:', Object.keys(response.data.data[0]));
-                }
                 setLaboratorios(response.data.data);
             } else {
                 showNotification('danger', `Error al cargar laboratorios: ${response.data.message}`);
@@ -167,13 +162,13 @@ const DevolucionCanjeForm = () => {
         try {
             const response = await axios.get('/proveedores/transportistas');
             if (response.data.success) {
-                console.log('🚛 Transportistas cargados:', response.data.data);
+
                 setTransportistas(response.data.data);
             } else {
-                console.log('⚠️ Error al cargar transportistas:', response.data.message);
+
             }
         } catch (error) {
-            console.log('⚠️ Error de red al cargar transportistas:', error.message);
+
         }
     };
 
@@ -208,7 +203,7 @@ const DevolucionCanjeForm = () => {
                 try {
                     // Limpiar espacios en blanco del codlab
                     const cleanCodlab = selectedLaboratorio.trim();
-                    console.log('🔍 Cargando productos para laboratorio:', cleanCodlab);
+
                     const response = await axios.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
                     if (response.data.success) {
                         // Guardar copia original del backend
@@ -216,7 +211,7 @@ const DevolucionCanjeForm = () => {
                         setProductosADevolver(response.data.data);
                         setFilteredProductos(response.data.data); // Inicializar productos filtrados
                         setProductosSeleccionados(new Set()); // Limpiar selecciones
-                        console.log('✅ Productos cargados:', response.data.data.length, 'productos');
+
                         showNotification('success', `Productos cargados: ${response.data.data.length} productos disponibles para devolución`);
                     } else {
                         showNotification('danger', `Error al cargar productos a devolver: ${response.data.message}`);
@@ -336,18 +331,6 @@ const DevolucionCanjeForm = () => {
                 cantidadInputRef.current.select(); // Seleccionar todo el texto para que se pueda escribir directamente
             }
         }, 100);
-
-        console.log('✅ Producto seleccionado:', {
-            dropdownIndex: dropdownIndex,
-            codpro: producto.Codpro || producto.Idproducto,
-            nombre: producto.Nombre || producto.Producto,
-            lote: producto.Lote,
-            nroGuia: producto.NroGuia,
-            cantidad: producto.Cantidad,
-            referencia: producto.Referencia,
-            tipo: producto.tipodoc || producto.TipoDoc || producto.Tipo,
-            uniqueId: `${dropdownIndex}-${producto.Codpro || producto.Idproducto}-${producto.Lote}-${producto.NroGuia}-${producto.Referencia}-${producto.tipodoc || producto.TipoDoc || producto.Tipo}`
-        });
     };
 
     const handleDetalleChange = (e) => {
@@ -435,14 +418,14 @@ const DevolucionCanjeForm = () => {
                 const transportista = transportistas.find(t => t.Razon === value);
                 if (transportista) {
                     const codProv = transportista.Codprov ? transportista.Codprov.trim() : '';
-                    console.log('🚛 Cargando datos del transportista:', codProv);
+
 
                     // Si hay código válido, buscar por código
                     if (codProv && codProv !== '') {
                         const response = await axios.get(`/proveedores/detalle/${codProv}`);
                         if (response.data.success) {
                             const datosTransportista = response.data.data;
-                            console.log('✅ Datos del transportista cargados por código:', datosTransportista);
+
                             setTransportistaSeleccionado(datosTransportista);
 
                             // Auto-completar el RUC
@@ -451,16 +434,16 @@ const DevolucionCanjeForm = () => {
                                 RucTrans: datosTransportista.Documento || ''
                             }));
                         } else {
-                            console.log('⚠️ Error al cargar datos del transportista por código:', response.data.message);
+
                         }
                     } else {
                         // Si no hay código, buscar por razón
-                        console.log('🔍 Transportista sin código, buscando por razón:', transportista.Razon);
+
                         try {
                             const response = await axios.get(`/proveedores/detalle-razon/${encodeURIComponent(transportista.Razon.trim())}`);
                             if (response.data.success) {
                                 const datosTransportista = response.data.data;
-                                console.log('✅ Datos del transportista cargados por razón:', datosTransportista);
+
                                 setTransportistaSeleccionado(datosTransportista);
 
                                 // Auto-completar el RUC
@@ -469,19 +452,19 @@ const DevolucionCanjeForm = () => {
                                     RucTrans: datosTransportista.Documento || ''
                                 }));
                             } else {
-                                console.log('⚠️ Error al cargar datos del transportista por razón:', response.data.message);
+
                                 setCabecera(prev => ({ ...prev, RucTrans: '' }));
                                 setTransportistaSeleccionado(null);
                             }
                         } catch (error) {
-                            console.log('⚠️ Error al buscar transportista por razón:', error.message);
+
                             setCabecera(prev => ({ ...prev, RucTrans: '' }));
                             setTransportistaSeleccionado(null);
                         }
                     }
                 }
             } catch (error) {
-                console.log('⚠️ Error de red al cargar datos del transportista:', error.message);
+
                 // En caso de error, limpiar RUC
                 setCabecera(prev => ({ ...prev, RucTrans: '' }));
                 setTransportistaSeleccionado(null);
@@ -496,12 +479,12 @@ const DevolucionCanjeForm = () => {
 
 
     const handleSeleccionarLaboratorio = async (laboratorio) => {
-        console.log('🏥 Laboratorio seleccionado:', laboratorio);
+
 
         // Ahora todos los laboratorios que llegan del backend son válidos (Mantiene=1)
-        console.log('✅ Laboratorio válido para guías de canjes');
+
         const cleanCodlab = laboratorio.codlab.trim();
-        console.log('🧹 Codlab limpio:', cleanCodlab);
+
         setSelectedLaboratorio(cleanCodlab);
         setShowLaboratorioModal(false);
         setLaboratorioSearchTerm('');
@@ -509,12 +492,12 @@ const DevolucionCanjeForm = () => {
 
         try {
             // Cargar proveedores del laboratorio
-            console.log('🔍 Cargando proveedores para laboratorio:', cleanCodlab);
+
             const proveedoresResponse = await axios.get(`/proveedores/laboratorio/${cleanCodlab}`);
             if (proveedoresResponse.data.success) {
                 const proveedoresCargados = proveedoresResponse.data.data;
                 setProveedores(proveedoresCargados);
-                console.log('✅ Proveedores cargados:', proveedoresCargados.length);
+
                 
                 // Auto-seleccionar proveedor si solo hay uno
                 if (proveedoresCargados.length === 1) {
@@ -523,17 +506,17 @@ const DevolucionCanjeForm = () => {
                         ...prev,
                         Proveedor: unicoProveedor.proveedor
                     }));
-                    console.log('🎯 Auto-seleccionado proveedor único:', unicoProveedor.razon);
+
                     showNotification('info', `Proveedor auto-seleccionado: ${unicoProveedor.razon}`);
                 } else if (proveedoresCargados.length > 1) {
-                    console.log('📋 Múltiples proveedores disponibles, selección manual requerida');
+
                     showNotification('info', `${proveedoresCargados.length} proveedores disponibles. Seleccione uno.`);
                 } else {
-                    console.log('⚠️ No hay proveedores disponibles para este laboratorio');
+
                     showNotification('warning', 'No hay proveedores disponibles para este laboratorio');
                 }
             } else {
-                console.log('⚠️ Error al cargar proveedores:', proveedoresResponse.data.message);
+
                 setProveedores([]);
                 showNotification('danger', `Error al cargar proveedores: ${proveedoresResponse.data.message}`);
             }
@@ -548,7 +531,7 @@ const DevolucionCanjeForm = () => {
 
             showNotification('success', `Laboratorio seleccionado: ${laboratorio.Descripcion}. Datos cargados correctamente.`);
         } catch (error) {
-            console.log('⚠️ Error al cargar datos del laboratorio:', error.message);
+
             showNotification('warning', `Laboratorio seleccionado: ${laboratorio.Descripcion}. Error al cargar algunos datos.`);
         }
 
@@ -558,7 +541,7 @@ const DevolucionCanjeForm = () => {
 
     // --- FUNCIONALIDAD DE BOTONES ---
     const handleNuevo = async () => {
-        console.log('🔵 Botón Nuevo clickeado - Iniciando limpieza del formulario');
+
         setIsLoading(true);
 
         // Limpiar todos los estados
@@ -598,7 +581,7 @@ const DevolucionCanjeForm = () => {
             const nextNumResponse = await axios.get('/guias-canje/next-number');
             if (nextNumResponse.data.success && nextNumResponse.data.nextNumber) {
                 setCabecera(prev => ({ ...prev, NroGuia: nextNumResponse.data.nextNumber }));
-                console.log('🔢 Número de documento obtenido:', nextNumResponse.data.nextNumber);
+
             } else {
                 showNotification('warning', `Advertencia: No se pudo obtener el siguiente número de documento. ${nextNumResponse.data.message || ''}`);
             }
@@ -616,7 +599,7 @@ const DevolucionCanjeForm = () => {
             showNotification('danger', `Error de red al inicializar formulario: ${error.message}`);
         } finally {
             setIsLoading(false);
-            console.log('🔵 Botón Nuevo completado - Formulario limpio, número obtenido y modal de laboratorios abierto');
+
         }
     };
 
@@ -648,11 +631,11 @@ const DevolucionCanjeForm = () => {
         try {
             // Asegurar que los datos estén cargados antes de continuar
             if (proveedores.length === 0) {
-                console.log('🔄 Cargando proveedores...');
+
                 await fetchLaboratorios();
             }
             if (transportistas.length === 0) {
-                console.log('🔄 Cargando transportistas...');
+
                 await fetchTransportistas();
             }
 
@@ -660,9 +643,9 @@ const DevolucionCanjeForm = () => {
             const cabeceraResponse = await axios.get(`/guias-canje/${guia.NroGuia}/cabecera`);
             if (cabeceraResponse.data.success && cabeceraResponse.data.data) {
                 const fetchedCabecera = cabeceraResponse.data.data;
-                console.log('🔍 Datos de cabecera recibidos:', fetchedCabecera);
-                console.log('🔍 Proveedor código:', fetchedCabecera.Proveedor);
-                console.log('🔍 Proveedor nombre:', fetchedCabecera.ProveedorNombre);
+
+
+
 
                 // Limpiar espacios en blanco de los datos recibidos
                 const cleanCabecera = {
@@ -686,12 +669,12 @@ const DevolucionCanjeForm = () => {
 
                     // Cargar proveedores del laboratorio
                     try {
-                        console.log('🔍 Cargando proveedores para laboratorio:', laboratorioCode);
+
                         const proveedoresResponse = await axios.get(`/proveedores/laboratorio/${laboratorioCode}`);
                         if (proveedoresResponse.data.success) {
                             const proveedoresCargados = proveedoresResponse.data.data;
                             setProveedores(proveedoresCargados);
-                            console.log('✅ Proveedores cargados para laboratorio:', proveedoresCargados.length);
+
 
                             // Buscar y establecer el proveedor después de cargar los datos
                             if (cleanCabecera.Proveedor && proveedoresCargados.length > 0) {
@@ -708,11 +691,11 @@ const DevolucionCanjeForm = () => {
                                 }
 
                                 if (proveedorEncontrado) {
-                                    console.log('✅ Proveedor encontrado y establecido:', proveedorEncontrado.razon);
+
                                 } else {
-                                    console.log('⚠️ Proveedor no encontrado en la lista:', cleanCabecera.Proveedor);
-                                    console.log('Nombre del proveedor recibido:', fetchedCabecera.ProveedorNombre);
-                                    console.log('Proveedores disponibles:', proveedoresCargados.map(p => `${p.proveedor} - ${p.razon}`));
+
+
+
                                 }
                             } else if (!cleanCabecera.Proveedor && proveedoresCargados.length === 1) {
                                 // Auto-seleccionar proveedor si no hay uno establecido y solo hay uno disponible
@@ -721,14 +704,14 @@ const DevolucionCanjeForm = () => {
                                     ...prev,
                                     Proveedor: unicoProveedor.proveedor
                                 }));
-                                console.log('🎯 Auto-seleccionado proveedor único en modo consulta:', unicoProveedor.razon);
+
                             }
                         } else {
-                            console.log('⚠️ Error al cargar proveedores:', proveedoresResponse.data.message);
+
                             setProveedores([]);
                         }
                     } catch (error) {
-                        console.log('⚠️ Error al cargar proveedores del laboratorio:', error.message);
+
                         setProveedores([]);
                     }
                 }
@@ -748,23 +731,23 @@ const DevolucionCanjeForm = () => {
                                 RucTrans: transportistaEncontrado.Ruc || ''
                             }));
                         }
-                        console.log('✅ Transportista encontrado y establecido:', transportistaEncontrado.Razon);
+
                     } else {
-                        console.log('⚠️ Transportista no encontrado en la lista:', cleanCabecera.EmpTrans);
-                        console.log('Transportistas disponibles:', transportistas.map(t => t.Razon));
+
+
                     }
                 } else {
-                    console.log('⚠️ No hay transportistas cargados o transportista vacío');
+
                 }
 
-                console.log('🔍 Cabecera establecida:', cleanCabecera);
+
 
                 // Esperar un poco para que los datos se establezcan y luego verificar los selects
                 setTimeout(() => {
-                    console.log('🔍 Verificando selects después de establecer cabecera:');
-                    console.log('Cabecera actual:', cabecera);
-                    console.log('Proveedores cargados:', proveedores.length);
-                    console.log('Transportistas cargados:', transportistas.length);
+
+
+
+
                 }, 100);
             } else {
                 showNotification('danger', `Error al cargar cabecera de guía: ${cabeceraResponse.data.message}`);
@@ -797,10 +780,10 @@ const DevolucionCanjeForm = () => {
         showNotification('info', '🚀 Iniciando proceso de registro de guía de canje...');
 
         try {
-            console.log('🚀 Iniciando proceso de registro de guía de canje...');
+
 
             // Paso 1: Verificación de saldos de productos
-            console.log('📊 Paso 1: Verificando saldos de productos...');
+
             for (const detalle of detalles) {
                 const saldosResponse = await axios.post('/productos/verificar-saldos', {
                     cod: detalle.codpro,
@@ -812,21 +795,21 @@ const DevolucionCanjeForm = () => {
                     throw new Error(`Error al verificar saldos del producto ${detalle.codpro}: ${saldosResponse.data.message}`);
                 }
 
-                console.log(`✅ Saldos verificados para producto ${detalle.codpro}`);
+
             }
 
             // Paso 2: Búsqueda de guía de canje existente
-            console.log('🔍 Paso 2: Verificando si la guía ya existe...');
+
             const busquedaResponse = await axios.get(`/guias-canje/buscar/${cabecera.NroGuia}`);
 
             if (busquedaResponse.data.success && busquedaResponse.data.data) {
                 throw new Error(`La guía ${cabecera.NroGuia} ya existe en el sistema.`);
             }
 
-            console.log('✅ Guía no existe, procediendo con el registro...');
+
 
             // Paso 3: Inserción de nueva guía de canje
-            console.log('📝 Paso 3: Insertando cabecera de guía de canje...');
+
             const cabeceraData = {
                 docu: cabecera.NroGuia,
                 feca: new Date(cabecera.Fecha),
@@ -838,8 +821,8 @@ const DevolucionCanjeForm = () => {
                 destino: cabecera.Destinatario
             };
 
-            console.log('📋 Datos de cabecera a enviar:', cabeceraData);
-            console.log('📋 Estado actual de cabecera:', cabecera);
+
+
 
             // Validar que todos los campos requeridos estén presentes
             const camposRequeridos = ['docu', 'feca', 'Prov', 'empresa', 'ruc', 'placa', 'punto', 'destino'];
@@ -855,10 +838,10 @@ const DevolucionCanjeForm = () => {
                 throw new Error(`Error al insertar cabecera: ${cabeceraResponse.data.message}`);
             }
 
-            console.log('✅ Cabecera insertada correctamente');
+
 
             // Paso 4: Inserción de detalles de la guía de canje
-            console.log('📋 Paso 4: Insertando detalles de la guía...');
+
             for (const detalle of detalles) {
                 const detalleData = {
                     num: cabecera.NroGuia,
@@ -877,13 +860,13 @@ const DevolucionCanjeForm = () => {
                     throw new Error(`Error al insertar detalle del producto ${detalle.codpro}: ${detalleResponse.data.message}`);
                 }
 
-                console.log(`✅ Detalle insertado para producto ${detalle.codpro}`);
+
             }
 
-            console.log('✅ Todos los detalles insertados correctamente');
+
 
             // Paso 5: Actualizar contador de guía de devolución para proveedor
-            console.log('🔢 Paso 5: Actualizando contador de guía de devolución...');
+
             const actualizarContadorDevolucionResponse = await axios.post('/guias-canje/actualizar-contador-devolucion', {
                 numero: cabecera.NroGuia
             });
@@ -892,10 +875,10 @@ const DevolucionCanjeForm = () => {
                 throw new Error(`Error al actualizar contador de devolución: ${actualizarContadorDevolucionResponse.data.message}`);
             }
 
-            console.log('✅ Contador de devolución actualizado correctamente');
+
 
             // Paso 6: Obtener número de guía de remisión electrónica
-            console.log('🔢 Paso 6: Obteniendo número de guía de remisión...');
+
             const numeroGuiaResponse = await axios.get('/guias-venta/siguiente-numero');
 
             if (!numeroGuiaResponse.data.success) {
@@ -907,7 +890,7 @@ const DevolucionCanjeForm = () => {
             setPesoGuia('0.00');
             setDireccionGuia('');
 
-            console.log(`✅ Número de guía obtenido: ${numeroGuia}`);
+
 
             // Mostrar modal del generador
             setShowGeneradorModal(true);
@@ -931,12 +914,12 @@ const DevolucionCanjeForm = () => {
         showNotification('info', '🗑️ Iniciando eliminación completa de guía de canje...');
 
         try {
-            console.log('🗑️ Iniciando eliminación completa de guía de canje:', cabecera.NroGuia);
+
 
             const response = await axios.delete(`/guias-canje/${cabecera.NroGuia}/completa`);
 
             if (response.data.success) {
-                console.log('✅ Eliminación completada exitosamente');
+
                 showNotification('success', response.data.message);
                 handleNuevo();
             } else {
@@ -967,11 +950,11 @@ const DevolucionCanjeForm = () => {
     const cargarCabGuias = async () => {
         setLoadingCabGuias(true);
         try {
-            console.log('🔍 Cargando cabeceras de guías...');
+
             const response = await axios.get('/cab-guias');
             if (response.data.success) {
                 setCabGuias(response.data.data);
-                console.log(`✅ Se cargaron ${response.data.data.length} cabeceras de guías`);
+
             } else {
                 showNotification('danger', `Error al cargar cabeceras: ${response.data.message}`);
             }
@@ -985,12 +968,12 @@ const DevolucionCanjeForm = () => {
 
     const cargarUltimoNumeroCabGuia = async () => {
         try {
-            console.log('🔢 Cargando último número de cabecera de guía...');
+
             const response = await axios.get('/cab-guias/ultimo-numero');
             if (response.data.success) {
                 setUltimoNumeroCabGuia(response.data.ultimoNumero);
                 setNuevoNumero(response.data.ultimoNumero);
-                console.log('✅ Último número cargado:', response.data.ultimoNumero);
+
             } else {
                 console.error('❌ Error al cargar último número:', response.data.message);
             }
@@ -1005,11 +988,11 @@ const DevolucionCanjeForm = () => {
         }
 
         try {
-            console.log(`🗑️ Eliminando cabecera de guía: ${numero}`);
+
             const response = await axios.delete(`/cab-guias/${numero}`);
 
             if (response.data.success) {
-                console.log('✅ Cabecera eliminada correctamente');
+
                 showNotification('success', response.data.message);
                 await cargarCabGuias(); // Recargar la lista
             } else {
@@ -1028,13 +1011,13 @@ const DevolucionCanjeForm = () => {
         }
 
         try {
-            console.log(`🔢 Actualizando último número a: ${nuevoNumero}`);
+
             const response = await axios.put('/cab-guias/ultimo-numero', {
                 nuevoNumero: nuevoNumero.trim()
             });
 
             if (response.data.success) {
-                console.log('✅ Último número actualizado correctamente');
+
                 showNotification('success', response.data.message);
                 setUltimoNumeroCabGuia(nuevoNumero.trim());
                 setEditandoNumero(false);
@@ -1057,20 +1040,20 @@ const DevolucionCanjeForm = () => {
         showNotification('info', '🔄 Iniciando proceso de retorno del modal...');
 
         try {
-            console.log('🔄 Iniciando proceso de retorno del modal...');
+
 
             // Paso 7: Búsqueda de guía de venta existente
-            console.log('🔍 Paso 7: Verificando si la guía de venta ya existe...');
+
             const busquedaGuiaVentaResponse = await axios.get(`/guias-venta/buscar/${numeroGuiaGenerado}`);
 
             if (busquedaGuiaVentaResponse.data.success && busquedaGuiaVentaResponse.data.data) {
                 throw new Error(`La guía de venta ${numeroGuiaGenerado} ya existe en el sistema.`);
             }
 
-            console.log('✅ Guía de venta no existe, procediendo con el registro...');
+
 
             // Paso 8: Inserción de la cabecera de la guía de venta
-            console.log('📝 Paso 8: Insertando cabecera de guía de venta...');
+
             const guiaVentaData = {
                 nro: numeroGuiaGenerado,
                 Venta: cabecera.NroGuia, // Número de la guía de canje original
@@ -1090,10 +1073,10 @@ const DevolucionCanjeForm = () => {
                 throw new Error(`Error al insertar guía de venta: ${guiaVentaResponse.data.message}`);
             }
 
-            console.log('✅ Cabecera de guía de venta insertada correctamente');
+
 
             // Paso 9: Preparación de datos para impresión
-            console.log('🖨️ Paso 9: Preparando datos para impresión...');
+
             const impresionResponse = await axios.post('/guias-venta/preparar-impresion', {
                 doc: numeroGuiaGenerado
             });
@@ -1102,10 +1085,10 @@ const DevolucionCanjeForm = () => {
                 throw new Error(`Error al preparar datos para impresión: ${impresionResponse.data.message}`);
             }
 
-            console.log('✅ Datos preparados para impresión');
+
 
             // Paso 10: Actualización del contador de guías
-            console.log('🔢 Paso 10: Actualizando contador de guías...');
+
             const actualizarContadorResponse = await axios.post('/guias-venta/actualizar-contador', {
                 numero: numeroGuiaGenerado
             });
@@ -1114,7 +1097,7 @@ const DevolucionCanjeForm = () => {
                 throw new Error(`Error al actualizar contador: ${actualizarContadorResponse.data.message}`);
             }
 
-            console.log('✅ Contador actualizado correctamente');
+
 
             // Cerrar modal y limpiar formulario
             setShowGeneradorModal(false);
@@ -1817,7 +1800,7 @@ const DevolucionCanjeForm = () => {
                                             showNotification('info', '🔄 Recargando productos disponibles...');
 
                                             const cleanCodlab = selectedLaboratorio.trim();
-                                            console.log('🔄 Recargando productos para laboratorio:', cleanCodlab);
+
 
                                             const response = await axios.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
                                             if (response.data.success) {
@@ -1826,7 +1809,7 @@ const DevolucionCanjeForm = () => {
                                                 setProductoSearchTerm('');
                                                 setShowProductoDropdown(false);
 
-                                                console.log('✅ Productos recargados:', response.data.data.length, 'productos');
+
                                                 showNotification('success', `✅ Productos actualizados: ${response.data.data.length} productos disponibles`);
                                             } else {
                                                 showNotification('danger', `❌ Error al recargar productos: ${response.data.message}`);

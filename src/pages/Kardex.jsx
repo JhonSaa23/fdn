@@ -94,7 +94,7 @@ const Kardex = () => {
   const handleConsultar = async () => {
     try {
       setLoading(true);
-      console.log('Consultando kardex con filtros:', filtros);
+
       const data = await consultarKardex(filtros);
       const movimientosArray = Array.isArray(data) ? data : [];
       // Ordenar del más antiguo al más reciente por documento

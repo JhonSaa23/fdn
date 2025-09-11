@@ -93,7 +93,7 @@ const Promociones = () => {
   const cargarPromociones = async () => {
     try {
       setLoading(true);
-      console.log('Enviando filtros a la API:', filtros);
+
       const data = await consultarPromociones(filtros);
       setPromociones(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -111,13 +111,13 @@ const Promociones = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Cambiando filtro ${name} a:`, value);
+
     setFiltros(prev => {
       const newFiltros = {
         ...prev,
         [name]: value
       };
-      console.log('Nuevos filtros:', newFiltros);
+
       return newFiltros;
     });
   };
@@ -138,7 +138,7 @@ const Promociones = () => {
 
   const handleConsultar = React.useCallback(() => {
     // Debug: Verificar los valores actuales de filtros
-    console.log('Filtros antes de consultar:', filtros);
+
     
     // Capturar el filtro de tipificacion usado en esta consulta
     setUltimaConsultaTipificacion(filtros.tipificacion);
@@ -203,16 +203,6 @@ const Promociones = () => {
       const codproStr = String(formData.codpro || '').trim();
       
       if (editingPromocion) {
-        console.log('Actualizando promoción:', {
-          tipificacionOld: editingPromocion.tipificacion,
-          codproOld: editingPromocion.codpro,
-          desdeOld: editingPromocion.desde,
-          porcentajeOld: editingPromocion.porcentaje,
-          tipificacionNew: tipificacionStr,
-          codproNew: codproStr,
-          desdeNew: desde,
-          porcentajeNew: porcentaje
-        });
         
         await actualizarPromocion({
           tipificacionOld: editingPromocion.tipificacion,

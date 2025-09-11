@@ -57,14 +57,11 @@ const Movimientos = () => {
   const handleNuevo = async () => {
     try {
       setLoading(true);
-      console.log('🚀 Iniciando proceso de nuevo movimiento...');
       
       const response = await axiosClient.post('/movimientos/generar-numero');
-      console.log('📊 Respuesta del servidor:', response.data);
       
       if (response.data.success) {
         const numero = response.data.numero;
-        console.log('✅ Número generado:', numero);
         
         setNumeroMovimiento(numero);
         const hoy = new Date();
@@ -79,7 +76,6 @@ const Movimientos = () => {
         
         showNotification('success', `Nuevo movimiento creado: ${numero}`);
       } else {
-        console.log('❌ Error en la respuesta:', response.data);
         showNotification('error', response.data.message || 'Error al generar número de movimiento');
       }
     } catch (error) {
@@ -95,17 +91,12 @@ const Movimientos = () => {
   const cargarOpcionesTipo = async (tipo) => {
     try {
       setLoading(true);
-      console.log(`🚀 Cargando opciones de ${tipo}...`);
-      
       const codigo = tipo === 'entrada' ? 8 : 9;
       const response = await axiosClient.get(`/movimientos/opciones-tipo/${codigo}`);
-      console.log(`📊 Respuesta de opciones de ${tipo}:`, response.data);
       
       if (response.data.success) {
         setOpcionesSalida(response.data.data);
-        console.log(`✅ Opciones de ${tipo} cargadas:`, response.data.data);
       } else {
-        console.log('❌ Error en respuesta:', response.data);
         showNotification('error', response.data.message || `Error al cargar opciones de ${tipo}`);
       }
     } catch (error) {
@@ -140,14 +131,10 @@ const Movimientos = () => {
       // Cerrar modales previos
       setShowModalSaldos(false);
       setShowModalProducto(false);
-      console.log('🚀 Buscando producto:', productoBuscado);
-      
       const response = await axiosClient.get(`/movimientos/buscar-producto/${productoBuscado.trim()}`);
-      console.log('📊 Respuesta de búsqueda de producto:', response.data);
       
       if (response.data.success) {
         // Verificar bloqueo del producto
-        console.log('🔒 Verificando bloqueo del producto:', productoBuscado.trim());
         const bloqueoResponse = await axiosClient.get(`/movimientos/verificar-bloqueo-producto/${productoBuscado.trim()}`);
         
         if (bloqueoResponse.data.success && bloqueoResponse.data.bloqueado) {
@@ -171,16 +158,12 @@ const Movimientos = () => {
         if (response.data.saldos && response.data.saldos.length > 0) {
           setSaldosProducto(response.data.saldos);
           setShowModalSaldos(true);
-          console.log('✅ Saldos encontrados:', response.data.saldos);
-          console.log('📊 Cantidad de saldos:', response.data.saldos.length);
         } else {
-          console.log('⚠️ No hay saldos disponibles para el producto');
           showNotification('warning', 'Producto encontrado pero sin saldos disponibles');
         }
         
         showNotification('success', 'Producto encontrado');
       } else {
-        console.log('❌ Error en respuesta:', response.data);
         showNotification('error', response.data.message || 'Producto no encontrado');
         setProductoEncontrado(null);
       }
@@ -221,9 +204,6 @@ const Movimientos = () => {
 
   // Función para seleccionar saldo
   const seleccionarSaldo = (saldo) => {
-    console.log('🎯 Seleccionando saldo:', saldo);
-    console.log('📅 Fecha de vencimiento recibida:', saldo.fechaVencimiento);
-    console.log('📅 Tipo de fecha:', typeof saldo.fechaVencimiento);
     
     // Formatear la fecha para el input de tipo date
     let fechaFormateada = '';
@@ -231,7 +211,6 @@ const Movimientos = () => {
       try {
         const fecha = new Date(saldo.fechaVencimiento);
         fechaFormateada = fecha.toISOString().split('T')[0];
-        console.log('📅 Fecha formateada para input:', fechaFormateada);
       } catch (error) {
         console.error('❌ Error al formatear fecha:', error);
       }
@@ -272,7 +251,6 @@ const Movimientos = () => {
     
     // Verificar bloqueo del producto antes de agregar
     try {
-      console.log('🔒 Verificando bloqueo antes de agregar:', formularioMovimiento.codpro);
       const bloqueoResponse = await axiosClient.get(`/movimientos/verificar-bloqueo-producto/${formularioMovimiento.codpro}`);
       
       if (bloqueoResponse.data.success && bloqueoResponse.data.bloqueado) {
@@ -292,12 +270,6 @@ const Movimientos = () => {
       id: Date.now() // ID temporal para la grilla
     };
     
-    console.log('🎯 Agregando producto a la grilla:');
-    console.log('- Tipo de movimiento:', tipoMovimiento);
-    console.log('- Movin asignado:', nuevoProducto.movin);
-    console.log('- Opción seleccionada:', opcionSeleccionada);
-    console.log('- Clase asignada:', nuevoProducto.clase);
-    console.log('- Producto completo:', nuevoProducto);
     
     setProductosAgregados(prev => [...prev, nuevoProducto]);
     
@@ -351,10 +323,6 @@ const Movimientos = () => {
         productos: productosAgregados
       };
       
-      console.log('📤 Datos enviados al backend para registro:');
-      console.log('- Tipo de movimiento:', tipoMovimiento);
-      console.log('- Productos con movin:', productosAgregados.map(p => ({ codpro: p.codpro, movin: p.movin })));
-      console.log('- Datos completos:', data);
       
       const response = await axiosClient.post('/movimientos/registrar', data);
       if (response.data.success) {
@@ -807,7 +775,6 @@ const Movimientos = () => {
               
               {/* Tabla de saldos */}
               <div className="px-4 pb-4">
-                {console.log('🔍 Datos de saldosProducto en modal:', saldosProducto)}
                 <div className="bg-gray-200 rounded-lg overflow-hidden">
                   <table className="w-full">
                     <thead className="bg-gray-300">

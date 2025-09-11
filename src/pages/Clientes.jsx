@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNotification } from '../App';
-import { consultarClientes, crearCliente, actualizarCliente, eliminarCliente, importarClientesExcel, eliminarClientesEnMasa, obtenerTipificacionesClientes } from '../services/api';
+import { consultarClientes, crearCliente, actualizarCliente, eliminarCliente, importarClientesExcel, eliminarClientesEnMasa, obtenerTipificacionesClientes, obtenerLaboratoriosClientes } from '../services/api';
 import { 
   PencilIcon, 
   TrashIcon,
@@ -11,13 +11,7 @@ import {
 import Card from '../components/Card';
 import Button from '../components/Button';
 
-// Las tipificaciones se cargarán dinámicamente de la base de datos
-
-// Lista de laboratorios
-const LABORATORIOS = {
-  "01": "Laboratorio 01",
-  "49": "Laboratorio 49"
-};
+// Las tipificaciones y laboratorios se cargarán dinámicamente de la base de datos
 
 // Función auxiliar para manejar strings de manera segura
 const safeString = (value) => {
@@ -46,6 +40,10 @@ const Clientes = () => {
   // Estado para tipificaciones dinámicas
   const [tipificaciones, setTipificaciones] = useState([]);
   const [tipificacionesMap, setTipificacionesMap] = useState({});
+  
+  // Estado para laboratorios dinámicos
+  const [laboratorios, setLaboratorios] = useState([]);
+  const [laboratoriosMap, setLaboratoriosMap] = useState({});
 
   // Estados para paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,11 +111,28 @@ const Clientes = () => {
     }
   };
 
+  // Cargar laboratorios desde la base de datos
+  const cargarLaboratorios = async () => {
+    try {
+      const data = await obtenerLaboratoriosClientes();
+      setLaboratorios(data);
+      
+      // Crear un mapa para búsqueda rápida
+      const map = {};
+      data.forEach(lab => {
+        map[lab.codlab] = lab.descripcion;
+      });
+      setLaboratoriosMap(map);
+    } catch (error) {
+      console.error('Error al cargar laboratorios:', error);
+      showNotification('error', 'Error al cargar los laboratorios');
+    }
+  };
+
   // Cargar clientes (primera página o nueva búsqueda)
   const cargarClientes = async (resetear = true) => {
     try {
       setLoading(true);
-      console.log('Enviando filtros a la API:', filtros);
       const response = await consultarClientes(filtros, 1, 40);
       
       if (resetear) {
@@ -153,7 +168,6 @@ const Clientes = () => {
     try {
       setLoadingMore(true);
       const nextPage = currentPage + 1;
-      console.log('Cargando página:', nextPage);
       
       const response = await consultarClientes(filtros, nextPage, 40);
       
@@ -201,7 +215,6 @@ const Clientes = () => {
       const newEndPage = Math.min(WINDOW_SIZE, totalPages);
       
       if (newStartPage !== visibleStartPage || newEndPage !== visibleEndPage) {
-        console.log('📍 Reseteando ventana al inicio:', newStartPage, '-', newEndPage);
         setVisibleStartPage(newStartPage);
         setVisibleEndPage(newEndPage);
       }
@@ -221,7 +234,6 @@ const Clientes = () => {
         const newEndPage = Math.min(estimatedPage, currentPage);
         
         if (newStartPage !== visibleStartPage || newEndPage !== visibleEndPage) {
-          console.log('📍 Moviendo ventana hacia abajo:', newStartPage, '-', newEndPage);
           setVisibleStartPage(newStartPage);
           setVisibleEndPage(newEndPage);
         }
@@ -234,7 +246,6 @@ const Clientes = () => {
         const newEndPage = Math.min(newStartPage + WINDOW_SIZE - 1, currentPage);
         
         if (newStartPage !== visibleStartPage || newEndPage !== visibleEndPage) {
-          console.log('📍 Moviendo ventana hacia arriba:', newStartPage, '-', newEndPage);
           setVisibleStartPage(newStartPage);
           setVisibleEndPage(newEndPage);
         }
@@ -277,8 +288,9 @@ const Clientes = () => {
     setLastScrollTop(0);
     setScrollDirection('down');
     
-    // Cargar tipificaciones y clientes
+    // Cargar tipificaciones, laboratorios y clientes
     cargarTipificaciones();
+    cargarLaboratorios();
     cargarClientes(true);
   }, []);
 
@@ -460,7 +472,6 @@ const Clientes = () => {
       
       if (resumen.errores > 0) {
         mensaje += `• ${resumen.errores} errores encontrados`;
-        console.warn('Errores de importación:', detalles);
       }
       
       showNotification('success', mensaje);
@@ -637,8 +648,10 @@ const Clientes = () => {
                   className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 >
                   <option value="">Todos</option>
-                  {Object.entries(LABORATORIOS).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
+                  {laboratorios.map(lab => (
+                    <option key={lab.codlab} value={lab.codlab}>
+                      {lab.codlab} - {lab.descripcion}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -869,8 +882,10 @@ const Clientes = () => {
                     className="w-full p-2 border rounded-md"
                   >
                     <option value="">Seleccione un laboratorio</option>
-                    {Object.entries(LABORATORIOS).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
+                    {laboratorios.map(lab => (
+                      <option key={lab.codlab} value={lab.codlab}>
+                        {lab.codlab} - {lab.descripcion}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -975,8 +990,10 @@ const Clientes = () => {
                   required
                 >
                   <option value="">Seleccione un laboratorio</option>
-                  {Object.entries(LABORATORIOS).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
+                  {laboratorios.map(lab => (
+                    <option key={lab.codlab} value={lab.codlab}>
+                      {lab.codlab} - {lab.descripcion}
+                    </option>
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1">

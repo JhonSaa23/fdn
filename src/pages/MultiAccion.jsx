@@ -45,8 +45,8 @@ function MultiAccion() {
     setLoadingPedido(true);
     try {
       const data = await buscarPedido(numeroPedido);
-      console.log('📦 Datos recibidos del pedido:', data);
-      console.log('📋 Detalles del pedido:', data.detalles);
+
+
       setResultadoPedido(data);
       setShowPedidoModal(true);
     } catch (error) {

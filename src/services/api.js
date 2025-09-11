@@ -650,11 +650,6 @@ export const reusarGuia = async (numero) => {
 
 export const autorizarCodigos = async (codigos) => {
   try {
-    console.log('=== DEBUG FRONTEND AUTORIZAR ===');
-    console.log('Códigos recibidos:', codigos);
-    console.log('Tipo de códigos:', typeof codigos);
-    console.log('Payload a enviar:', { codigos });
-    
     const response = await axiosClient.post('/multi-accion/autorizar', { codigos });
     return response.data;
   } catch (error) {
@@ -739,6 +734,64 @@ export const obtenerLaboratoriosClientes = async () => {
     return response.data;
   } catch (error) {
     console.error('Error al obtener laboratorios:', error);
+    throw error;
+  }
+};
+
+// =====================================================
+// FUNCIONES DE AUTENTICACIÓN
+// =====================================================
+
+export const validarDocumento = async (documento, tipoUsuario) => {
+  try {
+    const response = await axiosClient.post('/auth/validar-documento', {
+      documento,
+      tipoUsuario
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error validando documento:', error);
+    throw error;
+  }
+};
+
+export const enviarCodigo = async (idus, numeroCelular) => {
+  try {
+    const response = await axiosClient.post('/auth/enviar-codigo', {
+      idus,
+      numeroCelular
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error enviando código:', error);
+    throw error;
+  }
+};
+
+export const verificarCodigo = async (idus, codigo, mantenerSesion = false) => {
+  try {
+    const response = await axiosClient.post('/auth/verificar-codigo', {
+      idus,
+      codigo,
+      mantenerSesion,
+      ipAcceso: '127.0.0.1',
+      dispositivo: 'Frontend'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error verificando código:', error);
+    throw error;
+  }
+};
+
+export const cerrarSesion = async (idus) => {
+  try {
+    const response = await axiosClient.post('/auth/logout', {
+      idus
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error cerrando sesión:', error);
     throw error;
   }
 };
@@ -1127,6 +1180,28 @@ export const exportarComprasLaboratorio = async (codigoLaboratorio) => {
     return { success: true };
   } catch (error) {
     console.error('Error al exportar compras por laboratorio:', error);
+    throw error;
+  }
+};
+
+// ===== HISTORIAL CLIENTE =====
+
+export const obtenerListaClientes = async () => {
+  try {
+    const response = await axiosClient.get('/clientes-lista');
+    return response.data;
+  } catch (error) {
+    console.error('Error obteniendo lista de clientes:', error);
+    throw error;
+  }
+};
+
+export const consultarHistorialCliente = async (filtros) => {
+  try {
+    const response = await axiosClient.post('/historial-cliente', filtros);
+    return response.data;
+  } catch (error) {
+    console.error('Error consultando historial de cliente:', error);
     throw error;
   }
 };

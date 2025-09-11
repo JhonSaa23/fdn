@@ -89,7 +89,7 @@ const Guias = () => {
   const cargarGuias = async (resetear = true) => {
     try {
       setLoading(true);
-      console.log('Enviando filtros a la API:', filtros);
+
       const response = await listarGuias(filtros, 1, 500);
       
       if (resetear) {
@@ -125,7 +125,7 @@ const Guias = () => {
     try {
       setLoadingMore(true);
       const nextPage = currentPage + 1;
-      console.log('Cargando página:', nextPage);
+
       
       const response = await listarGuias(filtros, nextPage, 500);
       
@@ -173,7 +173,7 @@ const Guias = () => {
       const newEndPage = Math.min(WINDOW_SIZE, totalPages);
       
       if (newStartPage !== visibleStartPage || newEndPage !== visibleEndPage) {
-        console.log('📍 Reseteando ventana al inicio:', newStartPage, '-', newEndPage);
+
         setVisibleStartPage(newStartPage);
         setVisibleEndPage(newEndPage);
       }
@@ -193,7 +193,7 @@ const Guias = () => {
         const newEndPage = Math.min(estimatedPage, currentPage);
         
         if (newStartPage !== visibleStartPage || newEndPage !== visibleEndPage) {
-          console.log('📍 Moviendo ventana hacia abajo:', newStartPage, '-', newEndPage);
+
           setVisibleStartPage(newStartPage);
           setVisibleEndPage(newEndPage);
         }
@@ -206,7 +206,7 @@ const Guias = () => {
         const newEndPage = Math.min(newStartPage + WINDOW_SIZE - 1, currentPage);
         
         if (newStartPage !== visibleStartPage || newEndPage !== visibleEndPage) {
-          console.log('📍 Moviendo ventana hacia arriba:', newStartPage, '-', newEndPage);
+
           setVisibleStartPage(newStartPage);
           setVisibleEndPage(newEndPage);
         }

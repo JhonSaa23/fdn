@@ -29,7 +29,7 @@ const JuegoTresEnRaya = () => {
   // Conectar socket al montar el componente
   useEffect(() => {
     const socketUrl = import.meta.env.VITE_API_URL;
-    console.log('🔌 Conectando a socket.io en:', socketUrl);
+
     
     const newSocket = io(socketUrl, {
       transports: ['websocket', 'polling'],
@@ -42,13 +42,13 @@ const JuegoTresEnRaya = () => {
 
     // Eventos del socket
     newSocket.on('connect', () => {
-      console.log('✅ Conectado al servidor socket.io');
-      console.log('🔌 Socket ID:', newSocket.id);
-      console.log('🌐 URL del servidor:', socketUrl);
+
+
+
     });
 
     newSocket.on('disconnect', (reason) => {
-      console.log('❌ Desconectado del servidor:', reason);
+
       setError(`Conexión perdida: ${reason}`);
     });
 
@@ -58,7 +58,7 @@ const JuegoTresEnRaya = () => {
     });
 
     newSocket.on('roomUpdate', (data) => {
-      console.log('📋 Actualización de sala:', data);
+
       setRoom(data.room);
       setBoard(data.room.board);
       setCurrentPlayer(data.room.currentPlayer);
@@ -66,17 +66,12 @@ const JuegoTresEnRaya = () => {
       
       // Determinar símbolo del jugador usando el estado actual de playerName
       const player = data.room.players.find(p => p.name === playerName);
-      console.log('👤 Jugador encontrado:', {
-        playerName,
-        player,
-        allPlayers: data.room.players
-      });
       
       if (player) {
-        console.log('✅ Asignando símbolo:', player.symbol);
+
         setMySymbol(player.symbol);
       } else {
-        console.log('❌ No se encontró jugador con nombre:', playerName);
+
       }
       
       if (data.room.status === 'waiting') {
@@ -91,7 +86,7 @@ const JuegoTresEnRaya = () => {
     });
 
     newSocket.on('gameUpdate', (data) => {
-      console.log('Actualización del juego:', data);
+
       setBoard(data.board);
       setCurrentPlayer(data.currentPlayer);
       setWinner(data.winner);
@@ -137,7 +132,7 @@ const JuegoTresEnRaya = () => {
     if (playerName && room) {
       const player = room.players.find(p => p.name === playerName);
       if (player) {
-        console.log('🔄 Actualizando símbolo por cambio de nombre:', player.symbol);
+
         setMySymbol(player.symbol);
       }
     }
@@ -146,15 +141,6 @@ const JuegoTresEnRaya = () => {
   // Actualizar isMyTurn cuando cambien las variables relevantes
   useEffect(() => {
     const newIsMyTurn = mySymbol && gameState === 'playing' && currentPlayer === mySymbol;
-    console.log('🔄 Actualizando isMyTurn:', {
-      mySymbol,
-      gameState,
-      currentPlayer,
-      newIsMyTurn,
-      'mySymbol === currentPlayer': mySymbol === currentPlayer,
-      'gameState === playing': gameState === 'playing',
-      'mySymbol existe': !!mySymbol
-    });
     setIsMyTurn(newIsMyTurn);
   }, [mySymbol, currentPlayer, gameState]);
 
@@ -192,25 +178,11 @@ const JuegoTresEnRaya = () => {
   };
 
   const makeMove = (position) => {
-    console.log('🎯 Intento de movimiento:', {
-      position,
-      isMyTurn,
-      boardPosition: board[position],
-      gameState,
-      mySymbol,
-      currentPlayer
-    });
-    
     if (!isMyTurn || board[position] !== null || gameState !== 'playing') {
-      console.log('❌ Movimiento bloqueado:', {
-        'Es mi turno': isMyTurn,
-        'Casilla vacía': board[position] === null,
-        'Juego activo': gameState === 'playing'
-      });
       return;
     }
     
-    console.log('✅ Enviando movimiento al servidor');
+
     socket.emit('makeMove', { position });
   };
 
@@ -223,7 +195,7 @@ const JuegoTresEnRaya = () => {
   };
 
   const restartGame = () => {
-    console.log('🔄 Solicitando reinicio del juego');
+
     socket.emit('restartGame');
   };
 

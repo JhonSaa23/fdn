@@ -40,12 +40,12 @@ const UsersBot = () => {
   const fetchUsuarios = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Iniciando fetchUsuarios...');
+
       const response = await axiosClient.get('/usersbot');
-      console.log('📡 Response completa:', response);
-      console.log('📊 Response.data:', response.data);
+
+
       setUsuarios(response.data.data); // Extraer solo el array de usuarios
-      console.log('✅ Usuarios establecidos:', response.data.data);
+
     } catch (error) {
       console.error('❌ Error al obtener usuarios:', error);
       console.error('❌ Error.response:', error.response);
@@ -53,18 +53,18 @@ const UsersBot = () => {
       setAlert({ type: 'danger', message: 'Error al obtener usuarios' });
     } finally {
       setLoading(false);
-      console.log('🏁 Loading terminado');
+
     }
   };
 
   const fetchLaboratorios = async () => {
     try {
-      console.log('🔍 Iniciando fetchLaboratorios...');
+
       const response = await axiosClient.get('/laboratorios');
-      console.log('📡 Response laboratorios:', response);
-      console.log('📊 Laboratorios.data:', response.data);
+
+
       setLaboratorios(response.data.data); // Extraer solo el array de laboratorios
-      console.log('✅ Laboratorios establecidos:', response.data.data);
+
     } catch (error) {
       console.error('❌ Error al obtener laboratorios:', error);
       console.error('❌ Error.response:', error.response);
@@ -221,11 +221,11 @@ const UsersBot = () => {
   }) : [];
 
   // Debug logs
-  console.log('🔍 Estado actual:');
-  console.log('📊 usuarios:', usuarios);
-  console.log('📊 usuariosFiltrados:', usuariosFiltrados);
-  console.log('📊 loading:', loading);
-  console.log('📊 laboratorios:', laboratorios);
+
+
+
+
+
 
   return (
     <div className="w-full px-0 sm:px-4 py-3 sm:py-6">
