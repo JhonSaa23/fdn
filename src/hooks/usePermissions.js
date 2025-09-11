@@ -16,7 +16,10 @@ export const usePermissions = () => {
       // Verificar que el usuario tenga un token válido antes de cargar vistas
       const token = localStorage.getItem('authToken');
       if (token) {
-        cargarVistas();
+        // Pequeño delay para asegurar que el token esté disponible
+        setTimeout(() => {
+          cargarVistas();
+        }, 100);
       } else {
         setVistasSistema([]);
         setVistasUsuario([]);
@@ -34,21 +37,35 @@ export const usePermissions = () => {
     try {
       setLoading(true);
       
-      // Cargar todas las vistas del sistema
-      const vistasResponse = await axiosClient.get('/vistas');
-      
-      if (vistasResponse.data.success) {
-        setVistasSistema(vistasResponse.data.data);
+      // Solo cargar vistas del sistema si el usuario es administrador
+      if (usuario.tipoUsuario === 'Admin') {
+        try {
+          const vistasResponse = await axiosClient.get('/vistas');
+          if (vistasResponse.data.success) {
+            setVistasSistema(vistasResponse.data.data);
+          }
+        } catch (error) {
+          console.error('Error cargando vistas del sistema:', error);
+          // Si falla, continuar sin vistas del sistema
+        }
+      } else {
+        // Para usuarios no administradores, no cargar vistas del sistema
+        setVistasSistema([]);
       }
 
       // Cargar vistas permitidas para el usuario
-      const usuarioVistasResponse = await axiosClient.get(`/vistas/usuario/${usuario.idus}`);
-      
-      if (usuarioVistasResponse.data.success) {
-        setVistasUsuario(usuarioVistasResponse.data.data);
+      try {
+        const usuarioVistasResponse = await axiosClient.get(`/vistas/usuario/${usuario.idus}`);
+        if (usuarioVistasResponse.data.success) {
+          setVistasUsuario(usuarioVistasResponse.data.data);
+        }
+      } catch (error) {
+        console.error('Error cargando vistas del usuario:', error);
+        // Si falla, usar un conjunto básico de vistas para usuarios no administradores
+        setVistasUsuario([]);
       }
     } catch (error) {
-      console.error('Error cargando vistas:', error);
+      console.error('Error general cargando vistas:', error);
     } finally {
       setLoading(false);
     }

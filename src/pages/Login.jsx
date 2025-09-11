@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { validarDocumento, enviarCodigo, verificarCodigo } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
-import DatabaseStatus from '../components/DatabaseStatus';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -260,11 +259,6 @@ const Login = () => {
                  className="h-16 object-contain"
                />
              </div>
-           </div>
-           
-           {/* Estado de la base de datos */}
-           <div className="flex justify-center mb-4">
-             <DatabaseStatus />
            </div>
             
             {/* Tabs */}

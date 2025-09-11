@@ -12,7 +12,7 @@ const axiosClient = axios.create({
 // Interceptor para requests
 axiosClient.interceptors.request.use((config) => {
   // No enviar token para rutas de autenticación
-  const isAuthRoute = config.url?.includes('/auth/') || config.url?.includes('/api/auth/');
+  const isAuthRoute = config.url?.includes('/auth/');
   
   if (!isAuthRoute) {
     // Obtener token del localStorage solo para rutas que no son de autenticación
