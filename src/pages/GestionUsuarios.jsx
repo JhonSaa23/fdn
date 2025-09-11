@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useNotification } from '../App';
 import { usePermissions } from '../hooks/usePermissions';
+import axiosClient from '../services/axiosClient';
 
 const GestionUsuarios = () => {
   const { showNotification } = useNotification();
@@ -58,10 +59,9 @@ const GestionUsuarios = () => {
 
   const cargarVistasDisponibles = async () => {
     try {
-      const response = await fetch('/api/vistas');
-      if (response.ok) {
-        const data = await response.json();
-        setVistasDisponibles(data.data || []);
+      const response = await axiosClient.get('/vistas');
+      if (response.data.success) {
+        setVistasDisponibles(response.data.data || []);
       }
     } catch (error) {
       console.error('Error cargando vistas:', error);
@@ -71,10 +71,9 @@ const GestionUsuarios = () => {
   const cargarUsuarios = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/auth/usuarios');
-      if (response.ok) {
-        const data = await response.json();
-        setUsuarios(data.data || []);
+      const response = await axiosClient.get('/auth/usuarios');
+      if (response.data.success) {
+        setUsuarios(response.data.data || []);
       } else {
         showNotification('error', 'Error al cargar usuarios');
       }
@@ -129,41 +128,26 @@ const GestionUsuarios = () => {
     }
 
     try {
-      const url = editingUser ? `/api/auth/usuarios/${editingUser.IDUS}` : '/api/auth/usuarios';
-      const method = editingUser ? 'PUT' : 'POST';
-      
       // Preparar datos sin permisos (ahora se manejan en tabla separada)
       const dataToSend = {
         ...formData,
         Permisos: '' // Ya no se usa este campo
       };
       
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dataToSend),
-      });
+      let response;
+      if (editingUser) {
+        response = await axiosClient.put(`/auth/usuarios/${editingUser.IDUS}`, dataToSend);
+      } else {
+        response = await axiosClient.post('/auth/usuarios', dataToSend);
+      }
 
-      if (response.ok) {
-        const responseData = await response.json();
-        const userId = editingUser ? editingUser.IDUS : responseData.data?.IDUS;
+      if (response.data.success) {
+        const userId = editingUser ? editingUser.IDUS : response.data.data?.IDUS;
         
         // Guardar vistas del usuario
         if (userId && selectedPermissions.length > 0) {
           try {
-            const vistasResponse = await fetch(`/api/vistas/usuario/${userId}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ vistas: selectedPermissions }),
-            });
-            
-            if (!vistasResponse.ok) {
-              console.error('Error guardando vistas del usuario');
-            }
+            await axiosClient.put(`/vistas/usuario/${userId}`, { vistas: selectedPermissions });
           } catch (error) {
             console.error('Error guardando vistas:', error);
           }
@@ -175,8 +159,7 @@ const GestionUsuarios = () => {
         resetForm();
         cargarUsuarios();
       } else {
-        const errorData = await response.json();
-        showNotification('error', errorData.message || 'Error al guardar usuario');
+        showNotification('error', response.data.message || 'Error al guardar usuario');
       }
     } catch (error) {
       console.error('Error guardando usuario:', error);
@@ -189,10 +172,9 @@ const GestionUsuarios = () => {
     
     // Cargar vistas del usuario desde la BD
     try {
-      const response = await fetch(`/api/vistas/usuario/${usuario.IDUS}`);
-      if (response.ok) {
-        const data = await response.json();
-        const vistasUsuario = data.data || [];
+      const response = await axiosClient.get(`/vistas/usuario/${usuario.IDUS}`);
+      if (response.data.success) {
+        const vistasUsuario = response.data.data || [];
         setSelectedPermissions(vistasUsuario.map(v => v.ID));
       }
     } catch (error) {
@@ -222,16 +204,13 @@ const GestionUsuarios = () => {
     }
 
     try {
-      const response = await fetch(`/api/auth/usuarios/${idus}`, {
-        method: 'DELETE',
-      });
+      const response = await axiosClient.delete(`/auth/usuarios/${idus}`);
 
-      if (response.ok) {
+      if (response.data.success) {
         showNotification('success', 'Usuario eliminado exitosamente');
         cargarUsuarios();
       } else {
-        const errorData = await response.json();
-        showNotification('error', errorData.message || 'Error al eliminar usuario');
+        showNotification('error', response.data.message || 'Error al eliminar usuario');
       }
     } catch (error) {
       console.error('Error eliminando usuario:', error);
