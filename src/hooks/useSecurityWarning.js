@@ -4,6 +4,23 @@ export const useSecurityWarning = () => {
   useEffect(() => {
     // Mensaje de seguridad para disuadir el uso de la consola
     console.clear();
+    
+    // Mensaje de advertencia de seguridad
+    console.log('%c🚨 ADVERTENCIA DE SEGURIDAD 🚨', 'color: #ff0000; font-size: 20px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);');
+    console.log('%c⚠️ ACCESO NO AUTORIZADO DETECTADO ⚠️', 'color: #ff6600; font-size: 16px; font-weight: bold;');
+    console.log('%c', 'color: #ff0000; font-size: 14px;');
+    console.log('%cEste es un sistema privado de Farmacos del Norte.', 'color: #ffffff; font-size: 14px; background: #000000; padding: 5px;');
+    console.log('%cEl acceso no autorizado está PROHIBIDO y es ILEGAL.', 'color: #ffffff; font-size: 14px; background: #ff0000; padding: 5px;');
+    console.log('%c', 'color: #ff0000; font-size: 14px;');
+    console.log('%c🔒 SISTEMA DE MONITOREO ACTIVO 🔒', 'color: #00ff00; font-size: 14px; font-weight: bold; background: #000000; padding: 5px;');
+    console.log('%c• Tu actividad está siendo monitoreada', 'color: #ffff00; font-size: 12px;');
+    console.log('%c• Tu IP ha sido registrada', 'color: #ffff00; font-size: 12px;');
+    console.log('%c• Se ha generado un reporte de seguridad', 'color: #ffff00; font-size: 12px;');
+    console.log('%c• Las autoridades han sido notificadas', 'color: #ffff00; font-size: 12px;');
+    console.log('%c', 'color: #ff0000; font-size: 14px;');
+    console.log('%c🚫 CERRAR INMEDIATAMENTE ESTA VENTANA 🚫', 'color: #ff0000; font-size: 16px; font-weight: bold; background: #000000; padding: 10px; border: 2px solid #ff0000;');
+    console.log('%c', 'color: #ff0000; font-size: 14px;');
+    console.log('%c© 2024 Farmacos del Norte - Sistema Interno', 'color: #cccccc; font-size: 10px;');
 
 
 
