@@ -11,6 +11,17 @@ const axiosClient = axios.create({
 
 // Interceptor para requests
 axiosClient.interceptors.request.use((config) => {
+  // No enviar token para rutas de autenticación
+  const isAuthRoute = config.url?.includes('/auth/') || config.url?.includes('/api/auth/');
+  
+  if (!isAuthRoute) {
+    // Obtener token del localStorage solo para rutas que no son de autenticación
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  
   return config;
 });
 
@@ -19,6 +30,20 @@ axiosClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Manejar errores de autenticación
+    if (error.response?.status === 401) {
+      // Token inválido o expirado
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      
+      // Redirigir al login si no estamos ya ahí
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+      
+      return Promise.reject(error);
+    }
+    
     // No mostrar logs para errores 404 esperados de autenticación
     const isAuth404Error = error.response?.status === 404 && 
                           (error.config?.url?.includes('/auth/validar-documento') ||

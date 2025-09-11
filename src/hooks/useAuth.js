@@ -13,10 +13,10 @@ export const useAuth = () => {
 
   const verificarSesion = () => {
     try {
-      const usuarioData = localStorage.getItem('usuario');
-      const sesionData = localStorage.getItem('sesion');
+      const token = localStorage.getItem('authToken');
+      const usuarioData = localStorage.getItem('user');
       
-      if (!usuarioData || !sesionData) {
+      if (!token || !usuarioData) {
         setUsuario(null);
         setSesion(null);
         setIsAuthenticated(false);
@@ -25,26 +25,11 @@ export const useAuth = () => {
       }
 
       const usuarioParsed = JSON.parse(usuarioData);
-      const sesionParsed = JSON.parse(sesionData);
 
-      // Verificar si la sesión no ha expirado
-      const ahora = new Date();
-      const expiraEn = new Date(sesionParsed.expiraEn);
-
-      if (ahora > expiraEn) {
-        logout();
-        return;
-      }
-
-      // Verificar si el código de acceso sigue siendo válido
-      const codigoExpira = new Date(sesionParsed.codigoAccesoExpira);
-      if (ahora > codigoExpira) {
-        logout();
-        return;
-      }
-
+      // El token JWT ya maneja la expiración automáticamente
+      // Si el token es válido, el usuario está autenticado
       setUsuario(usuarioParsed);
-      setSesion(sesionParsed);
+      setSesion({ token: token }); // Mantener compatibilidad
       setIsAuthenticated(true);
       setLoading(false);
 
@@ -54,9 +39,10 @@ export const useAuth = () => {
     }
   };
 
-  const login = (usuarioData, sesionData) => {
-    localStorage.setItem('usuario', JSON.stringify(usuarioData));
-    localStorage.setItem('sesion', JSON.stringify(sesionData));
+  const login = (usuarioData, sesionData, token) => {
+    localStorage.setItem('user', JSON.stringify(usuarioData));
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('sesion', JSON.stringify(sesionData)); // Mantener compatibilidad
     setUsuario(usuarioData);
     setSesion(sesionData);
     setIsAuthenticated(true);
@@ -73,7 +59,8 @@ export const useAuth = () => {
       // Continuar con el logout local aunque falle el backend
     } finally {
       // Limpiar datos locales
-      localStorage.removeItem('usuario');
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
       localStorage.removeItem('sesion');
       setUsuario(null);
       setSesion(null);

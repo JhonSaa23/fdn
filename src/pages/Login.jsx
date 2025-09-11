@@ -127,8 +127,8 @@ const Login = () => {
       const response = await verificarCodigo(usuarioData.idus, formData.codigo, rememberSession);
       
       if (response.success) {
-        // Usar el hook de autenticación para guardar la sesión
-        login(response.data.usuario, response.data.sesion);
+        // Usar el hook de autenticación para guardar la sesión con el token JWT
+        login(response.data.usuario, response.data.sesion, response.data.token);
         
         
         // Redirigir a la página que intentaba acceder o al home

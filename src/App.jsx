@@ -34,6 +34,7 @@ import GestionUsuarios from './pages/GestionUsuarios';
 import Movimientos from './pages/Movimientos';
 import HistorialCliente from './pages/HistorialCliente';
 import Login from './pages/Login';
+import AccessDenied from './components/AccessDenied';
 
 // Crear contexto para manejar el estado del sidebar
 export const SidebarContext = createContext();
@@ -137,6 +138,7 @@ function App() {
       <NotificationContext.Provider value={notificationContextValue}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/access-denied" element={<AccessDenied />} />
           <Route path="/*" element={
             <ProtectedRoute>
               <div className="flex h-screen bg-gray-50">
