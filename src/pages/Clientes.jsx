@@ -421,7 +421,11 @@ const Clientes = () => {
   const cargarLaboratoriosModal = async () => {
     try {
       const response = await axiosClient.get('/clientes/laboratorios-todos');
-      setLaboratoriosDisponibles(response.data);
+      if (response.data.success) {
+        setLaboratoriosDisponibles(response.data.data);
+      } else {
+        console.error('Error en respuesta del servidor:', response.data.message);
+      }
     } catch (error) {
       console.error('Error cargando laboratorios:', error);
     }
