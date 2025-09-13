@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from '../services/axiosClient';
+import axiosClient from '../services/axiosClient';
 import { useNotification } from '../App';
 
 const DevolucionCanjeForm = () => {
@@ -146,7 +146,7 @@ const DevolucionCanjeForm = () => {
     // --- FUNCIONES DE CARGA ---
     const fetchLaboratorios = async () => {
         try {
-            const response = await axios.get('/laboratorios');
+            const response = await axiosClient.get('/laboratorios');
             if (response.data.success) {
                 // Verificar la estructura del primer laboratorio
                 setLaboratorios(response.data.data);
@@ -160,7 +160,7 @@ const DevolucionCanjeForm = () => {
 
     const fetchTransportistas = async () => {
         try {
-            const response = await axios.get('/proveedores/transportistas');
+            const response = await axiosClient.get('/proveedores/transportistas');
             if (response.data.success) {
 
                 setTransportistas(response.data.data);
@@ -204,7 +204,7 @@ const DevolucionCanjeForm = () => {
                     // Limpiar espacios en blanco del codlab
                     const cleanCodlab = selectedLaboratorio.trim();
 
-                    const response = await axios.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
+                    const response = await axiosClient.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
                     if (response.data.success) {
                         // Guardar copia original del backend
                         setProductosOriginales(response.data.data);
@@ -422,7 +422,7 @@ const DevolucionCanjeForm = () => {
 
                     // Si hay código válido, buscar por código
                     if (codProv && codProv !== '') {
-                        const response = await axios.get(`/proveedores/detalle/${codProv}`);
+                        const response = await axiosClient.get(`/proveedores/detalle/${codProv}`);
                         if (response.data.success) {
                             const datosTransportista = response.data.data;
 
@@ -440,7 +440,7 @@ const DevolucionCanjeForm = () => {
                         // Si no hay código, buscar por razón
 
                         try {
-                            const response = await axios.get(`/proveedores/detalle-razon/${encodeURIComponent(transportista.Razon.trim())}`);
+                            const response = await axiosClient.get(`/proveedores/detalle-razon/${encodeURIComponent(transportista.Razon.trim())}`);
                             if (response.data.success) {
                                 const datosTransportista = response.data.data;
 
@@ -493,7 +493,7 @@ const DevolucionCanjeForm = () => {
         try {
             // Cargar proveedores del laboratorio
 
-            const proveedoresResponse = await axios.get(`/proveedores/laboratorio/${cleanCodlab}`);
+            const proveedoresResponse = await axiosClient.get(`/proveedores/laboratorio/${cleanCodlab}`);
             if (proveedoresResponse.data.success) {
                 const proveedoresCargados = proveedoresResponse.data.data;
                 setProveedores(proveedoresCargados);
@@ -578,7 +578,7 @@ const DevolucionCanjeForm = () => {
 
         try {
             // LLAMADA CLAVE: Obtener el siguiente número de documento
-            const nextNumResponse = await axios.get('/guias-canje/next-number');
+            const nextNumResponse = await axiosClient.get('/guias-canje/next-number');
             if (nextNumResponse.data.success && nextNumResponse.data.nextNumber) {
                 setCabecera(prev => ({ ...prev, NroGuia: nextNumResponse.data.nextNumber }));
 
@@ -587,7 +587,7 @@ const DevolucionCanjeForm = () => {
             }
 
             // LLAMADA CLAVE: Cargar laboratorios y abrir modal
-            const labResponse = await axios.get('/laboratorios');
+            const labResponse = await axiosClient.get('/laboratorios');
             if (labResponse.data.success) {
                 setLaboratorios(labResponse.data.data);
                 setShowLaboratorioModal(true);
@@ -607,7 +607,7 @@ const DevolucionCanjeForm = () => {
         setIsLoading(true);
         showNotification('info', '🔍 Cargando guías disponibles...');
         try {
-            const response = await axios.get('/guias-canje');
+            const response = await axiosClient.get('/guias-canje');
             if (response.data.success) {
                 setGuiasCanjeList(response.data.data);
                 setShowBuscarModal(true);
@@ -640,7 +640,7 @@ const DevolucionCanjeForm = () => {
             }
 
             // Cargar cabecera
-            const cabeceraResponse = await axios.get(`/guias-canje/${guia.NroGuia}/cabecera`);
+            const cabeceraResponse = await axiosClient.get(`/guias-canje/${guia.NroGuia}/cabecera`);
             if (cabeceraResponse.data.success && cabeceraResponse.data.data) {
                 const fetchedCabecera = cabeceraResponse.data.data;
 
@@ -670,7 +670,7 @@ const DevolucionCanjeForm = () => {
                     // Cargar proveedores del laboratorio
                     try {
 
-                        const proveedoresResponse = await axios.get(`/proveedores/laboratorio/${laboratorioCode}`);
+                        const proveedoresResponse = await axiosClient.get(`/proveedores/laboratorio/${laboratorioCode}`);
                         if (proveedoresResponse.data.success) {
                             const proveedoresCargados = proveedoresResponse.data.data;
                             setProveedores(proveedoresCargados);
@@ -754,7 +754,7 @@ const DevolucionCanjeForm = () => {
             }
 
             // Cargar detalles
-            const detallesResponse = await axios.get(`/guias-canje/${guia.NroGuia}/detalles`);
+            const detallesResponse = await axiosClient.get(`/guias-canje/${guia.NroGuia}/detalles`);
             if (detallesResponse.data.success) {
                 setDetalles(detallesResponse.data.data.map(d => ({
                     ...d,
@@ -785,7 +785,7 @@ const DevolucionCanjeForm = () => {
             // Paso 1: Verificación de saldos de productos
 
             for (const detalle of detalles) {
-                const saldosResponse = await axios.post('/productos/verificar-saldos', {
+                const saldosResponse = await axiosClient.post('/productos/verificar-saldos', {
                     cod: detalle.codpro,
                     lote: detalle.lote,
                     alma: 3 // Almacén por defecto
@@ -800,7 +800,7 @@ const DevolucionCanjeForm = () => {
 
             // Paso 2: Búsqueda de guía de canje existente
 
-            const busquedaResponse = await axios.get(`/guias-canje/buscar/${cabecera.NroGuia}`);
+            const busquedaResponse = await axiosClient.get(`/guias-canje/buscar/${cabecera.NroGuia}`);
 
             if (busquedaResponse.data.success && busquedaResponse.data.data) {
                 throw new Error(`La guía ${cabecera.NroGuia} ya existe en el sistema.`);
@@ -832,7 +832,7 @@ const DevolucionCanjeForm = () => {
                 throw new Error(`Campos faltantes: ${camposFaltantes.join(', ')}`);
             }
 
-            const cabeceraResponse = await axios.post('/guias-canje/insertar-cabecera', cabeceraData);
+            const cabeceraResponse = await axiosClient.post('/guias-canje/insertar-cabecera', cabeceraData);
 
             if (!cabeceraResponse.data.success) {
                 throw new Error(`Error al insertar cabecera: ${cabeceraResponse.data.message}`);
@@ -854,7 +854,7 @@ const DevolucionCanjeForm = () => {
                     tipodoc: detalle.tipodoc || 'NN'
                 };
 
-                const detalleResponse = await axios.post('/guias-canje/insertar-detalle', detalleData);
+                const detalleResponse = await axiosClient.post('/guias-canje/insertar-detalle', detalleData);
 
                 if (!detalleResponse.data.success) {
                     throw new Error(`Error al insertar detalle del producto ${detalle.codpro}: ${detalleResponse.data.message}`);
@@ -867,7 +867,7 @@ const DevolucionCanjeForm = () => {
 
             // Paso 5: Actualizar contador de guía de devolución para proveedor
 
-            const actualizarContadorDevolucionResponse = await axios.post('/guias-canje/actualizar-contador-devolucion', {
+            const actualizarContadorDevolucionResponse = await axiosClient.post('/guias-canje/actualizar-contador-devolucion', {
                 numero: cabecera.NroGuia
             });
 
@@ -879,7 +879,7 @@ const DevolucionCanjeForm = () => {
 
             // Paso 6: Obtener número de guía de remisión electrónica
 
-            const numeroGuiaResponse = await axios.get('/guias-venta/siguiente-numero');
+            const numeroGuiaResponse = await axiosClient.get('/guias-venta/siguiente-numero');
 
             if (!numeroGuiaResponse.data.success) {
                 throw new Error(`Error al obtener número de guía: ${numeroGuiaResponse.data.message}`);
@@ -916,7 +916,7 @@ const DevolucionCanjeForm = () => {
         try {
 
 
-            const response = await axios.delete(`/guias-canje/${cabecera.NroGuia}/completa`);
+            const response = await axiosClient.delete(`/guias-canje/${cabecera.NroGuia}/completa`);
 
             if (response.data.success) {
 
@@ -951,7 +951,7 @@ const DevolucionCanjeForm = () => {
         setLoadingCabGuias(true);
         try {
 
-            const response = await axios.get('/cab-guias');
+            const response = await axiosClient.get('/cab-guias');
             if (response.data.success) {
                 setCabGuias(response.data.data);
 
@@ -969,7 +969,7 @@ const DevolucionCanjeForm = () => {
     const cargarUltimoNumeroCabGuia = async () => {
         try {
 
-            const response = await axios.get('/cab-guias/ultimo-numero');
+            const response = await axiosClient.get('/cab-guias/ultimo-numero');
             if (response.data.success) {
                 setUltimoNumeroCabGuia(response.data.ultimoNumero);
                 setNuevoNumero(response.data.ultimoNumero);
@@ -989,7 +989,7 @@ const DevolucionCanjeForm = () => {
 
         try {
 
-            const response = await axios.delete(`/cab-guias/${numero}`);
+            const response = await axiosClient.delete(`/cab-guias/${numero}`);
 
             if (response.data.success) {
 
@@ -1012,7 +1012,7 @@ const DevolucionCanjeForm = () => {
 
         try {
 
-            const response = await axios.put('/cab-guias/ultimo-numero', {
+            const response = await axiosClient.put('/cab-guias/ultimo-numero', {
                 nuevoNumero: nuevoNumero.trim()
             });
 
@@ -1044,7 +1044,7 @@ const DevolucionCanjeForm = () => {
 
             // Paso 7: Búsqueda de guía de venta existente
 
-            const busquedaGuiaVentaResponse = await axios.get(`/guias-venta/buscar/${numeroGuiaGenerado}`);
+            const busquedaGuiaVentaResponse = await axiosClient.get(`/guias-venta/buscar/${numeroGuiaGenerado}`);
 
             if (busquedaGuiaVentaResponse.data.success && busquedaGuiaVentaResponse.data.data) {
                 throw new Error(`La guía de venta ${numeroGuiaGenerado} ya existe en el sistema.`);
@@ -1067,7 +1067,7 @@ const DevolucionCanjeForm = () => {
                 peso: parseFloat(pesoGuia) || 0.00
             };
 
-            const guiaVentaResponse = await axios.post('/guias-venta/insertar', guiaVentaData);
+            const guiaVentaResponse = await axiosClient.post('/guias-venta/insertar', guiaVentaData);
 
             if (!guiaVentaResponse.data.success) {
                 throw new Error(`Error al insertar guía de venta: ${guiaVentaResponse.data.message}`);
@@ -1077,7 +1077,7 @@ const DevolucionCanjeForm = () => {
 
             // Paso 9: Preparación de datos para impresión
 
-            const impresionResponse = await axios.post('/guias-venta/preparar-impresion', {
+            const impresionResponse = await axiosClient.post('/guias-venta/preparar-impresion', {
                 doc: numeroGuiaGenerado
             });
 
@@ -1089,7 +1089,7 @@ const DevolucionCanjeForm = () => {
 
             // Paso 10: Actualización del contador de guías
 
-            const actualizarContadorResponse = await axios.post('/guias-venta/actualizar-contador', {
+            const actualizarContadorResponse = await axiosClient.post('/guias-venta/actualizar-contador', {
                 numero: numeroGuiaGenerado
             });
 
@@ -1802,7 +1802,7 @@ const DevolucionCanjeForm = () => {
                                             const cleanCodlab = selectedLaboratorio.trim();
 
 
-                                            const response = await axios.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
+                                            const response = await axiosClient.get(`/guias-devolucion/${cleanCodlab}/productos-a-devolver`);
                                             if (response.data.success) {
                                                 setProductosADevolver(response.data.data);
                                                 setFilteredProductos(response.data.data);
