@@ -418,7 +418,8 @@ const Promociones = () => {
     const busquedaLower = busqueda.toLowerCase();
     const resultados = todosLosProductos.filter(producto => 
       producto.codpro.toLowerCase().includes(busquedaLower) ||
-      producto.nombre.toLowerCase().includes(busquedaLower)
+      producto.nombre.toLowerCase().includes(busquedaLower) ||
+      (producto.codLab && producto.codLab.toLowerCase().includes(busquedaLower))
     ).slice(0, 50); // Limitamos a 50 resultados
 
     setProductosFiltrados(resultados);
@@ -542,7 +543,7 @@ const Promociones = () => {
                   value={filtros.codpro}
                   onChange={handleFilterChange}
                   className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  placeholder="Ej: 000-000"
+                  placeholder="CodPro, CodLab o CodLab1"
                 />
               </div>
               <div>
@@ -599,6 +600,8 @@ const Promociones = () => {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipi</th>
                     <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CodPro</th>
                     <th className="pr-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre del Producto</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CodLab</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CodLab1</th>
                     <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desde</th>
                     <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Por%</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">Acciones</th>
@@ -607,13 +610,13 @@ const Promociones = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center">
+                      <td colSpan="8" className="px-6 py-4 text-center">
                         Cargando...
                       </td>
                     </tr>
                   ) : promocionesFiltradas.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center">
+                      <td colSpan="8" className="px-6 py-4 text-center">
                         No hay datos disponibles
                       </td>
                     </tr>
@@ -637,7 +640,12 @@ const Promociones = () => {
                             )}
                           </div>
                         </td>
-
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {promocion.codLab || '-'}
+                        </td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {promocion.codLab1 || '-'}
+                        </td>
                         <td className="text-center py-4 whitespace-nowrap">
                           {promocion.desde}
                         </td>
@@ -729,7 +737,7 @@ const Promociones = () => {
                     }
                   }}
                   autoComplete="off"
-                  placeholder="Buscar por código o nombre..."
+                  placeholder="Buscar por código, nombre o CodLab..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 input-producto"
                 />
                 
@@ -755,7 +763,9 @@ const Promociones = () => {
                         >
                           <div className="font-medium">{producto.codpro}</div>
                           <div className="text-sm text-gray-600">{producto.nombre}</div>
-                          <div className="text-xs text-gray-500">{producto.laboratorio}</div>
+                          {producto.codLab && (
+                            <div className="text-xs text-blue-600">CodLab: {producto.codLab}</div>
+                          )}
                         </div>
                       ))
                     ) : busquedaProducto ? (

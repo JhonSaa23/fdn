@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNotification } from '../App';
-import { consultarClientes, crearCliente, actualizarCliente, eliminarCliente, importarClientesExcel, eliminarClientesEnMasa, obtenerTipificacionesClientes, obtenerLaboratoriosClientes } from '../services/api';
+import { consultarClientes, crearCliente, actualizarCliente, eliminarCliente, importarClientesExcel, eliminarClientesEnMasa, obtenerTipificacionesClientes, obtenerLaboratoriosClientes, agregarTipificacion, obtenerTipificacionesExistentes, actualizarTipificacion } from '../services/api';
+import axiosClient from '../services/axiosClient';
 import { 
   PencilIcon, 
   TrashIcon,
   XMarkIcon,
   DocumentArrowUpIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  EllipsisVerticalIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -37,6 +41,34 @@ const Clientes = () => {
   const [selectedTipificaciones, setSelectedTipificaciones] = useState([]);
   const [deleteMassLoading, setDeleteMassLoading] = useState(false);
   
+  // Estado para el dropdown de acciones
+  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // Estados para agregar tipificación
+  const [showTipificacionModal, setShowTipificacionModal] = useState(false);
+  const [tipificacionForm, setTipificacionForm] = useState({
+    tipificacion: '',
+    codlab: '',
+    descripcion: ''
+  });
+  const [tipificacionLoading, setTipificacionLoading] = useState(false);
+  const [siguienteNumero, setSiguienteNumero] = useState(null);
+  
+  // Estados para select de búsqueda de laboratorios
+  const [laboratoriosDisponibles, setLaboratoriosDisponibles] = useState([]);
+  const [busquedaLaboratorio, setBusquedaLaboratorio] = useState('');
+  const [mostrarLaboratorios, setMostrarLaboratorios] = useState(false);
+  
+  // Estados para editar tipificación
+  const [showEditarTipificacionModal, setShowEditarTipificacionModal] = useState(false);
+  const [tipificacionesExistentes, setTipificacionesExistentes] = useState([]);
+  const [tipificacionSeleccionada, setTipificacionSeleccionada] = useState(null);
+  const [editarTipificacionForm, setEditarTipificacionForm] = useState({
+    descripcion: ''
+  });
+  const [editarTipificacionLoading, setEditarTipificacionLoading] = useState(false);
+  
   // Estado para tipificaciones dinámicas
   const [tipificaciones, setTipificaciones] = useState([]);
   const [tipificacionesMap, setTipificacionesMap] = useState({});
@@ -63,7 +95,6 @@ const Clientes = () => {
   // Estados para filtros
   const [filtros, setFiltros] = useState({
     codlab: '',
-    cliente: '',
     tipificacion: '',
     activo: ''
   });
@@ -80,6 +111,9 @@ const Clientes = () => {
 
   // Ref para el container de scroll
   const tableContainerRef = useRef(null);
+  
+  // Ref para el dropdown de acciones
+  const actionsDropdownRef = useRef(null);
 
   // Calcular clientes visibles basado en la ventana actual
   const calcularClientesVisibles = useCallback(() => {
@@ -305,7 +339,7 @@ const Clientes = () => {
 
   // Resetear paginación cuando cambien los filtros
   useEffect(() => {
-    if (JSON.stringify(filtros) !== JSON.stringify({ codlab: '', cliente: '', tipificacion: '', activo: '' })) {
+    if (JSON.stringify(filtros) !== JSON.stringify({ codlab: '', tipificacion: '', activo: '' })) {
       setCurrentPage(1);
       setHasMore(true);
       setVisibleStartPage(1);
@@ -315,10 +349,62 @@ const Clientes = () => {
     }
   }, [filtros]);
 
+  // Cerrar dropdown cuando se haga clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Verificar si el click es en un botón del dropdown
+      if (event.target.closest('button[data-dropdown-action]')) {
+        return; // No cerrar si es un botón del dropdown
+      }
+      
+      if (actionsDropdownRef.current && !actionsDropdownRef.current.contains(event.target)) {
+        setShowActionsDropdown(false);
+      }
+    };
+
+    if (showActionsDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showActionsDropdown]);
+
+  // Cargar laboratorios cuando se abra el modal
+  useEffect(() => {
+    if (showTipificacionModal) {
+      cargarLaboratoriosModal();
+    }
+  }, [showTipificacionModal]);
+
+  // Cargar tipificaciones existentes cuando se abra el modal de editar
+  useEffect(() => {
+    if (showEditarTipificacionModal) {
+      cargarTipificacionesExistentes();
+    }
+  }, [showEditarTipificacionModal]);
+
+  // Cerrar dropdown de laboratorios cuando se haga clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.laboratorio-dropdown')) {
+        setMostrarLaboratorios(false);
+      }
+    };
+
+    if (mostrarLaboratorios) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [mostrarLaboratorios]);
+
   const handleLimpiar = () => {
     setFiltros({
       codlab: '',
-      cliente: '',
       tipificacion: '',
       activo: ''
     });
@@ -329,6 +415,169 @@ const Clientes = () => {
     setVisibleEndPage(WINDOW_SIZE);
     setLastScrollTop(0);
     setScrollDirection('down');
+  };
+
+  // Función para cargar laboratorios para el modal
+  const cargarLaboratoriosModal = async () => {
+    try {
+      const response = await axiosClient.get('/clientes/laboratorios-todos');
+      setLaboratoriosDisponibles(response.data);
+    } catch (error) {
+      console.error('Error cargando laboratorios:', error);
+    }
+  };
+
+  // Función para obtener el siguiente número de tipificación
+  const obtenerSiguienteTipificacion = async (codlab) => {
+    try {
+      const response = await axiosClient.get(`/clientes/siguiente-tipificacion/${codlab}`);
+      return response.data.siguienteNumero;
+    } catch (error) {
+      console.error('Error obteniendo siguiente tipificación:', error);
+      return 1; // Valor por defecto
+    }
+  };
+
+  // Función para cuando cambie el laboratorio, actualizar el número de tipificación
+  const handleCodlabChange = async (codlab) => {
+    setTipificacionForm(prev => ({ ...prev, codlab }));
+    
+    if (codlab) {
+      const numero = await obtenerSiguienteTipificacion(codlab);
+      setSiguienteNumero(numero);
+    } else {
+      setSiguienteNumero(null);
+    }
+  };
+
+  // Función para filtrar laboratorios
+  const laboratoriosFiltrados = laboratoriosDisponibles.filter(lab => {
+    const codLab = lab.codlab || '';
+    const descripcion = lab.descripcion || '';
+    const busqueda = busquedaLaboratorio.toLowerCase();
+    
+    return codLab.toLowerCase().includes(busqueda) ||
+           descripcion.toLowerCase().includes(busqueda);
+  });
+
+  // Función para seleccionar laboratorio
+  const seleccionarLaboratorio = async (laboratorio) => {
+    const codLab = laboratorio.codlab || '';
+    const descripcion = laboratorio.descripcion || '';
+    
+    setTipificacionForm(prev => ({ ...prev, codlab: codLab }));
+    setBusquedaLaboratorio(`${codLab} - ${descripcion}`);
+    setMostrarLaboratorios(false);
+    
+    // Obtener siguiente número para este laboratorio
+    if (codLab) {
+      const numero = await obtenerSiguienteTipificacion(codLab);
+      setSiguienteNumero(numero);
+    }
+  };
+
+  // Función para cerrar el modal de tipificación
+  const handleCerrarTipificacionModal = () => {
+    setShowTipificacionModal(false);
+    setTipificacionForm({ tipificacion: '', codlab: '', descripcion: '' });
+    setSiguienteNumero(null);
+    setBusquedaLaboratorio('');
+    setMostrarLaboratorios(false);
+  };
+
+  // Función para agregar tipificación
+  const handleAgregarTipificacion = async (e) => {
+    e.preventDefault();
+    
+    if (!tipificacionForm.tipificacion || !tipificacionForm.codlab || !tipificacionForm.descripcion) {
+      showNotification('danger', 'Todos los campos son requeridos');
+      return;
+    }
+
+    try {
+      setTipificacionLoading(true);
+      
+      const response = await agregarTipificacion(
+        parseInt(tipificacionForm.tipificacion),
+        tipificacionForm.codlab,
+        tipificacionForm.descripcion
+      );
+
+      if (response.success) {
+        showNotification('success', 'Tipificación agregada exitosamente');
+        handleCerrarTipificacionModal();
+        
+        // Recargar tipificaciones
+        await cargarTipificaciones();
+      } else {
+        showNotification('danger', response.message || 'Error al agregar tipificación');
+      }
+    } catch (error) {
+      console.error('Error agregando tipificación:', error);
+      showNotification('danger', error.response?.data?.message || 'Error al agregar tipificación');
+    } finally {
+      setTipificacionLoading(false);
+    }
+  };
+
+  // Función para cargar tipificaciones existentes
+  const cargarTipificacionesExistentes = async () => {
+    try {
+      const response = await obtenerTipificacionesExistentes();
+      setTipificacionesExistentes(response);
+    } catch (error) {
+      console.error('Error cargando tipificaciones existentes:', error);
+    }
+  };
+
+  // Función para seleccionar tipificación para editar
+  const seleccionarTipificacionParaEditar = (tipificacion) => {
+    setTipificacionSeleccionada(tipificacion);
+    setEditarTipificacionForm({
+      descripcion: tipificacion.descripcion
+    });
+  };
+
+  // Función para editar tipificación
+  const handleEditarTipificacion = async (e) => {
+    e.preventDefault();
+    
+    if (!editarTipificacionForm.descripcion) {
+      showNotification('danger', 'La descripción es requerida');
+      return;
+    }
+
+    try {
+      setEditarTipificacionLoading(true);
+      
+      const response = await actualizarTipificacion(
+        tipificacionSeleccionada.tipificacion,
+        tipificacionSeleccionada.codlab,
+        editarTipificacionForm.descripcion
+      );
+
+      if (response.success) {
+        showNotification('success', 'Tipificación actualizada exitosamente');
+        handleCerrarEditarTipificacionModal();
+        
+        // Recargar tipificaciones
+        await cargarTipificaciones();
+      } else {
+        showNotification('danger', response.message || 'Error al actualizar tipificación');
+      }
+    } catch (error) {
+      console.error('Error actualizando tipificación:', error);
+      showNotification('danger', error.response?.data?.message || 'Error al actualizar tipificación');
+    } finally {
+      setEditarTipificacionLoading(false);
+    }
+  };
+
+  // Función para cerrar el modal de editar tipificación
+  const handleCerrarEditarTipificacionModal = () => {
+    setShowEditarTipificacionModal(false);
+    setTipificacionSeleccionada(null);
+    setEditarTipificacionForm({ descripcion: '' });
   };
 
   const handleSubmit = async (e) => {
@@ -568,9 +817,15 @@ const Clientes = () => {
   // Filtrar clientes en tiempo real
   const clientesFiltrados = Array.isArray(clientes)
     ? (filtroCliente
-        ? clientes.filter(c => (c.cliente || '').toLowerCase().includes(filtroCliente.toLowerCase()))
+        ? clientes.filter(c => {
+            const ruc = (c.cliente || '').toLowerCase();
+            const nombre = (c.razon || '').toLowerCase();
+            const busqueda = filtroCliente.toLowerCase();
+            return ruc.includes(busqueda) || nombre.includes(busqueda);
+          })
         : clientes)
     : [];
+
 
   return (
     <>
@@ -604,39 +859,118 @@ const Clientes = () => {
               >
                 {loading ? 'Consultando...' : 'Consultar'}
               </Button>
-              <Button
-                style={{ display: 'flex', backgroundColor: '#007bff', color: 'white' }}
-                type="button"
-                variant="info"
-                onClick={() => setShowImportModal(true)}
-              >
-                <DocumentArrowUpIcon className="w-5 h-5 mr-2" />
-                Importar
-              </Button>
-              <Button
-                style={{ display: 'flex', backgroundColor: '#dc2626', color: 'white' }}
-                type="button"
-                variant="danger"
-                onClick={() => setShowDeleteMassModal(true)}
-              >
-                <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
-                Eliminar Masa
-              </Button>
-              <Button
-                type="button"
-                variant="success"
-                onClick={() => {
-                  setEditingCliente(null);
-                  setFormData({ codlab: '', cliente: '', tipificacion: '' });
-                  setShowForm(true);
-                }}
-              >
-                Agregar
-              </Button>
+              {/* Botón de Acciones con Dropdown */}
+              <div className="relative" ref={actionsDropdownRef}>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={() => {
+                    if (!showActionsDropdown) {
+                      const rect = actionsDropdownRef.current.getBoundingClientRect();
+                      setDropdownPosition({
+                        top: rect.bottom + window.scrollY + 8,
+                        left: rect.right - 192 + window.scrollX // 192px es el ancho del dropdown
+                      });
+                    }
+                    setShowActionsDropdown(!showActionsDropdown);
+                  }}
+                  className="flex items-center"
+                >
+                  <EllipsisVerticalIcon className="w-5 h-5 mr-2" />
+                  Acciones
+                </Button>
+                
+                {/* Dropdown Menu - Renderizado como Portal */}
+                {showActionsDropdown && createPortal(
+                  <div 
+                    className="fixed w-48 bg-white rounded-md shadow-lg z-[9999] border border-gray-200"
+                    style={{
+                      top: `${dropdownPosition.top}px`,
+                      left: `${dropdownPosition.left}px`
+                    }}
+                  >
+                    <div className="py-1">
+                      <button
+                        data-dropdown-action
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setEditingCliente(null);
+                          setFormData({ codlab: '', cliente: '', tipificacion: '' });
+                          setShowForm(true);
+                          setShowActionsDropdown(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <PlusIcon className="w-4 h-4 mr-3 text-green-600" />
+                        Agregar Cliente
+                      </button>
+                      
+                      <button
+                        data-dropdown-action
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowImportModal(true);
+                          setShowActionsDropdown(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <DocumentArrowUpIcon className="w-4 h-4 mr-3 text-blue-600" />
+                        Importar desde Excel
+                      </button>
+                      
+                      <button
+                        data-dropdown-action
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowDeleteMassModal(true);
+                          setShowActionsDropdown(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <ExclamationTriangleIcon className="w-4 h-4 mr-3 text-red-600" />
+                        Eliminar en Masa
+                      </button>
+                      
+                      <div className="border-t border-gray-200 my-1"></div>
+                      
+                      <button
+                        data-dropdown-action
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowTipificacionModal(true);
+                          setShowActionsDropdown(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <PlusIcon className="w-4 h-4 mr-3 text-purple-600" />
+                        Agregar Tipificación
+                      </button>
+                      <button
+                        data-dropdown-action
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowEditarTipificacionModal(true);
+                          setShowActionsDropdown(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <PencilIcon className="w-4 h-4 mr-3 text-blue-600" />
+                        Editar Tipificación
+                      </button>
+                    </div>
+                  </div>,
+                  document.body
+                )}
+              </div>
             </div>
           </div>
           <form className="space-y-4">
-            <div className="grid grid-cols-5 gap-x-4 gap-y-4">
+            <div className="grid grid-cols-4 gap-x-4 gap-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Laboratorio
@@ -654,19 +988,6 @@ const Clientes = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cliente
-                </label>
-                <input
-                  type="number"
-                  name="cliente"
-                  value={filtros.cliente}
-                  onChange={handleFilterChange}
-                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  placeholder="Ej: 10165799670"
-                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -710,7 +1031,7 @@ const Clientes = () => {
                   value={filtroCliente}
                   onChange={e => setFiltroCliente(e.target.value)}
                   className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  placeholder="Buscar cliente..."
+                  placeholder="Buscar por nombre o RUC..."
                 />
               </div>
             </div>
@@ -758,7 +1079,14 @@ const Clientes = () => {
                           {cliente.codlab}
                         </td>
                         <td className="py-4 whitespace-nowrap">
-                          {cliente.cliente}
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-900">
+                              {cliente.razon || 'Sin nombre'}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              RUC: {cliente.cliente}
+                            </span>
+                          </div>
                         </td>
                         <td className="py-4">
                           <div className="flex flex-col">
@@ -1167,6 +1495,246 @@ const Clientes = () => {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Agregar Tipificación */}
+      {showTipificacionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Agregar Nueva Tipificación</h2>
+              <button
+                onClick={handleCerrarTipificacionModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAgregarTipificacion} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Número de Tipificación *
+                </label>
+                <input
+                  type="number"
+                  value={tipificacionForm.tipificacion}
+                  onChange={(e) => setTipificacionForm(prev => ({ ...prev, tipificacion: e.target.value }))}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Ingresa el número de tipificación"
+                  min="1"
+                  required
+                />
+                {siguienteNumero && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    <span className="text-gray-400">Sugerido para este laboratorio: </span>
+                    <span className="font-medium text-gray-600">{siguienteNumero}</span>
+                  </p>
+                )}
+              </div>
+              
+              <div className="relative laboratorio-dropdown">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Laboratorio *
+                </label>
+                <input
+                  type="text"
+                  value={busquedaLaboratorio}
+                  onChange={(e) => {
+                    setBusquedaLaboratorio(e.target.value);
+                    setMostrarLaboratorios(true);
+                  }}
+                  onFocus={() => setMostrarLaboratorios(true)}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Buscar laboratorio por código o nombre..."
+                  required
+                />
+                
+                {mostrarLaboratorios && laboratoriosFiltrados.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {laboratoriosFiltrados.map((lab) => (
+                      <div
+                        key={lab.codlab || 'unknown'}
+                        onClick={() => seleccionarLaboratorio(lab)}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                      >
+                        <div className="font-medium text-gray-900">{lab.codlab || 'Sin código'}</div>
+                        <div className="text-gray-500">{lab.descripcion || 'Sin descripción'}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {mostrarLaboratorios && laboratoriosFiltrados.length === 0 && busquedaLaboratorio && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    <div className="px-3 py-2 text-sm text-gray-500">
+                      No se encontraron laboratorios
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descripción *
+                </label>
+                <textarea
+                  value={tipificacionForm.descripcion}
+                  onChange={(e) => setTipificacionForm(prev => ({ ...prev, descripcion: e.target.value }))}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Descripción de la tipificación"
+                  rows={3}
+                  required
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCerrarTipificacionModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={tipificacionLoading}
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50"
+                >
+                  {tipificacionLoading ? 'Agregando...' : 'Agregar Tipificación'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Editar Tipificación */}
+      {showEditarTipificacionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Editar Tipificación</h2>
+              <button
+                onClick={handleCerrarEditarTipificacionModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Lista de tipificaciones existentes */}
+              <div>
+                <h3 className="text-lg font-medium mb-3">Selecciona una tipificación para editar:</h3>
+                <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-md">
+                  {tipificacionesExistentes.map((tip) => (
+                    <div
+                      key={`${tip.tipificacion}-${tip.codlab}`}
+                      onClick={() => seleccionarTipificacionParaEditar(tip)}
+                      className={`p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 ${
+                        tipificacionSeleccionada?.tipificacion === tip.tipificacion && 
+                        tipificacionSeleccionada?.codlab === tip.codlab 
+                          ? 'bg-blue-50 border-blue-200' 
+                          : ''
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {tip.codlab} - {tip.nombreLaboratorio}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Tipificación #{tip.tipificacion}
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            {tip.descripcion}
+                          </div>
+                        </div>
+                        <PencilIcon className="w-4 h-4 text-gray-400" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Formulario de edición */}
+              {tipificacionSeleccionada && (
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-medium mb-3">
+                    Editando: {tipificacionSeleccionada.codlab} - Tipificación #{tipificacionSeleccionada.tipificacion}
+                  </h3>
+                  <form onSubmit={handleEditarTipificacion} className="space-y-4">
+                    {/* Información de solo lectura */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Número de Tipificación
+                        </label>
+                        <input
+                          type="text"
+                          value={tipificacionSeleccionada.tipificacion}
+                          className="block w-full rounded-md border border-gray-300 py-2 px-3 bg-gray-100 text-gray-600"
+                          readOnly
+                        />
+                        <p className="text-xs text-gray-500 mt-1">No se puede modificar</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Código de Laboratorio
+                        </label>
+                        <input
+                          type="text"
+                          value={tipificacionSeleccionada.codlab}
+                          className="block w-full rounded-md border border-gray-300 py-2 px-3 bg-gray-100 text-gray-600"
+                          readOnly
+                        />
+                        <p className="text-xs text-gray-500 mt-1">No se puede modificar</p>
+                      </div>
+                    </div>
+
+                    {/* Descripción editable */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Descripción *
+                      </label>
+                      <input
+                        type="text"
+                        value={editarTipificacionForm.descripcion}
+                        onChange={(e) => setEditarTipificacionForm(prev => ({
+                          ...prev,
+                          descripcion: e.target.value
+                        }))}
+                        className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                        placeholder="Ingresa la descripción de la tipificación"
+                        required
+                        maxLength={40}
+                      />
+                    </div>
+
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        onClick={handleCerrarEditarTipificacionModal}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={editarTipificacionLoading}
+                        className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50"
+                      >
+                        {editarTipificacionLoading ? 'Actualizando...' : 'Actualizar Tipificación'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         </div>

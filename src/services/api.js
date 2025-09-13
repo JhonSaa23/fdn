@@ -807,6 +807,44 @@ export const obtenerTipificacionesClientes = async () => {
   }
 };
 
+export const agregarTipificacion = async (tipificacion, codlab, descripcion) => {
+  try {
+    const response = await axiosClient.post('/clientes/tipificaciones', {
+      tipificacion,
+      codlab,
+      descripcion
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error agregando tipificación:', error);
+    throw error;
+  }
+};
+
+// Obtener todas las tipificaciones existentes
+export const obtenerTipificacionesExistentes = async () => {
+  try {
+    const response = await axiosClient.get('/clientes/tipificaciones-existentes');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener tipificaciones existentes:', error);
+    throw error;
+  }
+};
+
+// Actualizar una tipificación existente
+export const actualizarTipificacion = async (tipificacion, codlab, descripcion) => {
+  try {
+    const response = await axiosClient.put(`/clientes/tipificaciones/${tipificacion}/${codlab}`, {
+      descripcion
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar tipificación:', error);
+    throw error;
+  }
+};
+
 export const importarClientesExcel = async (file, codlab) => {
   try {
     const formData = new FormData();
