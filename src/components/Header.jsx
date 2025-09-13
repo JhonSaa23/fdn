@@ -5,8 +5,8 @@ import { useSidebar, useNotification } from '../App';
 // Mapa de títulos para cada ruta
 const pageTitles = {
   '/': 'Inicio',
-  '/medifarma': 'Importar Medifarma',
-  '/bcp': 'Importar BCP',
+  '/importar/medifarma': 'Importar Medifarma',
+  '/importar/bcp': 'Importar BCP',
   '/bbva': 'Importar BBVA',
   '/descuento-cliente': 'Importar Descuento Cliente',
   '/exportaciones': 'Exportaciones',

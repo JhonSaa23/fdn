@@ -2,10 +2,11 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import AccessDenied from './AccessDenied';
+import NotFound from './NotFound';
 
 const ProtectedRoute = ({ children, requiredPermission = null }) => {
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const { canAccessRoute, getMenuItems, loading: permissionsLoading } = usePermissions();
+  const { canAccessRoute, isRouteValid, getMenuItems, loading: permissionsLoading } = usePermissions();
   const location = useLocation();
 
   // Mostrar loading mientras se verifican las credenciales
@@ -29,12 +30,17 @@ const ProtectedRoute = ({ children, requiredPermission = null }) => {
   if (location.pathname !== '/login') {
     const tienePermisos = canAccessRoute(location.pathname);
     
-    if (!tienePermisos) {
-      // Mostrar página de acceso denegado con lógica de redirección inteligente
+    // Solo verificar permisos si no estamos cargando y tenemos vistas cargadas
+    if (!permissionsLoading && !tienePermisos) {
+      // Si no es una ruta válida del sistema, mostrar 404
+      if (!isRouteValid(location.pathname)) {
+        return <NotFound />;
+      }
+      
+      // Si es una ruta válida pero sin permisos, mostrar acceso denegado
       return <AccessDenied />;
     }
   }
-
   // Si está autenticado y tiene permisos, mostrar el componente protegido
   return children;
 };

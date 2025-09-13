@@ -35,9 +35,13 @@ axiosClient.interceptors.response.use(
       // Token inválido o expirado
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('sesion');
       
-      // Redirigir al login si no estamos ya ahí
-      if (!window.location.pathname.includes('/login')) {
+      // Solo redirigir al login si no estamos ya ahí Y no es una petición de permisos
+      const isPermissionRequest = error.config?.url?.includes('/vistas/') || 
+                                 error.config?.url?.includes('/auth/');
+      
+      if (!window.location.pathname.includes('/login') && !isPermissionRequest) {
         window.location.href = '/login';
       }
       

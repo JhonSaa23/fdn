@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('admin');
   const [step, setStep] = useState(1); // 1: DNI/RUC, 2: Código
   const [formData, setFormData] = useState({
@@ -27,6 +27,27 @@ const Login = () => {
     }
     return () => clearTimeout(timer);
   }, [countdown]);
+
+  // Redirigir al dashboard si ya está autenticado
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      // Si ya está autenticado, redirigir al dashboard o a la ruta que intentaba acceder
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate, location.state]);
+
+  // Mostrar loading mientras se verifica la autenticación
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
 
 
   const validateDocument = (value) => {

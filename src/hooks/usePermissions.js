@@ -7,19 +7,17 @@ export const usePermissions = () => {
   const [vistasSistema, setVistasSistema] = useState([]);
   const [vistasUsuario, setVistasUsuario] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [vistasCargadas, setVistasCargadas] = useState(false);
 
   // console.log('🔍 usePermissions:', { usuario, authLoading });
 
   // Cargar vistas del sistema y del usuario
   useEffect(() => {
-    if (usuario && !authLoading) {
+    if (usuario && !authLoading && !vistasCargadas) {
       // Verificar que el usuario tenga un token válido antes de cargar vistas
       const token = localStorage.getItem('authToken');
       if (token) {
-        // Pequeño delay para asegurar que el token esté disponible
-        setTimeout(() => {
-          cargarVistas();
-        }, 100);
+        cargarVistas();
       } else {
         setVistasSistema([]);
         setVistasUsuario([]);
@@ -30,8 +28,9 @@ export const usePermissions = () => {
       setVistasSistema([]);
       setVistasUsuario([]);
       setLoading(false);
+      setVistasCargadas(false);
     }
-  }, [usuario, authLoading]);
+  }, [usuario, authLoading, vistasCargadas]);
 
   const cargarVistas = async () => {
     try {
@@ -63,33 +62,52 @@ export const usePermissions = () => {
         console.error('Error cargando vistas del usuario:', error);
         // Si falla, usar un conjunto básico de vistas para usuarios no administradores
         setVistasUsuario([]);
+        // No redirigir al login si falla la carga de vistas
+        // El usuario puede seguir usando la aplicación con permisos limitados
       }
     } catch (error) {
       console.error('Error general cargando vistas:', error);
     } finally {
       setLoading(false);
+      setVistasCargadas(true);
     }
   };
 
   const canAccessRoute = (route) => {
     if (!usuario) {
-
       return false;
     }
     
+    // Si estamos cargando, permitir acceso temporalmente
+    if (loading) {
+      return true;
+    }
+    
+    // Si no hay vistas cargadas después del loading, permitir acceso básico
+    if (vistasUsuario.length === 0) {
+      // Permitir acceso a rutas básicas
+      const rutasBasicas = ['/', '/login', '/importar/medifarma', '/importar/bcp'];
+      return rutasBasicas.includes(route);
+    }
+    
     // Verificar si el usuario tiene acceso a esta ruta específica
-    // Incluso los Admins deben respetar los permisos asignados
     const tieneAcceso = vistasUsuario.some(vista => vista.Ruta === route);
     
-    // console.log('🔒 canAccessRoute:', {
-    //   route,
-    //   usuario: usuario.Nombres,
-    //   tipoUsuario: usuario.TipoUsuario,
-    //   vistasUsuario: vistasUsuario.map(v => v.Ruta),
-    //   tieneAcceso
-    // });
-    
     return tieneAcceso;
+  };
+
+  const isRouteValid = (route) => {
+    const rutasValidas = [
+      '/', '/importar/medifarma', '/importar/bcp', '/exportaciones', 
+      '/consulta-movimientos', '/reportes/reporte-codpro', '/promociones', 
+      '/bonificaciones', '/pedidos', '/saldos', '/movimientos', '/clientes', 
+      '/clie-vend', '/usersbot', '/gestion-usuarios', '/escalas', 
+      '/kardex-tabla', '/guias', '/multi-accion', '/consulta-productos', 
+      '/devolucion-canje', '/historial-cliente', '/reportes/picking-procter',
+      '/reportes/concurso', '/reportes/loreal-notas', '/reportes/compras-laboratorio'
+    ];
+    
+    return rutasValidas.includes(route);
   };
 
   const getMenuItems = () => {
@@ -168,6 +186,7 @@ export const usePermissions = () => {
   return {
     loading,
     canAccessRoute,
+    isRouteValid,
     getMenuItems,
     getVistasSistema,
     getVistasUsuario,

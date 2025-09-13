@@ -22,8 +22,8 @@ function Home() {
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200',
       modules: [
-        { name: 'Medifarma', icon: <ArrowUpTrayIcon className="w-5 h-5" />, path: '/medifarma' },
-        { name: 'BCP', icon: <ArrowUpTrayIcon className="w-5 h-5" />, path: '/bcp' }
+        { name: 'Medifarma', icon: <ArrowUpTrayIcon className="w-5 h-5" />, path: '/importar/medifarma' },
+        { name: 'BCP', icon: <ArrowUpTrayIcon className="w-5 h-5" />, path: '/importar/bcp' }
       ]
     },
     {
@@ -56,7 +56,7 @@ function Home() {
       modules: [
         { name: 'Clientes', icon: <UserGroupIcon className="w-5 h-5" />, path: '/clientes' },
         { name: 'Consulta Productos', icon: <MagnifyingGlassIcon className="w-5 h-5" />, path: '/consulta-productos' },
-        { name: 'Reportes', icon: <DocumentTextIcon className="w-5 h-5" />, path: '/reporte-codpro' }
+        { name: 'Reportes', icon: <DocumentTextIcon className="w-5 h-5" />, path: '/reportes/reporte-codpro' }
       ]
     }
   ];
