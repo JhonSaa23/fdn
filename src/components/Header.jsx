@@ -15,6 +15,7 @@ const pageTitles = {
   '/consulta-movimientos': 'Consultar Movimientos',
   '/reporte-codpro': 'Reporte CodPro',
   '/promociones': 'Promociones',
+  '/infocorp': 'Infocorp',
   '/escalas': 'Escalas',
   '/multi-accion': 'Multi Acción',
   '/reportes/picking-procter': 'Reporte Picking Procter - Cobertura General',

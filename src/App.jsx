@@ -27,6 +27,7 @@ import Saldos from './pages/Saldos';
 import ConsultaProductos from './pages/ConsultaProductos';
 import DevolucionCanjeForm from './pages/DevolucionCanjeForm';
 import ReporteComprasLaboratorio from './pages/ReporteComprasLaboratorio';
+import Infocorp from './pages/Infocorp';
 import JuegoTresEnRaya from './pages/JuegoTresEnRaya';
 import ClieVend from './pages/ClieVend';
 import UsersBot from './pages/UsersBot';
@@ -158,6 +159,7 @@ function App() {
                       <Route path="/pedidos" element={<Pedidos />} />
                       <Route path="/saldos" element={<Saldos />} />
                       <Route path="/clientes" element={<Clientes />} />
+                      <Route path="/infocorp" element={<Infocorp />} />
                       <Route path="/clie-vend" element={<ClieVend />} />
                       <Route path="/escalas" element={<Escalas />} />
                       <Route path="/kardex" element={<Kardex />} />

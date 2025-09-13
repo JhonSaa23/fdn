@@ -100,7 +100,7 @@ export const usePermissions = () => {
       '/', '/importar/medifarma', '/importar/bcp', '/exportaciones', 
       '/consulta-movimientos', '/reportes/reporte-codpro', '/promociones', 
       '/bonificaciones', '/pedidos', '/saldos', '/movimientos', '/clientes', 
-      '/clie-vend', '/usersbot', '/gestion-usuarios', '/escalas', 
+      '/infocorp', '/clie-vend', '/usersbot', '/gestion-usuarios', '/escalas', 
       '/kardex-tabla', '/guias', '/multi-accion', '/consulta-productos', 
       '/devolucion-canje', '/historial-cliente', '/reportes/picking-procter',
       '/reportes/concurso', '/reportes/loreal-notas', '/reportes/compras-laboratorio'
