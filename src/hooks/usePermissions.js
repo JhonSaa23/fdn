@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import axiosClient from '../services/axiosClient';
 
@@ -83,11 +83,10 @@ export const usePermissions = () => {
       return true;
     }
     
-    // Si no hay vistas cargadas después del loading, permitir acceso básico
+    // Si no hay vistas cargadas después del loading, solo permitir dashboard
     if (vistasUsuario.length === 0) {
-      // Permitir acceso a rutas básicas
-      const rutasBasicas = ['/', '/login', '/importar/medifarma', '/importar/bcp'];
-      return rutasBasicas.includes(route);
+      // Solo permitir acceso al dashboard si no hay vistas asignadas
+      return route === '/' || route === '/login';
     }
     
     // Verificar si el usuario tiene acceso a esta ruta específica
@@ -110,7 +109,7 @@ export const usePermissions = () => {
     return rutasValidas.includes(route);
   };
 
-  const getMenuItems = () => {
+  const getMenuItems = useCallback(() => {
     if (!usuario) return [];
     
     // Agrupar vistas por subrutas
@@ -173,15 +172,15 @@ export const usePermissions = () => {
     menuItems.sort((a, b) => a.orden - b.orden);
     
     return menuItems;
-  };
+  }, [usuario, vistasUsuario]);
 
-  const getVistasSistema = () => {
+  const getVistasSistema = useCallback(() => {
     return vistasSistema;
-  };
+  }, [vistasSistema]);
 
-  const getVistasUsuario = () => {
+  const getVistasUsuario = useCallback(() => {
     return vistasUsuario;
-  };
+  }, [vistasUsuario]);
 
   return {
     loading,

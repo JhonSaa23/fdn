@@ -28,17 +28,19 @@ const ProtectedRoute = ({ children, requiredPermission = null }) => {
 
   // Verificar permisos para todas las rutas (excepto login)
   if (location.pathname !== '/login') {
-    const tienePermisos = canAccessRoute(location.pathname);
+    // Si no es una ruta válida del sistema, mostrar 404 inmediatamente
+    if (!isRouteValid(location.pathname)) {
+      return <NotFound />;
+    }
     
-    // Solo verificar permisos si no estamos cargando y tenemos vistas cargadas
-    if (!permissionsLoading && !tienePermisos) {
-      // Si no es una ruta válida del sistema, mostrar 404
-      if (!isRouteValid(location.pathname)) {
-        return <NotFound />;
-      }
+    // Solo verificar permisos si no estamos cargando
+    if (!permissionsLoading) {
+      const tienePermisos = canAccessRoute(location.pathname);
       
-      // Si es una ruta válida pero sin permisos, mostrar acceso denegado
-      return <AccessDenied />;
+      // Si no tiene permisos para una ruta válida, mostrar acceso denegado
+      if (!tienePermisos) {
+        return <AccessDenied />;
+      }
     }
   }
   // Si está autenticado y tiene permisos, mostrar el componente protegido
