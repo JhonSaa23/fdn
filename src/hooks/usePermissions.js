@@ -24,7 +24,7 @@ export const usePermissions = () => {
         setLoading(false);
       }
     } else if (!authLoading && !usuario) {
-      // Si no hay usuario y auth terminó de cargar, limpiar vistas
+      // Si no hay usuario y auth terminó de cargar, limpiar vistas inmediatamente
       setVistasSistema([]);
       setVistasUsuario([]);
       setLoading(false);
@@ -35,6 +35,16 @@ export const usePermissions = () => {
   const cargarVistas = async () => {
     try {
       setLoading(true);
+      
+      // Verificar nuevamente que el usuario y token existan antes de hacer las peticiones
+      const token = localStorage.getItem('authToken');
+      if (!token || !usuario) {
+        setVistasSistema([]);
+        setVistasUsuario([]);
+        setLoading(false);
+        setVistasCargadas(true);
+        return;
+      }
       
       // Solo cargar vistas del sistema si el usuario es administrador
       if (usuario.tipoUsuario === 'Admin') {

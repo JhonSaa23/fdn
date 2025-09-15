@@ -65,6 +65,11 @@ export const useAuth = () => {
       setUsuario(null);
       setSesion(null);
       setIsAuthenticated(false);
+      
+      // Redirigir inmediatamente al login después del logout
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
   };
 

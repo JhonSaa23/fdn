@@ -37,11 +37,9 @@ axiosClient.interceptors.response.use(
       localStorage.removeItem('user');
       localStorage.removeItem('sesion');
       
-      // Solo redirigir al login si no estamos ya ahí Y no es una petición de permisos
-      const isPermissionRequest = error.config?.url?.includes('/vistas/') || 
-                                 error.config?.url?.includes('/auth/');
-      
-      if (!window.location.pathname.includes('/login') && !isPermissionRequest) {
+      // Solo redirigir al login si no estamos ya ahí
+      // No importa si es una petición de permisos, si hay 401 debe redirigir
+      if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
       
