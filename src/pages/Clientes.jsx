@@ -77,20 +77,15 @@ const Clientes = () => {
   const [laboratorios, setLaboratorios] = useState([]);
   const [laboratoriosMap, setLaboratoriosMap] = useState({});
 
-  // Estados para paginación
+  // Estados para paginación y scroll infinito
+  const [allClientes, setAllClientes] = useState([]); // Todos los datos cargados
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalClientes, setTotalClientes] = useState(0);
+  const [loadingAll, setLoadingAll] = useState(false);
   
-  // Estados para windowing (ventana deslizante)
-  const [allClientes, setAllClientes] = useState([]); // Todos los datos cargados
-  const [visibleStartPage, setVisibleStartPage] = useState(1);
-  const [visibleEndPage, setVisibleEndPage] = useState(3);
-  const [lastScrollTop, setLastScrollTop] = useState(0);
-  const [scrollDirection, setScrollDirection] = useState('down');
-  
-  // Configuración de windowing
-  const WINDOW_SIZE = 3; // Mantener 3 páginas visibles (120 registros)
+  // Configuración de scroll infinito
+  const ITEMS_PER_PAGE = 40;
 
   // Estados para filtros
   const [filtros, setFiltros] = useState({
@@ -115,17 +110,20 @@ const Clientes = () => {
   // Ref para el dropdown de acciones
   const actionsDropdownRef = useRef(null);
 
-  // Calcular clientes visibles basado en la ventana actual
-  const calcularClientesVisibles = useCallback(() => {
-    const startIndex = (visibleStartPage - 1) * 40;
-    const endIndex = visibleEndPage * 40;
-    return allClientes.slice(startIndex, endIndex);
-  }, [allClientes, visibleStartPage, visibleEndPage]);
+  // Filtrar clientes en tiempo real - buscar en TODOS los datos cargados
+  const clientesFiltrados = Array.isArray(allClientes)
+    ? (filtroCliente
+        ? allClientes.filter(c => {
+            const ruc = (c.cliente || '').toLowerCase();
+            const nombre = (c.razon || '').toLowerCase();
+            const busqueda = filtroCliente.toLowerCase();
+            return ruc.includes(busqueda) || nombre.includes(busqueda);
+          })
+        : allClientes)
+    : [];
 
-  // Actualizar clientes visibles cuando cambie la ventana
-  useEffect(() => {
-    setClientes(calcularClientesVisibles());
-  }, [calcularClientesVisibles]);
+  // Aplicar scroll infinito a los clientes filtrados
+  const clientesVisibles = clientesFiltrados.slice(0, currentPage * ITEMS_PER_PAGE);
 
   // Cargar tipificaciones desde la base de datos
   const cargarTipificaciones = async () => {
@@ -163,22 +161,20 @@ const Clientes = () => {
     }
   };
 
-  // Cargar clientes (primera página o nueva búsqueda)
-  const cargarClientes = async (resetear = true) => {
+  // Cargar TODOS los clientes de una vez
+  const cargarTodosLosClientes = async () => {
     try {
+      setLoadingAll(true);
       setLoading(true);
-      const response = await consultarClientes(filtros, 1, 40);
       
-      if (resetear) {
-        setAllClientes(response.data);
-        setClientes(response.data);
-        setCurrentPage(1);
-        setVisibleStartPage(1);
-        setVisibleEndPage(Math.min(WINDOW_SIZE, Math.ceil(response.pagination.total / 40)));
-      }
+      // Cargar todos los clientes sin paginación
+      const response = await consultarClientes(filtros, 1, 10000); // Número grande para obtener todos
       
-      setHasMore(response.pagination.hasMore);
-      setTotalClientes(response.pagination.total);
+      setAllClientes(response.data);
+      setTotalClientes(response.data.length);
+      setCurrentPage(1);
+      setHasMore(false); // Ya no hay más datos que cargar
+      
     } catch (error) {
       console.error('Error al cargar clientes:', error);
       let mensaje = 'Error al cargar los clientes';
@@ -186,107 +182,42 @@ const Clientes = () => {
         mensaje = error.response.data?.error || mensaje;
       }
       showNotification('error', mensaje);
-      if (resetear) {
-        setAllClientes([]);
-        setClientes([]);
-      }
+      setAllClientes([]);
+      setTotalClientes(0);
     } finally {
+      setLoadingAll(false);
       setLoading(false);
     }
   };
 
-  // Cargar más clientes (paginación infinita)
-  const cargarMasClientes = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+  // Cargar más clientes visibles (scroll infinito local)
+  const cargarMasClientesVisibles = useCallback(() => {
+    if (loadingMore || currentPage * ITEMS_PER_PAGE >= clientesFiltrados.length) return;
     
-    try {
-      setLoadingMore(true);
+    setLoadingMore(true);
+    
+    // Simular delay para mostrar el indicador de carga
+    setTimeout(() => {
       const nextPage = currentPage + 1;
-      
-      const response = await consultarClientes(filtros, nextPage, 40);
-      
-      // Agregar a allClientes en lugar de clientes directamente
-      setAllClientes(prev => [...prev, ...response.data]);
       setCurrentPage(nextPage);
-      setHasMore(response.pagination.hasMore);
-      
-      // Expandir ventana si es necesario
-      if (nextPage <= visibleEndPage + 1) {
-        setVisibleEndPage(Math.min(nextPage, Math.ceil(totalClientes / 40)));
-      }
-    } catch (error) {
-      console.error('Error al cargar más clientes:', error);
-      showNotification('error', 'Error al cargar más clientes');
-    } finally {
       setLoadingMore(false);
-    }
-  }, [filtros, currentPage, hasMore, loadingMore, visibleEndPage, totalClientes]);
+    }, 300);
+  }, [currentPage, loadingMore, clientesFiltrados.length]);
 
-  // Detectar scroll para carga infinita y windowing
+  // Detectar scroll para carga infinita local
   const handleScroll = useCallback(() => {
     const container = tableContainerRef.current;
     if (!container) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
     
-    // Detectar dirección del scroll
-    const direction = scrollTop > lastScrollTop ? 'down' : 'up';
-    setScrollDirection(direction);
-    setLastScrollTop(scrollTop);
-
-    // Calcular posición relativa (0-1)
-    const scrollPercentage = scrollHeight > clientHeight ? scrollTop / (scrollHeight - clientHeight) : 0;
+    // Si estamos cerca del final, cargar más elementos visibles
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 50;
     
-    // Estimar en qué "página" estamos basado en el scroll
-    const totalPages = Math.ceil(totalClientes / 40);
-    const estimatedPage = Math.max(1, Math.ceil(scrollPercentage * totalPages));
-
-    // === WINDOWING LOGIC ===
-    
-    // Si estamos cerca del inicio (primera página), resetear ventana al inicio
-    if (scrollPercentage < 0.1 && direction === 'up') {
-      const newStartPage = 1;
-      const newEndPage = Math.min(WINDOW_SIZE, totalPages);
-      
-      if (newStartPage !== visibleStartPage || newEndPage !== visibleEndPage) {
-        setVisibleStartPage(newStartPage);
-        setVisibleEndPage(newEndPage);
-      }
+    if (isNearBottom && !loadingMore && currentPage * ITEMS_PER_PAGE < clientesFiltrados.length) {
+      cargarMasClientesVisibles();
     }
-    // Si scrolleamos hacia abajo y necesitamos expandir/mover la ventana
-    else if (direction === 'down') {
-      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 50;
-      
-      // Si estamos cerca del final de los datos visibles, cargar más
-      if (isNearBottom && hasMore && !loadingMore && !loading) {
-        cargarMasClientes();
-      }
-      
-      // Si scrolleamos más allá de la ventana actual, moverla hacia abajo
-      if (estimatedPage > visibleEndPage && estimatedPage <= currentPage) {
-        const newStartPage = Math.max(1, estimatedPage - WINDOW_SIZE + 1);
-        const newEndPage = Math.min(estimatedPage, currentPage);
-        
-        if (newStartPage !== visibleStartPage || newEndPage !== visibleEndPage) {
-          setVisibleStartPage(newStartPage);
-          setVisibleEndPage(newEndPage);
-        }
-      }
-    }
-    // Si scrolleamos hacia arriba y necesitamos mover la ventana
-    else if (direction === 'up' && scrollPercentage > 0.1) {
-      if (estimatedPage < visibleStartPage) {
-        const newStartPage = Math.max(1, estimatedPage);
-        const newEndPage = Math.min(newStartPage + WINDOW_SIZE - 1, currentPage);
-        
-        if (newStartPage !== visibleStartPage || newEndPage !== visibleEndPage) {
-          setVisibleStartPage(newStartPage);
-          setVisibleEndPage(newEndPage);
-        }
-      }
-    }
-
-  }, [hasMore, loadingMore, loading, cargarMasClientes, lastScrollTop, totalClientes, visibleStartPage, visibleEndPage, currentPage]);
+  }, [loadingMore, currentPage, clientesFiltrados.length, cargarMasClientesVisibles]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -306,26 +237,18 @@ const Clientes = () => {
 
   const handleConsultar = () => {
     setCurrentPage(1);
-    setHasMore(true);
-    setVisibleStartPage(1);
-    setVisibleEndPage(WINDOW_SIZE);
-    setLastScrollTop(0);
-    setScrollDirection('down');
-    cargarClientes(true);
+    setHasMore(false);
+    cargarTodosLosClientes();
   };
 
   useEffect(() => {
     setCurrentPage(1);
-    setHasMore(true);
-    setVisibleStartPage(1);
-    setVisibleEndPage(WINDOW_SIZE);
-    setLastScrollTop(0);
-    setScrollDirection('down');
+    setHasMore(false);
     
     // Cargar tipificaciones, laboratorios y clientes
     cargarTipificaciones();
     cargarLaboratorios();
-    cargarClientes(true);
+    cargarTodosLosClientes();
   }, []);
 
   // Agregar event listener para scroll
@@ -341,11 +264,7 @@ const Clientes = () => {
   useEffect(() => {
     if (JSON.stringify(filtros) !== JSON.stringify({ codlab: '', tipificacion: '', activo: '' })) {
       setCurrentPage(1);
-      setHasMore(true);
-      setVisibleStartPage(1);
-      setVisibleEndPage(WINDOW_SIZE);
-      setLastScrollTop(0);
-      setScrollDirection('down');
+      setHasMore(false);
     }
   }, [filtros]);
 
@@ -410,11 +329,7 @@ const Clientes = () => {
     });
     setFiltroCliente('');
     setCurrentPage(1);
-    setHasMore(true);
-    setVisibleStartPage(1);
-    setVisibleEndPage(WINDOW_SIZE);
-    setLastScrollTop(0);
-    setScrollDirection('down');
+    setHasMore(false);
   };
 
   // Función para cargar laboratorios para el modal
@@ -622,12 +537,8 @@ const Clientes = () => {
       setEditingCliente(null);
       setFormData({ codlab: '', cliente: '', tipificacion: '' });
       setCurrentPage(1);
-      setHasMore(true);
-      setVisibleStartPage(1);
-      setVisibleEndPage(WINDOW_SIZE);
-      setLastScrollTop(0);
-      setScrollDirection('down');
-      cargarClientes(true);
+      setHasMore(false);
+      cargarTodosLosClientes();
     } catch (error) {
       console.error('Error completo:', error);
       let mensaje = 'Error al guardar el cliente';
@@ -663,12 +574,8 @@ const Clientes = () => {
           tipificacion: cliente.tipificacion
         });
         setCurrentPage(1);
-        setHasMore(true);
-        setVisibleStartPage(1);
-        setVisibleEndPage(WINDOW_SIZE);
-        setLastScrollTop(0);
-        setScrollDirection('down');
-        cargarClientes(true);
+        setHasMore(false);
+        cargarTodosLosClientes();
       } catch (error) {
         console.error('Error al eliminar el cliente:', error);
         let mensaje = 'Error al eliminar el cliente';
@@ -734,12 +641,8 @@ const Clientes = () => {
       setImportFile(null);
       setSelectedLab('');
       setCurrentPage(1);
-      setHasMore(true);
-      setVisibleStartPage(1);
-      setVisibleEndPage(WINDOW_SIZE);
-      setLastScrollTop(0);
-      setScrollDirection('down');
-      cargarClientes(true);
+      setHasMore(false);
+      cargarTodosLosClientes();
       
     } catch (error) {
       console.error('Error en importación:', error);
@@ -799,12 +702,8 @@ const Clientes = () => {
       setShowDeleteMassModal(false);
       setSelectedTipificaciones([]);
       setCurrentPage(1);
-      setHasMore(true);
-      setVisibleStartPage(1);
-      setVisibleEndPage(WINDOW_SIZE);
-      setLastScrollTop(0);
-      setScrollDirection('down');
-      cargarClientes(true);
+      setHasMore(false);
+      cargarTodosLosClientes();
       
     } catch (error) {
       console.error('Error en eliminación en masa:', error);
@@ -818,17 +717,10 @@ const Clientes = () => {
     }
   };
 
-  // Filtrar clientes en tiempo real
-  const clientesFiltrados = Array.isArray(clientes)
-    ? (filtroCliente
-        ? clientes.filter(c => {
-            const ruc = (c.cliente || '').toLowerCase();
-            const nombre = (c.razon || '').toLowerCase();
-            const busqueda = filtroCliente.toLowerCase();
-            return ruc.includes(busqueda) || nombre.includes(busqueda);
-          })
-        : clientes)
-    : [];
+  // Resetear página cuando cambie el filtro de cliente
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filtroCliente]);
 
 
   return (
@@ -840,11 +732,11 @@ const Clientes = () => {
             <div>
               <h1 className="text-xl font-bold">Consulta de Clientes</h1>
               <p className="text-sm text-gray-600">
-                Mostrando {clientes.length} de {totalClientes} resultados
-                {allClientes.length > clientes.length && (
-                  <span className="text-blue-600"> (ventana: páginas {visibleStartPage}-{visibleEndPage})</span>
+                Mostrando {clientesVisibles.length} de {clientesFiltrados.length} resultados
+                {filtroCliente && (
+                  <span className="text-blue-600"> (filtrado de {totalClientes} total)</span>
                 )}
-                {hasMore && ' (cargando más al hacer scroll)'}
+                {currentPage * ITEMS_PER_PAGE < clientesFiltrados.length && ' (cargando más al hacer scroll)'}
               </p>
             </div>
             <div className="flex space-x-3">
@@ -1070,14 +962,14 @@ const Clientes = () => {
                         Cargando...
                       </td>
                     </tr>
-                  ) : clientesFiltrados.length === 0 ? (
+                  ) : clientesVisibles.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="px-6 py-4 text-center">
                         No hay datos disponibles
                       </td>
                     </tr>
                   ) : (
-                    clientesFiltrados.map((cliente, index) => (
+                    clientesVisibles.map((cliente, index) => (
                       <tr key={index} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           {cliente.codlab}
@@ -1160,21 +1052,19 @@ const Clientes = () => {
               )}
               
               {/* Mensaje cuando no hay más resultados */}
-              {!hasMore && clientes.length > 0 && (
+              {currentPage * ITEMS_PER_PAGE >= clientesFiltrados.length && clientesVisibles.length > 0 && (
                 <div className="flex justify-center items-center py-4">
                   <span className="text-sm text-gray-500">
-                    ✓ Se han cargado todos los resultados ({totalClientes})
+                    ✓ Se han cargado todos los resultados ({clientesFiltrados.length})
                   </span>
                 </div>
               )}
               
-              {/* Indicador de windowing activo */}
-              {allClientes.length > clientes.length && (
+              {/* Indicador de filtro activo */}
+              {filtroCliente && (
                 <div className="flex justify-center items-center py-2 bg-blue-50 border-t">
                   <span className="text-xs text-blue-600">
-                    🪟 Ventana optimizada: {allClientes.length} registros cargados, 
-                    mostrando {clientes.length} (páginas {visibleStartPage}-{visibleEndPage})
-                    - Scroll hacia arriba/abajo para navegar
+                    🔍 Filtro activo: "{filtroCliente}" - {clientesFiltrados.length} resultados encontrados de {totalClientes} total
                   </span>
                 </div>
               )}
