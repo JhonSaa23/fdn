@@ -34,6 +34,7 @@ import UsersBot from './pages/UsersBot';
 import GestionUsuarios from './pages/GestionUsuarios';
 import Movimientos from './pages/Movimientos';
 import HistorialCliente from './pages/HistorialCliente';
+import LetrasPage from './pages/LetrasPage';
 import Login from './pages/Login';
 import AccessDenied from './components/AccessDenied';
 
@@ -177,6 +178,7 @@ function App() {
                       <Route path="/gestion-usuarios" element={<GestionUsuarios />} />
                       <Route path="/movimientos" element={<Movimientos />} />
                       <Route path="/historial-cliente" element={<HistorialCliente />} />
+                      <Route path="/letras" element={<LetrasPage />} />
                     </Routes>
                   </div>
                 </main>

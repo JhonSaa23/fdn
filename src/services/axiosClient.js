@@ -17,8 +17,12 @@ axiosClient.interceptors.request.use((config) => {
   if (!isAuthRoute) {
     // Obtener token del localStorage solo para rutas que no son de autenticación
     const token = localStorage.getItem('authToken');
+    console.log('🔍 [AXIOS] Request to:', config.url, 'Token:', token ? 'Present' : 'Missing');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔍 [AXIOS] Authorization header set:', `Bearer ${token.substring(0, 20)}...`);
+    } else {
+      console.log('❌ [AXIOS] No token found in localStorage');
     }
   }
   
@@ -27,9 +31,11 @@ axiosClient.interceptors.request.use((config) => {
 
 axiosClient.interceptors.response.use(
   (response) => {
+    console.log('✅ [AXIOS] Response from:', response.config.url, 'Status:', response.status);
     return response;
   },
   (error) => {
+    console.log('❌ [AXIOS] Error from:', error.config?.url, 'Status:', error.response?.status, 'Message:', error.response?.data?.message);
     // Manejar errores de autenticación
     if (error.response?.status === 401) {
       // Token inválido o expirado
