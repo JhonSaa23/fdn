@@ -22,6 +22,8 @@ const LetrasPage = () => {
   const [error, setError] = useState(null);
   const [filtroActivo, setFiltroActivo] = useState(1); // 1=Pendientes, 2=Pagadas, 3=Vencidas
   const [filtroCodigoBanco, setFiltroCodigoBanco] = useState(false);
+  const [letrasFiltradas, setLetrasFiltradas] = useState([]); // Letras filtradas para mostrar
+  const [estadisticasCalculadas, setEstadisticasCalculadas] = useState(null); // Estadísticas calculadas del frontend
   
   // Filtros
   const [filtros, setFiltros] = useState({
@@ -38,6 +40,22 @@ const LetrasPage = () => {
   const [mostrandoSoloPendientes, setMostrandoSoloPendientes] = useState(true);
   const [copiado, setCopiado] = useState(false);
 
+  // Función para calcular estadísticas desde los datos del frontend
+  const calcularEstadisticas = (letrasData) => {
+    const stats = {
+      TotalLetras: letrasData.length,
+      LetrasGeneradas: letrasData.filter(l => l.Estado === 1).length,
+      LetrasCanceladas: letrasData.filter(l => l.Estado === 2).length,
+      LetrasProtestadas: letrasData.filter(l => l.Estado === 3).length,
+      LetrasAmortizadas: letrasData.filter(l => l.Estado === 4).length,
+      LetrasObservadas: letrasData.filter(l => l.Estado === 5).length,
+      TotalMonto: letrasData.reduce((sum, l) => sum + (parseFloat(l.Monto) || 0), 0),
+      MontoPagado: letrasData.filter(l => l.Estado === 4).reduce((sum, l) => sum + (parseFloat(l.Monto) || 0), 0),
+      MontoPendiente: letrasData.filter(l => l.Estado === 1).reduce((sum, l) => sum + (parseFloat(l.Monto) || 0), 0)
+    };
+    return stats;
+  };
+
   // Cargar datos iniciales
   useEffect(() => {
     cargarDatos();
@@ -47,20 +65,20 @@ const LetrasPage = () => {
     try {
       setLoading(true);
       
-      // Cargar letras y estadísticas en paralelo
-      const [letrasRes, statsRes] = await Promise.all([
-        axiosClient.get('/letras'),
-        axiosClient.get('/letras/estadisticas')
-      ]);
+      // Cargar solo las letras (las estadísticas se calcularán en el frontend)
+      const letrasRes = await axiosClient.get('/letras');
 
       // Guardar todas las letras
       const todasLasLetrasData = letrasRes.data.data || [];
       setTodasLasLetras(todasLasLetrasData);
       
+      // Calcular estadísticas desde todos los datos
+      const statsCalculadas = calcularEstadisticas(todasLasLetrasData);
+      setEstadisticasCalculadas(statsCalculadas);
+      
       // Filtrar solo las letras pendientes por defecto
       const letrasPendientes = todasLasLetrasData.filter(letra => letra.Estado === 1);
       setLetras(letrasPendientes);
-      setEstadisticas(statsRes.data.data || {});
       setFiltroActivo(1); // Pendientes por defecto
       setFiltroCodigoBanco(false); // Asegurar que el filtro de código de banco esté desactivado
     } catch (err) {
@@ -113,7 +131,7 @@ const LetrasPage = () => {
     }
     
     setLetras(letrasFiltradas);
-    setShowFiltros(false);
+      setShowFiltros(false);
   };
 
   const limpiarFiltros = () => {
@@ -125,15 +143,24 @@ const LetrasPage = () => {
     });
     setFiltroCodigoBanco(false);
     setFiltroActivo(1);
+    
+    // Recalcular estadísticas con todos los datos (sin filtros)
+    const statsCompletas = calcularEstadisticas(todasLasLetras);
+    setEstadisticasCalculadas(statsCompletas);
+    
     // Volver a mostrar solo pendientes
     const letrasPendientes = todasLasLetras.filter(letra => letra.Estado === 1);
-    setLetras(letrasPendientes);
+    const letrasLimitadas = letrasPendientes.slice(0, 100);
+    setLetras(letrasLimitadas);
+    setLetrasFiltradas(letrasPendientes);
   };
 
 
   const aplicarFiltroEstado = (estado) => {
+    console.log('🔍 [FILTRO] Cambiando estado de', filtroActivo, 'a', estado);
     setFiltroActivo(estado);
-    aplicarFiltrosReales();
+    // Aplicar filtros inmediatamente con el nuevo estado
+    aplicarFiltrosConEstado(estado);
   };
 
   const toggleFiltroCodigoBanco = () => {
@@ -143,35 +170,82 @@ const LetrasPage = () => {
     aplicarFiltrosReales();
   };
 
-  const aplicarFiltrosReales = () => {
-    let letrasFiltradas = todasLasLetras.filter(letra => letra.Estado === filtroActivo);
-    console.log('Filtro activo:', filtroActivo, 'Filtro código banco:', filtroCodigoBanco);
-    console.log('Letras antes del filtro de código:', letrasFiltradas.length);
+  const aplicarFiltrosConEstado = (estado) => {
+    // Empezar con TODAS las letras
+    let letrasParaEstadisticas = [...todasLasLetras];
     
-    // Aplicar filtro de código de banco si está activo (verde = solo con código)
-    if (filtroCodigoBanco) {
-      letrasFiltradas = letrasFiltradas.filter(letra => letra.CodBanco && letra.CodBanco.trim() !== '');
-      console.log('Letras después del filtro de código:', letrasFiltradas.length);
-    }
-    
-    // Aplicar filtro de cliente en tiempo real
+    // Aplicar filtros de cliente y código de banco
     if (filtros.cliente) {
       const clienteBusqueda = filtros.cliente.toLowerCase();
-      letrasFiltradas = letrasFiltradas.filter(letra => 
-        letra.NombreCliente.toLowerCase().includes(clienteBusqueda) ||
-        letra.Codclie.toLowerCase().includes(clienteBusqueda)
+      letrasParaEstadisticas = letrasParaEstadisticas.filter(letra => 
+        (letra.NombreCliente || '').toLowerCase().includes(clienteBusqueda) ||
+        (letra.Codclie || '').toString().toLowerCase().includes(clienteBusqueda)
       );
     }
     
-    setLetras(letrasFiltradas);
+    if (filtroCodigoBanco) {
+      letrasParaEstadisticas = letrasParaEstadisticas.filter(letra => letra.CodBanco && letra.CodBanco.trim() !== '');
+    }
+    
+    // Calcular estadísticas con TODOS los datos filtrados (sin filtrar por estado)
+    const statsFiltradas = calcularEstadisticas(letrasParaEstadisticas);
+    setEstadisticasCalculadas(statsFiltradas);
+    
+    // Filtrar por estado para mostrar solo las letras del estado especificado
+    let letrasFiltradas = letrasParaEstadisticas.filter(letra => letra.Estado === estado);
+    
+    // Limitar a 100 registros para evitar sobrecargar la web
+    const letrasLimitadas = letrasFiltradas.slice(0, 100);
+    
+    setLetras(letrasLimitadas);
+    setLetrasFiltradas(letrasFiltradas);
+    
+    console.log('🔍 [FILTROS] Estado aplicado:', estado);
+    console.log('🔍 [FILTROS] Letras filtradas:', letrasFiltradas.length);
+    console.log('🔍 [FILTROS] Letras limitadas:', letrasLimitadas.length);
+  };
+
+  const aplicarFiltrosReales = () => {
+    aplicarFiltrosConEstado(filtroActivo);
   };
 
   const handleClienteChange = (e) => {
-    setFiltros({...filtros, cliente: e.target.value});
-    // Aplicar filtro en tiempo real después de un pequeño delay
-    setTimeout(() => {
-      aplicarFiltrosReales();
-    }, 100);
+    const nuevoCliente = e.target.value;
+    setFiltros({...filtros, cliente: nuevoCliente});
+    
+    // Usar la misma lógica que aplicarFiltrosReales
+    let letrasParaEstadisticas = [...todasLasLetras];
+    
+    // Aplicar filtros de cliente y código de banco
+    if (nuevoCliente) {
+      const clienteBusqueda = nuevoCliente.toLowerCase();
+      letrasParaEstadisticas = letrasParaEstadisticas.filter(letra => 
+        (letra.NombreCliente || '').toLowerCase().includes(clienteBusqueda) ||
+        (letra.Codclie || '').toString().toLowerCase().includes(clienteBusqueda)
+      );
+    }
+    
+    if (filtroCodigoBanco) {
+      letrasParaEstadisticas = letrasParaEstadisticas.filter(letra => letra.CodBanco && letra.CodBanco.trim() !== '');
+    }
+    
+    // Calcular estadísticas con TODOS los datos filtrados (sin filtrar por estado)
+    const statsFiltradas = calcularEstadisticas(letrasParaEstadisticas);
+    setEstadisticasCalculadas(statsFiltradas);
+    
+    // Filtrar por estado para mostrar solo las letras del estado activo
+    let letrasFiltradas = letrasParaEstadisticas.filter(letra => letra.Estado === filtroActivo);
+    
+    // Limitar a 100 registros
+    const letrasLimitadas = letrasFiltradas.slice(0, 100);
+    
+    setLetras(letrasLimitadas);
+    setLetrasFiltradas(letrasFiltradas);
+    
+    console.log('🔍 [CLIENTE] Estado activo:', filtroActivo);
+    console.log('🔍 [CLIENTE] Cliente buscado:', nuevoCliente);
+    console.log('🔍 [CLIENTE] Letras filtradas:', letrasFiltradas.length);
+    console.log('🔍 [CLIENTE] Letras limitadas:', letrasLimitadas.length);
   };
 
   const verDetalle = (letra) => {
@@ -190,37 +264,44 @@ const LetrasPage = () => {
     }
   };
 
-  const copiarDatosLetra = async (letra, event) => {
-    event.stopPropagation(); // Evitar que se abra el modal de detalle
+  const copiarDatosLetra = async (letra) => {
     try {
-      const datosFormateados = `Letra: ${letra.Numero}
+      const datos = `Letra: ${letra.Numero}
 Cliente: ${letra.NombreCliente}
 Código Banco: ${letra.CodBanco || 'N/A'}
 Vencimiento: ${formatDate(letra.FecVen)}
-Monto: ${formatCurrency(letra.Monto)}`;
-      
-      await navigator.clipboard.writeText(datosFormateados);
+Monto: ${formatCurrency(letra.Monto)}
+Monto Pagado: ${formatCurrency(letra.MontoPagado)}
+Estado: ${getEstadoText(letra.Estado)}
+Días por vencer: ${calcularDiasPorVencer(letra.FecVen)}`;
+
+      await navigator.clipboard.writeText(datos);
       setCopiado(true);
       setTimeout(() => setCopiado(false), 2000);
     } catch (err) {
-      console.error('Error al copiar datos:', err);
+      console.error('Error al copiar datos de la letra:', err);
     }
   };
 
+
   const getEstadoColor = (estado) => {
     switch (estado) {
-      case 1: return 'warning';
-      case 2: return 'success';
-      case 3: return 'error';
+      case 1: return 'success';   // Generado - Verde
+      case 2: return 'error';     // Cancelado - Rojo
+      case 3: return 'error';     // Protestado - Rojo
+      case 4: return 'warning';   // Amortizado - Amarillo
+      case 5: return 'warning';   // Observada - Amarillo
       default: return 'default';
     }
   };
 
   const getEstadoText = (estado) => {
     switch (estado) {
-      case 1: return 'Pendiente';
-      case 2: return 'Pagado';
-      case 3: return 'Vencido';
+      case 1: return 'Generado';
+      case 2: return 'Cancelado';
+      case 3: return 'Protestado';
+      case 4: return 'Amortizado';
+      case 5: return 'Observada';
       default: return 'Desconocido';
     }
   };
@@ -230,6 +311,28 @@ Monto: ${formatCurrency(letra.Monto)}`;
       style: 'currency',
       currency: 'PEN'
     }).format(amount);
+  };
+
+  const calcularDiasPorVencer = (fechaVencimiento) => {
+    if (!fechaVencimiento) return '-';
+    
+    try {
+      const hoy = new Date();
+      const fechaVen = new Date(fechaVencimiento);
+      const diffTime = fechaVen - hoy;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) {
+        return `Vencido hace ${Math.abs(diffDays)} días`;
+      } else if (diffDays === 0) {
+        return 'Vence hoy';
+      } else {
+        return `${diffDays} días`;
+      }
+    } catch (error) {
+      console.error('Error calculando días por vencer:', error);
+      return '-';
+    }
   };
 
   const formatDate = (date) => {
@@ -279,8 +382,7 @@ Monto: ${formatCurrency(letra.Monto)}`;
     return letras.map((letra, index) => (
       <div 
         key={`${letra.Numero}-${index}`} 
-        className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-        onClick={() => verDetalle(letra)}
+        className="p-3 border-b border-gray-100"
       >
         <div className="flex justify-between items-start">
           <div className="flex-1 min-w-0">
@@ -324,8 +426,8 @@ Monto: ${formatCurrency(letra.Monto)}`;
                 <span className="font-medium text-right">{formatCurrency(letra.Monto)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-left">Saldo:</span>
-                <span className="font-medium text-right">{formatCurrency(letra.SaldoPendiente)}</span>
+                <span className="font-medium text-left">Monto Pagado:</span>
+                <span className="font-medium text-right">{formatCurrency(letra.MontoPagado)}</span>
               </div>
             </div>
             
@@ -374,35 +476,35 @@ Monto: ${formatCurrency(letra.Monto)}`;
     <div className="">
 
       {/* Estadísticas y Filtros Ultra Compactos */}
-      {estadisticas && (
+      {estadisticasCalculadas && (
         <div className="bg-white rounded-lg shadow p-3 mb-3">
            {/* Estadísticas en grid */}
-           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mb-3">
              <div className="flex items-center justify-center gap-1 px-2 py-1.5 bg-blue-50 text-blue-700 rounded text-xs">
                <DocumentTextIcon className="h-3 w-3" />
-               Total: {estadisticas.TotalLetras || 0}
+               Total: {estadisticasCalculadas?.TotalLetras || 0}
              </div>
              <button 
                onClick={() => aplicarFiltroEstado(1)}
                className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs transition-colors ${
                  filtroActivo === 1 
-                   ? 'bg-yellow-200 text-yellow-800 border-2 border-yellow-400' 
-                   : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
-               }`}
-             >
-               <ChartBarIcon className="h-3 w-3" />
-               Pend: {estadisticas.LetrasPendientes || 0}
-             </button>
-             <button 
-               onClick={() => aplicarFiltroEstado(2)}
-               className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs transition-colors ${
-                 filtroActivo === 2 
                    ? 'bg-green-200 text-green-800 border-2 border-green-400' 
                    : 'bg-green-50 text-green-700 hover:bg-green-100'
                }`}
              >
                <ChartBarIcon className="h-3 w-3" />
-               Pag: {estadisticas.LetrasPagadas || 0}
+               Gen: {estadisticasCalculadas?.LetrasGeneradas || 0}
+             </button>
+             <button 
+               onClick={() => aplicarFiltroEstado(2)}
+               className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs transition-colors ${
+                 filtroActivo === 2 
+                   ? 'bg-red-200 text-red-800 border-2 border-red-400' 
+                   : 'bg-red-50 text-red-700 hover:bg-red-100'
+               }`}
+             >
+               <ChartBarIcon className="h-3 w-3" />
+               Can: {estadisticasCalculadas?.LetrasCanceladas || 0}
              </button>
              <button 
                onClick={() => aplicarFiltroEstado(3)}
@@ -413,7 +515,29 @@ Monto: ${formatCurrency(letra.Monto)}`;
                }`}
              >
                <ChartBarIcon className="h-3 w-3" />
-               Ven: {estadisticas.LetrasVencidas || 0}
+               Pro: {estadisticasCalculadas?.LetrasProtestadas || 0}
+             </button>
+          <button
+               onClick={() => aplicarFiltroEstado(4)}
+               className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs transition-colors ${
+                 filtroActivo === 4 
+                   ? 'bg-yellow-200 text-yellow-800 border-2 border-yellow-400' 
+                   : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
+               }`}
+             >
+               <ChartBarIcon className="h-3 w-3" />
+               Amo: {estadisticasCalculadas?.LetrasAmortizadas || 0}
+          </button>
+             <button 
+               onClick={() => aplicarFiltroEstado(5)}
+               className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs transition-colors ${
+                 filtroActivo === 5 
+                   ? 'bg-yellow-200 text-yellow-800 border-2 border-yellow-400' 
+                   : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
+               }`}
+             >
+               <ChartBarIcon className="h-3 w-3" />
+               Obs: {estadisticasCalculadas?.LetrasObservadas || 0}
              </button>
            </div>
           
@@ -441,21 +565,21 @@ Monto: ${formatCurrency(letra.Monto)}`;
                placeholder="Buscar cliente..."
              />
              <div className="flex gap-1">
-               <button
-                 onClick={aplicarFiltros}
+          <button
+            onClick={aplicarFiltros}
                  className="flex-1 px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
-               >
-                 Buscar
-               </button>
+          >
+            Buscar
+          </button>
                <button
                  onClick={limpiarFiltros}
                  className="flex-1 px-2 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600 transition-colors"
                >
                  Limpiar
-               </button>
-             </div>
-           </div>
-           
+          </button>
+        </div>
+      </div>
+
            {/* Botón para filtrar solo con código de banco */}
            <div className="flex items-center justify-center gap-2 mb-3">
              <button
@@ -468,23 +592,7 @@ Monto: ${formatCurrency(letra.Monto)}`;
              >
                {filtroCodigoBanco ? 'Con Cod Banco' : 'Cod Banco'}
              </button>
-           </div>
-          
-          {/* Resumen financiero ultra compacto */}
-          <div className="text-xs text-gray-600 space-y-1">
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-600">Total:</span>
-              <span>{formatCurrency(estadisticas.MontoTotal || 0)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-green-600">Pagado:</span>
-              <span>{formatCurrency(estadisticas.MontoPagado || 0)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-yellow-600">Pendiente:</span>
-              <span>{formatCurrency(estadisticas.SaldoTotal || 0)}</span>
-            </div>
-          </div>
+        </div>
         </div>
       )}
 
@@ -493,10 +601,15 @@ Monto: ${formatCurrency(letra.Monto)}`;
       <div className="bg-white rounded-lg shadow">
          <div className="px-3 py-3 border-b border-gray-200">
            <div className="flex items-center justify-between">
-             <h2 className="text-lg font-medium text-gray-900">
-               Lista de Letras ({letras.length})
-             </h2>
-           </div>
+          <h2 className="text-lg font-medium text-gray-900">
+               Lista de Letras ({letras.length}{letrasFiltradas.length > letras.length ? ` de ${letrasFiltradas.length}` : ''})
+          </h2>
+        </div>
+           {letrasFiltradas.length > 100 && (
+             <div className="mt-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+               Mostrando los primeros 100 registros. Usa el filtro de cliente para buscar específicamente.
+             </div>
+           )}
          </div>
         
         {/* Vista Mobile - Formato párrafos */}
@@ -508,90 +621,105 @@ Monto: ${formatCurrency(letra.Monto)}`;
 
         {/* Vista Desktop - Tabla compacta */}
         <div className="hidden sm:block">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Número
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cliente
-                  </th>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cliente
+                    </th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Código Banco
-                  </th>
+                </th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha Inicio
-                  </th>
+                    Fechas
+                </th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha Vencimiento
-                  </th>
+                    Monto/Saldo
+                </th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Monto
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Saldo
-                  </th>
-                  <th className="relative px-3 py-2">
-                    <span className="sr-only">Acciones</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {letras.map((letra) => (
-                  <tr key={letra.Numero} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 text-sm font-medium text-gray-900">
-                      #{letra.Numero}
+                  Estado
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+               {letras.map((letra) => (
+                 <tr key={letra.Numero} className="hover:bg-gray-50">
+                    <td className="px-3 py-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copiarDatosLetra(letra);
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200 transition-colors"
+                      >
+                        <ClipboardDocumentIcon className="h-3 w-3" />
+                        Datos
+                      </button>
                     </td>
                     <td className="px-3 py-2">
                       <div className="text-sm text-gray-900">
                         {letra.NombreCliente}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {letra.Codclie}
+                        #{letra.Numero} - {letra.Codclie}
                       </div>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-900">
-                      {letra.CodBanco || '-'}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-900">
-                      {formatDate(letra.FecIni)}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-900">
-                      {formatDate(letra.FecVen)}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-900">
-                      {formatCurrency(letra.Monto)}
+                      {letra.CodBanco ? (
+                        <div className="flex items-center gap-2">
+                          <span>{letra.CodBanco}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copiarCodigoBanco(letra.CodBanco);
+                            }}
+                            className="inline-flex items-center justify-center w-6 h-6 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+                            title="Copiar código de banco"
+                          >
+                            <ClipboardDocumentIcon className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : '-'}
                     </td>
                     <td className="px-3 py-2">
-                      <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-                        getEstadoColor(letra.Estado) === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                        getEstadoColor(letra.Estado) === 'success' ? 'bg-green-100 text-green-800' :
-                        getEstadoColor(letra.Estado) === 'error' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {getEstadoText(letra.Estado)}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-900">
-                      {formatCurrency(letra.SaldoPendiente)}
-                    </td>
-                    <td className="px-3 py-2 text-right text-sm font-medium">
-                      <button
-                        onClick={() => verDetalle(letra)}
-                        className="text-blue-600 hover:text-blue-900 text-xs"
-                      >
-                        Ver Detalle
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <div className="text-sm text-gray-900">
+                        <span className="text-xs text-gray-500">F.inicio:</span> {formatDate(letra.FecIni)}
+                      </div>
+                      <div className="text-sm text-gray-900">
+                        <span className="text-xs text-gray-500">F.Venc:</span> {formatDate(letra.FecVen)}
+                      </div>
+                  </td>
+                    <td className="px-3 py-2">
+                      <div className="text-sm text-gray-900">
+                    {formatCurrency(letra.Monto)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Monto Pagado: {formatCurrency(letra.MontoPagado)}
+                      </div>
+                  </td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-col items-start gap-1">
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
+                      getEstadoColor(letra.Estado) === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                      getEstadoColor(letra.Estado) === 'success' ? 'bg-green-100 text-green-800' :
+                      getEstadoColor(letra.Estado) === 'error' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {getEstadoText(letra.Estado)}
+                    </span>
+                        <div className="text-xs text-gray-500">
+                          {calcularDiasPorVencer(letra.FecVen)}
+                        </div>
+                      </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           </div>
         </div>
       </div>
@@ -741,8 +869,8 @@ Monto: ${formatCurrency(letra.Monto)}`;
                   </span>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Saldo Pendiente</label>
-                  <p className="text-sm text-gray-900">{formatCurrency(letraSeleccionada.SaldoPendiente)}</p>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Monto Pagado</label>
+                  <p className="text-sm text-gray-900">{formatCurrency(letraSeleccionada.MontoPagado)}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">Días para Vencer</label>
@@ -769,11 +897,11 @@ Monto: ${formatCurrency(letra.Monto)}`;
            <div className="flex items-center gap-2">
              <ClipboardDocumentIcon className="h-4 w-4" />
              <span className="text-sm font-medium">¡Datos copiados!</span>
-           </div>
-         </div>
-       )}
-     </div>
-   );
- };
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default LetrasPage;
