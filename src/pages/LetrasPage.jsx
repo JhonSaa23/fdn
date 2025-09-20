@@ -18,8 +18,9 @@ const LetrasPage = () => {
   const [letras, setLetras] = useState([]);
   const [todasLasLetras, setTodasLasLetras] = useState([]); // Todas las letras cargadas
   const [estadisticas, setEstadisticas] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [datosCargados, setDatosCargados] = useState(false); // Para saber si se han cargado datos
   const [filtroActivo, setFiltroActivo] = useState(1); // 1=Pendientes, 2=Pagadas, 3=Vencidas
   const [filtroCodigoBanco, setFiltroCodigoBanco] = useState(false);
   const [letrasFiltradas, setLetrasFiltradas] = useState([]); // Letras filtradas para mostrar
@@ -27,8 +28,8 @@ const LetrasPage = () => {
   
   // Filtros
   const [filtros, setFiltros] = useState({
-    fechaInicio: '',
-    fechaFin: '',
+    mes: '',
+    año: '',
     estado: '',
     cliente: ''
   });
@@ -56,17 +57,34 @@ const LetrasPage = () => {
     return stats;
   };
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    cargarDatos();
-  }, []);
+  // No cargar datos iniciales - solo cuando se presione buscar
 
   const cargarDatos = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Cargar solo las letras (las estadísticas se calcularán en el frontend)
-      const letrasRes = await axiosClient.get('/letras');
+      // Construir parámetros de consulta basados en los filtros
+      const params = new URLSearchParams();
+      
+      if (filtros.mes) {
+        params.append('mes', filtros.mes);
+      }
+      
+      if (filtros.año) {
+        params.append('año', filtros.año);
+      }
+      
+      if (filtros.estado) {
+        params.append('estado', filtros.estado);
+      }
+      
+      if (filtros.cliente) {
+        params.append('cliente', filtros.cliente);
+      }
+      
+      // Cargar letras con filtros usando la ruta filtradas
+      const letrasRes = await axiosClient.get(`/letras/filtradas?${params.toString()}`);
 
       // Guardar todas las letras
       const todasLasLetrasData = letrasRes.data.data || [];
@@ -81,6 +99,7 @@ const LetrasPage = () => {
       setLetras(letrasPendientes);
       setFiltroActivo(1); // Pendientes por defecto
       setFiltroCodigoBanco(false); // Asegurar que el filtro de código de banco esté desactivado
+      setDatosCargados(true); // Marcar que se han cargado datos
     } catch (err) {
       setError('Error al cargar las letras de cambio');
       console.error('Error:', err);
@@ -90,69 +109,27 @@ const LetrasPage = () => {
   };
 
   const aplicarFiltros = () => {
-    // Filtrar en el frontend sin consultar la base de datos
-    let letrasFiltradas = [...todasLasLetras];
-    
-    // Filtrar por estado
-    if (filtros.estado) {
-      letrasFiltradas = letrasFiltradas.filter(letra => letra.Estado === parseInt(filtros.estado));
-    }
-    
-    // Filtrar por fecha inicio
-    if (filtros.fechaInicio) {
-      letrasFiltradas = letrasFiltradas.filter(letra => {
-        const fechaLetra = new Date(letra.FecIni);
-        const fechaInicio = new Date(filtros.fechaInicio);
-        return fechaLetra >= fechaInicio;
-      });
-    }
-    
-    // Filtrar por fecha fin
-    if (filtros.fechaFin) {
-      letrasFiltradas = letrasFiltradas.filter(letra => {
-        const fechaLetra = new Date(letra.FecIni);
-        const fechaFin = new Date(filtros.fechaFin);
-        return fechaLetra <= fechaFin;
-      });
-    }
-    
-    // Filtrar por cliente
-    if (filtros.cliente) {
-      const clienteBusqueda = filtros.cliente.toLowerCase();
-      letrasFiltradas = letrasFiltradas.filter(letra => 
-        letra.NombreCliente.toLowerCase().includes(clienteBusqueda) ||
-        letra.Codclie.toLowerCase().includes(clienteBusqueda)
-      );
-    }
-    
-    // Filtrar por código de banco si está activo (verde = solo con código)
-    if (filtroCodigoBanco) {
-      letrasFiltradas = letrasFiltradas.filter(letra => letra.CodBanco && letra.CodBanco.trim() !== '');
-    }
-    
-    setLetras(letrasFiltradas);
-      setShowFiltros(false);
+    // Cargar datos desde el servidor con los filtros aplicados
+    cargarDatos();
+    setShowFiltros(false);
   };
 
   const limpiarFiltros = () => {
     setFiltros({
-      fechaInicio: '',
-      fechaFin: '',
+      mes: '',
+      año: '',
       estado: '',
       cliente: ''
     });
     setFiltroCodigoBanco(false);
     setFiltroActivo(1);
     
-    // Recalcular estadísticas con todos los datos (sin filtros)
-    const statsCompletas = calcularEstadisticas(todasLasLetras);
-    setEstadisticasCalculadas(statsCompletas);
-    
-    // Volver a mostrar solo pendientes
-    const letrasPendientes = todasLasLetras.filter(letra => letra.Estado === 1);
-    const letrasLimitadas = letrasPendientes.slice(0, 100);
-    setLetras(letrasLimitadas);
-    setLetrasFiltradas(letrasPendientes);
+    // Limpiar datos mostrados
+    setLetras([]);
+    setTodasLasLetras([]);
+    setEstadisticasCalculadas(null);
+    setLetrasFiltradas([]);
+    setDatosCargados(false);
   };
 
 
@@ -475,8 +452,68 @@ Días por vencer: ${calcularDiasPorVencer(letra.FecVen)}`;
   return (
     <div className="">
 
+      {/* Mensaje inicial cuando no hay datos */}
+      {!datosCargados && !loading && (
+        <div className="bg-white rounded-lg shadow p-6 mb-3">
+          <div className="text-center">
+            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Consulta de Letras de Cambio
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Selecciona un mes y año para consultar las letras de cambio correspondientes.
+            </p>
+            
+            {/* Filtros iniciales */}
+            <div className="max-w-md mx-auto">
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <select
+                  value={filtros.mes}
+                  onChange={(e) => setFiltros({...filtros, mes: e.target.value})}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Seleccionar mes</option>
+                  <option value="1">Enero</option>
+                  <option value="2">Febrero</option>
+                  <option value="3">Marzo</option>
+                  <option value="4">Abril</option>
+                  <option value="5">Mayo</option>
+                  <option value="6">Junio</option>
+                  <option value="7">Julio</option>
+                  <option value="8">Agosto</option>
+                  <option value="9">Septiembre</option>
+                  <option value="10">Octubre</option>
+                  <option value="11">Noviembre</option>
+                  <option value="12">Diciembre</option>
+                </select>
+                <select
+                  value={filtros.año}
+                  onChange={(e) => setFiltros({...filtros, año: e.target.value})}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Seleccionar año</option>
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                  <option value="2022">2022</option>
+                  <option value="2021">2021</option>
+                  <option value="2020">2020</option>
+                </select>
+              </div>
+              <button
+                onClick={aplicarFiltros}
+                disabled={!filtros.mes || !filtros.año}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Buscar Letras
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Estadísticas y Filtros Ultra Compactos */}
-      {estadisticasCalculadas && (
+      {datosCargados && estadisticasCalculadas && (
         <div className="bg-white rounded-lg shadow p-3 mb-3">
            {/* Estadísticas en grid */}
            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mb-3">
@@ -543,24 +580,42 @@ Días por vencer: ${calcularDiasPorVencer(letra.FecVen)}`;
           
            {/* Filtros en grid */}
            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-             <input
-               type="date"
-               value={filtros.fechaInicio}
-               onChange={(e) => setFiltros({...filtros, fechaInicio: e.target.value})}
+             <select
+               value={filtros.mes}
+               onChange={(e) => setFiltros({...filtros, mes: e.target.value})}
                className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-               placeholder="Desde"
-             />
-             <input
-               type="date"
-               value={filtros.fechaFin}
-               onChange={(e) => setFiltros({...filtros, fechaFin: e.target.value})}
+             >
+               <option value="">Seleccionar mes</option>
+               <option value="1">Enero</option>
+               <option value="2">Febrero</option>
+               <option value="3">Marzo</option>
+               <option value="4">Abril</option>
+               <option value="5">Mayo</option>
+               <option value="6">Junio</option>
+               <option value="7">Julio</option>
+               <option value="8">Agosto</option>
+               <option value="9">Septiembre</option>
+               <option value="10">Octubre</option>
+               <option value="11">Noviembre</option>
+               <option value="12">Diciembre</option>
+             </select>
+             <select
+               value={filtros.año}
+               onChange={(e) => setFiltros({...filtros, año: e.target.value})}
                className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-               placeholder="Hasta"
-             />
+             >
+               <option value="">Seleccionar año</option>
+               <option value="2025">2025</option>
+               <option value="2024">2024</option>
+               <option value="2023">2023</option>
+               <option value="2022">2022</option>
+               <option value="2021">2021</option>
+               <option value="2020">2020</option>
+             </select>
              <input
                type="text"
                value={filtros.cliente}
-               onChange={handleClienteChange}
+               onChange={(e) => setFiltros({...filtros, cliente: e.target.value})}
                className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                placeholder="Buscar cliente..."
              />
@@ -598,6 +653,7 @@ Días por vencer: ${calcularDiasPorVencer(letra.FecVen)}`;
 
 
       {/* Lista de Letras en formato párrafos */}
+      {datosCargados && (
       <div className="bg-white rounded-lg shadow">
          <div className="px-3 py-3 border-b border-gray-200">
            <div className="flex items-center justify-between">
@@ -723,6 +779,7 @@ Días por vencer: ${calcularDiasPorVencer(letra.FecVen)}`;
           </div>
         </div>
       </div>
+      )}
 
       {/* Modal de Filtros */}
       {showFiltros && (
@@ -743,25 +800,45 @@ Días por vencer: ${calcularDiasPorVencer(letra.FecVen)}`;
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha Inicio
+                      Mes
                     </label>
-                    <input
-                      type="date"
-                      value={filtros.fechaInicio}
-                      onChange={(e) => setFiltros({...filtros, fechaInicio: e.target.value})}
+                    <select
+                      value={filtros.mes}
+                      onChange={(e) => setFiltros({...filtros, mes: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    >
+                      <option value="">Seleccionar mes</option>
+                      <option value="1">Enero</option>
+                      <option value="2">Febrero</option>
+                      <option value="3">Marzo</option>
+                      <option value="4">Abril</option>
+                      <option value="5">Mayo</option>
+                      <option value="6">Junio</option>
+                      <option value="7">Julio</option>
+                      <option value="8">Agosto</option>
+                      <option value="9">Septiembre</option>
+                      <option value="10">Octubre</option>
+                      <option value="11">Noviembre</option>
+                      <option value="12">Diciembre</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha Fin
+                      Año
                     </label>
-                    <input
-                      type="date"
-                      value={filtros.fechaFin}
-                      onChange={(e) => setFiltros({...filtros, fechaFin: e.target.value})}
+                    <select
+                      value={filtros.año}
+                      onChange={(e) => setFiltros({...filtros, año: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    >
+                      <option value="">Seleccionar año</option>
+                      <option value="2025">2025</option>
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                      <option value="2022">2022</option>
+                      <option value="2021">2021</option>
+                      <option value="2020">2020</option>
+                    </select>
                   </div>
                 </div>
                 
