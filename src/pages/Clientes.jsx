@@ -76,6 +76,9 @@ const Clientes = () => {
   // Estado para laboratorios dinámicos
   const [laboratorios, setLaboratorios] = useState([]);
   const [laboratoriosMap, setLaboratoriosMap] = useState({});
+  
+  // Estado para vendedores
+  const [vendedores, setVendedores] = useState([]);
 
   // Estados para paginación y scroll infinito
   const [allClientes, setAllClientes] = useState([]); // Todos los datos cargados
@@ -91,7 +94,8 @@ const Clientes = () => {
   const [filtros, setFiltros] = useState({
     codlab: '',
     tipificacion: '',
-    activo: ''
+    activo: '',
+    vendedor: ''
   });
 
   // Estados para el formulario
@@ -161,13 +165,26 @@ const Clientes = () => {
     }
   };
 
+  // Cargar vendedores desde la base de datos
+  const cargarVendedores = async () => {
+    try {
+      const response = await axiosClient.get('/clientes/vendedores');
+      if (response.data.success) {
+        setVendedores(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar vendedores:', error);
+      showNotification('error', 'Error al cargar los vendedores');
+    }
+  };
+
   // Cargar TODOS los clientes de una vez
   const cargarTodosLosClientes = async () => {
     try {
       setLoadingAll(true);
       setLoading(true);
       
-      // Cargar todos los clientes sin paginación
+      // Cargar todos los clientes con todos los filtros (incluyendo vendedor)
       const response = await consultarClientes(filtros, 1, 10000); // Número grande para obtener todos
       
       setAllClientes(response.data);
@@ -245,9 +262,10 @@ const Clientes = () => {
     setCurrentPage(1);
     setHasMore(false);
     
-    // Cargar tipificaciones, laboratorios y clientes
+    // Cargar tipificaciones, laboratorios, vendedores y clientes
     cargarTipificaciones();
     cargarLaboratorios();
+    cargarVendedores();
     cargarTodosLosClientes();
   }, []);
 
@@ -262,7 +280,7 @@ const Clientes = () => {
 
   // Resetear paginación cuando cambien los filtros
   useEffect(() => {
-    if (JSON.stringify(filtros) !== JSON.stringify({ codlab: '', tipificacion: '', activo: '' })) {
+    if (JSON.stringify(filtros) !== JSON.stringify({ codlab: '', tipificacion: '', activo: '', vendedor: '' })) {
       setCurrentPage(1);
       setHasMore(false);
     }
@@ -325,7 +343,8 @@ const Clientes = () => {
     setFiltros({
       codlab: '',
       tipificacion: '',
-      activo: ''
+      activo: '',
+      vendedor: ''
     });
     setFiltroCliente('');
     setCurrentPage(1);
@@ -920,6 +939,24 @@ const Clientes = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Vendedor
+                </label>
+                <select
+                  name="vendedor"
+                  value={filtros.vendedor}
+                  onChange={handleFilterChange}
+                  className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                >
+                  <option value="">Todos</option>
+                  {vendedores.map(vendedor => (
+                    <option key={vendedor.codemp} value={vendedor.codemp}>
+                      {vendedor.codemp} - {vendedor.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Filtro Cliente
                 </label>
                 <input
@@ -979,9 +1016,12 @@ const Clientes = () => {
                             <span className="font-medium text-gray-900">
                               {cliente.razon || 'Sin nombre'}
                             </span>
-                            <span className="text-sm text-gray-600">
-                              RUC: {cliente.cliente}
-                            </span>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <span>RUC: {cliente.cliente}</span>
+                              {cliente.codigo_vendedor && (
+                                <span>Vendedor: {cliente.codigo_vendedor}</span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="py-4">
