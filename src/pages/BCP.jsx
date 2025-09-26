@@ -3,7 +3,7 @@ import { useNotification } from '../App';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import ConsultaMovimientos from './ConsultaMovimientos';
-import { importBCPFile, uploadBCPToProd, getBCPData, clearBCP } from '../services/api';
+import { importBCPFile, uploadBCPToProd, getBCPData, getBCPImportData, clearBCP } from '../services/api';
 
 // Función para asegurar que las fechas se muestran en formato YYYYMMDD
 const normalizarFecha = (fecha) => {
@@ -75,9 +75,9 @@ function BCP() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const result = await getBCPData();
-        if (Array.isArray(result)) {
-          setData(result);
+        const result = await getBCPImportData();
+        if (result.success && Array.isArray(result.data)) {
+          setData(result.data);
         }
       } catch (error) {
         console.error('Error al cargar datos iniciales:', error);
@@ -187,9 +187,9 @@ function BCP() {
   // Función para refrescar los datos
   const refreshData = async () => {
     try {
-      const result = await getBCPData();
-      if (Array.isArray(result)) {
-        setData(result);
+      const result = await getBCPImportData();
+      if (result.success && Array.isArray(result.data)) {
+        setData(result.data);
       }
     } catch (error) {
       console.error('Error al refrescar datos:', error);

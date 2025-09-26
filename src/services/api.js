@@ -69,6 +69,20 @@ export const getBCPData = async () => {
   }
 };
 
+// Obtener datos de t_movimiento (para vista de importación)
+export const getBCPImportData = async () => {
+  try {
+    const response = await axiosClient.get('/bcp/import-data');
+    return response.data;
+  } catch (error) {
+    console.error('Error obteniendo datos de importación BCP:', error);
+    return { 
+      success: false, 
+      error: error.response?.data?.error || error.message || 'Error desconocido' 
+    };
+  }
+};
+
 export const importBCPFile = async (formData) => {
   try {
     const response = await axiosClient.post('/bcp/import', formData, {
@@ -346,7 +360,7 @@ export const downloadDbf = async (params) => {
 // Consultas
 export const consultarMovimientos = async (filtros) => {
   try {
-    const response = await axiosClient.post('/movimientos/consultar', filtros);
+    const response = await axiosClient.post('/bcp/consultar', filtros);
     return response.data;
   } catch (error) {
     console.error('Error consultando movimientos:', error);
@@ -359,7 +373,7 @@ export const consultarMovimientos = async (filtros) => {
 
 export const eliminarMovimientos = async (filtros) => {
   try {
-    const response = await axiosClient.post('/movimientos/eliminar', filtros);
+    const response = await axiosClient.post('/bcp/eliminar', filtros);
     return response.data;
   } catch (error) {
     console.error('Error eliminando movimientos:', error);
