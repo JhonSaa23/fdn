@@ -557,6 +557,56 @@ export async function descargarExcelNotasLoreal(anio, mes) {
   }
 }
 
+// Filtro avanzado para Notas Loreal
+export const consultarFiltroAvanzadoNotasLoreal = async (filtros) => {
+  try {
+    const response = await axiosClient.post('/reportes/loreal-notas/filtro-avanzado', filtros);
+    return response.data;
+  } catch (error) {
+    console.error('Error consultando filtro avanzado Notas Loreal:', error);
+    return { 
+      success: false, 
+      error: error.response?.data?.error || error.message || 'Error al consultar filtro avanzado' 
+    };
+  }
+};
+
+// Descargar Excel del filtro avanzado para Notas Loreal
+export const descargarExcelFiltroAvanzadoNotasLoreal = async (filtros) => {
+  try {
+    const response = await axiosClient.post('/reportes/loreal-notas/filtro-avanzado/excel', filtros, {
+      responseType: 'blob'
+    });
+    
+    // Crear un enlace temporal para descargar el archivo
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Generar nombre de archivo con filtros aplicados
+    let filename = 'Notas_Credito_Filtro_Avanzado';
+    if (filtros.fechaInicio) filename += `_desde_${filtros.fechaInicio}`;
+    if (filtros.fechaFin) filename += `_hasta_${filtros.fechaFin}`;
+    if (filtros.ruc) filename += `_RUC_${filtros.ruc}`;
+    if (filtros.laboratorio) filename += `_Lab_${filtros.laboratorio}`;
+    filename += '.xlsx';
+    
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error descargando Excel del filtro avanzado Notas Loreal:', error);
+    return { 
+      success: false, 
+      error: error.response?.data?.error || error.message || 'Error al descargar Excel' 
+    };
+  }
+};
+
 // Escalas
 export const consultarEscalas = async (filtros = {}) => {
   try {
