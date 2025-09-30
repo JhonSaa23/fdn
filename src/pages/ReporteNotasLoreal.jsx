@@ -243,21 +243,56 @@ function ReporteNotasLoreal() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-gray-900">Filtro Avanzado</h3>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setMostrarFiltroAvanzado(false)}
-                  >
-                    Volver a Filtros Normales
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={handleConsultarFiltroAvanzado}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                          Consultando...
+                        </>
+                      ) : 'Consultar'}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleLimpiarFiltrosAvanzados}
+                    >
+                      Limpiar Filtros
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="success"
+                      onClick={handleDescargarExcelFiltroAvanzado}
+                      disabled={loading || resultados.length === 0}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                          Descargando...
+                        </>
+                      ) : 'Descargar Excel'}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setMostrarFiltroAvanzado(false)}
+                    >
+                      Volver a Filtros Normales
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Fecha Inicio */}
                   <div>
-                    <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha Inicio (Opcional)
-                    </label>
                     <input
                       type="date"
                       id="fechaInicio"
@@ -265,17 +300,12 @@ function ReporteNotasLoreal() {
                       value={filtroAvanzado.fechaInicio}
                       onChange={handleChangeFiltroAvanzado}
                       className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      placeholder="Fecha Inicio (Opcional)"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Dejar vacío para traer desde el inicio
-                    </p>
                   </div>
 
                   {/* Fecha Fin */}
                   <div>
-                    <label htmlFor="fechaFin" className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha Fin (Opcional)
-                    </label>
                     <input
                       type="date"
                       id="fechaFin"
@@ -283,17 +313,12 @@ function ReporteNotasLoreal() {
                       value={filtroAvanzado.fechaFin}
                       onChange={handleChangeFiltroAvanzado}
                       className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      placeholder="Fecha Fin (Opcional)"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Dejar vacío para traer hasta el final
-                    </p>
                   </div>
 
                   {/* RUC */}
                   <div>
-                    <label htmlFor="ruc" className="block text-sm font-medium text-gray-700 mb-1">
-                      RUC (Opcional)
-                    </label>
                     <input
                       type="text"
                       id="ruc"
@@ -301,18 +326,12 @@ function ReporteNotasLoreal() {
                       value={filtroAvanzado.ruc}
                       onChange={handleChangeFiltroAvanzado}
                       className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                      placeholder="Ej: 20484204439"
+                      placeholder="RUC (Opcional)"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Dejar vacío para todos los RUC
-                    </p>
                   </div>
 
                   {/* Laboratorio */}
                   <div>
-                    <label htmlFor="laboratorio" className="block text-sm font-medium text-gray-700 mb-1">
-                      Laboratorio (Opcional)
-                    </label>
                     <input
                       type="text"
                       id="laboratorio"
@@ -320,51 +339,9 @@ function ReporteNotasLoreal() {
                       value={filtroAvanzado.laboratorio}
                       onChange={handleChangeFiltroAvanzado}
                       className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                      placeholder="Ej: 83, 49"
+                      placeholder="Laboratorio (Opcional)"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Dejar vacío para todos los laboratorios
-                    </p>
                   </div>
-                </div>
-
-                {/* Botones de acción del filtro avanzado */}
-                <div className="flex space-x-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    onClick={handleConsultarFiltroAvanzado}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                        Consultando...
-                      </>
-                    ) : 'Consultar'}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleLimpiarFiltrosAvanzados}
-                  >
-                    Limpiar Filtros
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="success"
-                    onClick={handleDescargarExcelFiltroAvanzado}
-                    disabled={loading || resultados.length === 0}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                        Descargando...
-                      </>
-                    ) : 'Descargar Excel'}
-                  </Button>
                 </div>
               </div>
             )}
@@ -378,6 +355,9 @@ function ReporteNotasLoreal() {
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Número</th>
+                {mostrarFiltroAvanzado && (
+                  <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                )}
                 <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Observación</th>
                 <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Código Cliente</th>
                 <th className="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Documento</th>
@@ -400,6 +380,9 @@ function ReporteNotasLoreal() {
                 resultados.map((item, index) => (
                   <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                     <td className="px-4 py-2 text-sm text-gray-900">{item.Numero}</td>
+                    {mostrarFiltroAvanzado && (
+                      <td className="px-4 py-2 text-sm text-gray-900">{item.Fecha}</td>
+                    )}
                     <td className="px-4 py-2 text-sm text-gray-900">{item.Observacion}</td>
                     <td className="px-4 py-2 text-sm text-gray-900">{item.Codclie}</td>
                     <td className="px-4 py-2 text-sm text-gray-900">{item.Documento}</td>
@@ -419,7 +402,7 @@ function ReporteNotasLoreal() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="16" className="px-4 py-2 text-sm text-gray-500 text-center">
+                  <td colSpan={mostrarFiltroAvanzado ? "17" : "16"} className="px-4 py-2 text-sm text-gray-500 text-center">
                     {loading ? 'Cargando resultados...' : 'No hay datos disponibles'}
                   </td>
                 </tr>
