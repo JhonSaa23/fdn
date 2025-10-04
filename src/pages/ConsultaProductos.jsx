@@ -366,60 +366,75 @@ const ConsultaProductos = () => {
                         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                             <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                 <div className="sm:flex sm:items-start">
-                                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                                        <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                    </div>
                                     <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                                         <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                                             Información Detallada del Saldo
                                         </h3>
                                         
                                         {detalleSaldo && (
-                                            <div className="space-y-3">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700">Código Producto</label>
-                                                        <p className="mt-1 text-sm text-gray-900">{detalleSaldo.codigoProducto}</p>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700">Lote</label>
-                                                        <p className="mt-1 text-sm text-gray-900">{detalleSaldo.lote || '-'}</p>
-                                                    </div>
-                                                </div>
+                                            <div className="space-y-4">
                                                 
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700">Cantidad Comprada</label>
-                                                        <p className="mt-1 text-sm text-gray-900">{detalleSaldo.cantidadComprada || '-'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700">F. Ingreso</label>
-                                                        <p className="mt-1 text-sm text-gray-900">
-                                                            {detalleSaldo.fechaIngreso ? formatDateTime(detalleSaldo.fechaIngreso) : '-'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                
+                                                {/* Facturas de compra */}
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700">Factura de Compra</label>
-                                                    <p className="mt-1 text-sm text-gray-900">{detalleSaldo.facturaCompra || '-'}</p>
-                                                </div>
-                                                
-                                                <div className="grid grid-cols-3 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700">Faltan</label>
-                                                        <p className="mt-1 text-sm text-gray-900">{detalleSaldo.faltan || '-'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700">Sobran</label>
-                                                        <p className="mt-1 text-sm text-gray-900">{detalleSaldo.sobran || '-'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700">Mal</label>
-                                                        <p className="mt-1 text-sm text-gray-900">{detalleSaldo.mal || '-'}</p>
-                                                    </div>
+                                                    
+                                                    {detalleSaldo.facturas && detalleSaldo.facturas.length > 0 ? (
+                                                        <div className="space-y-3">
+                                                            {detalleSaldo.facturas.map((factura, index) => (
+                                                                <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <h5 className="text-sm font-medium text-blue-900">
+                                                                            Factura: {factura.numero}
+                                                                        </h5>
+                                                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                                                            #{index + 1}
+                                                                        </span>
+                                                                    </div>
+                                                                    
+                                                                    <div className="grid grid-cols-2 gap-3 text-xs">
+                                                                        <div>
+                                                                            <label className="block font-medium text-gray-700">Cantidad</label>
+                                                                            <p className="text-gray-900">{factura.cantidad || '-'}</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block font-medium text-gray-700">Precio</label>
+                                                                            <p className="text-gray-900">S/ {factura.precio || '-'}</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block font-medium text-gray-700">Subtotal</label>
+                                                                            <p className="text-gray-900">S/ {factura.subtotal || '-'}</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block font-medium text-gray-700">F. Ingreso</label>
+                                                                            <p className="text-gray-900">
+                                                                                {factura.fechaIngreso ? formatDateTime(factura.fechaIngreso) : '-'}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div className="mt-3 pt-2 border-t border-blue-200">
+                                                                        <div className="grid grid-cols-3 gap-3 text-xs">
+                                                                            <div>
+                                                                                <label className="block font-medium text-gray-700">Faltan</label>
+                                                                                <p className="text-red-600 font-medium">{factura.faltan || '0'}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <label className="block font-medium text-gray-700">Sobran</label>
+                                                                                <p className="text-green-600 font-medium">{factura.sobran || '0'}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <label className="block font-medium text-gray-700">Mal</label>
+                                                                                <p className="text-orange-600 font-medium">{factura.mal || '0'}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center py-4 text-gray-500">
+                                                            No se encontraron facturas de compra
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
