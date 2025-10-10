@@ -35,6 +35,7 @@ import GestionUsuarios from './pages/GestionUsuarios';
 import Movimientos from './pages/Movimientos';
 import HistorialCliente from './pages/HistorialCliente';
 import LetrasPage from './pages/LetrasPage';
+import VentasAcFarma from './pages/VentasAcFarma';
 import Login from './pages/Login';
 import AccessDenied from './components/AccessDenied';
 
@@ -173,6 +174,7 @@ function App() {
                       <Route path="/reportes/concurso" element={<ReporteConcurso />} />
                       <Route path="/reportes/loreal-notas" element={<ReporteNotasLoreal />} />
                       <Route path="/reportes/compras-laboratorio" element={<ReporteComprasLaboratorio />} />
+                      <Route path="/reportes/ventas-ac-farma" element={<VentasAcFarma />} />
                       <Route path="/juego-tres-en-raya" element={<JuegoTresEnRaya />} />
                       <Route path="/usersbot" element={<UsersBot />} />
                       <Route path="/gestion-usuarios" element={<GestionUsuarios />} />

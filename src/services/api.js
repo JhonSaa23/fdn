@@ -1308,3 +1308,63 @@ export const consultarHistorialCliente = async (filtros) => {
     throw error;
   }
 };
+
+// ===== VENTAS AC FARMA =====
+
+export const consultarVentasAcFarma = async (fecha, codigoLaboratorio = '') => {
+  try {
+    const params = new URLSearchParams();
+    params.append('fecha', fecha);
+    if (codigoLaboratorio && codigoLaboratorio.trim() !== '') {
+      params.append('codigoLaboratorio', codigoLaboratorio.trim());
+    }
+    
+    const response = await axiosClient.get(`/ventas-ac-farma/consultar?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error consultando Ventas AC Farma:', error);
+    throw error;
+  }
+};
+
+export const exportarVentasAcFarmaExcel = async (fecha, codigoLaboratorio = '') => {
+  try {
+    const params = new URLSearchParams();
+    params.append('fecha', fecha);
+    if (codigoLaboratorio && codigoLaboratorio.trim() !== '') {
+      params.append('codigoLaboratorio', codigoLaboratorio.trim());
+    }
+    
+    const response = await axiosClient.get(`/ventas-ac-farma/exportar?${params.toString()}`, {
+      responseType: 'blob'
+    });
+    
+    // Crear link de descarga
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    
+    const fechaFormateada = new Date(fecha).toISOString().split('T')[0];
+    const nombreArchivo = `Ventas_AC_Farma_${fechaFormateada}${codigoLaboratorio ? '_Lab' + codigoLaboratorio : ''}.xlsx`;
+    
+    link.setAttribute('download', nombreArchivo);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    
+    return { success: true, message: 'Excel descargado exitosamente' };
+  } catch (error) {
+    console.error('Error exportando Ventas AC Farma a Excel:', error);
+    throw error;
+  }
+};
+
+export const obtenerLaboratoriosAcFarma = async () => {
+  try {
+    const response = await axiosClient.get('/ventas-ac-farma/laboratorios');
+    return response.data;
+  } catch (error) {
+    console.error('Error obteniendo laboratorios AC Farma:', error);
+    throw error;
+  }
+};

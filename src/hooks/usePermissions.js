@@ -113,7 +113,8 @@ export const usePermissions = () => {
       '/infocorp', '/clie-vend', '/usersbot', '/gestion-usuarios', '/escalas', 
       '/kardex-tabla', '/guias', '/multi-accion', '/consulta-productos', 
       '/devolucion-canje', '/historial-cliente', '/letras', '/reportes/picking-procter',
-      '/reportes/concurso', '/reportes/loreal-notas', '/reportes/compras-laboratorio'
+      '/reportes/concurso', '/reportes/loreal-notas', '/reportes/compras-laboratorio',
+      '/reportes/ventas-ac-farma'
     ];
     
     return rutasValidas.includes(route);
