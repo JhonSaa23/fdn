@@ -848,6 +848,40 @@ export const verificarCodigo = async (idus, codigo, mantenerSesion = false) => {
   }
 };
 
+// =====================================================
+// FUNCIONES DE AUTENTICACIÓN CON CONTRASEÑA
+// =====================================================
+
+export const loginWithPassword = async (credentials) => {
+  try {
+    const response = await axiosClient.post('/auth-password/login', credentials);
+    return response.data;
+  } catch (error) {
+    console.error('Error en login con contraseña:', error);
+    throw error;
+  }
+};
+
+export const cambiarPassword = async (passwordData) => {
+  try {
+    const response = await axiosClient.post('/auth-password/cambiar-password', passwordData);
+    return response.data;
+  } catch (error) {
+    console.error('Error cambiando contraseña:', error);
+    throw error;
+  }
+};
+
+export const establecerPassword = async (passwordData) => {
+  try {
+    const response = await axiosClient.post('/auth-password/establecer-password', passwordData);
+    return response.data;
+  } catch (error) {
+    console.error('Error estableciendo contraseña:', error);
+    throw error;
+  }
+};
+
 
 export const cerrarSesion = async (idus) => {
   try {

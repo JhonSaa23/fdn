@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { validarDocumento, enviarCodigo, verificarCodigo } from '../services/api';
+import { validarDocumento, loginWithPassword, establecerPassword } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 
 const Login = () => {
@@ -8,16 +8,17 @@ const Login = () => {
   const location = useLocation();
   const { login, isAuthenticated, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('admin');
-  const [step, setStep] = useState(1); // 1: DNI/RUC, 2: Código
+  const [step, setStep] = useState(1); // 1: DNI/RUC, 2: Contraseña
   const [formData, setFormData] = useState({
     documento: '',
-    codigo: ''
+    password: ''
   });
   const [countdown, setCountdown] = useState(0);
   const [errors, setErrors] = useState({});
   const [rememberSession, setRememberSession] = useState(false);
   const [loading, setLoading] = useState(false);
   const [usuarioData, setUsuarioData] = useState(null);
+  const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false);
 
   // Countdown timer
   useEffect(() => {
@@ -68,20 +69,33 @@ const Login = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const cleanValue = value.replace(/\D/g, '');
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: cleanValue
-    }));
-
-    // Validación en tiempo real
     if (name === 'documento') {
+      const cleanValue = value.replace(/\D/g, '');
+      setFormData(prev => ({
+        ...prev,
+        [name]: cleanValue
+      }));
+
+      // Validación en tiempo real
       const error = validateDocument(cleanValue);
       setErrors(prev => ({
         ...prev,
         documento: cleanValue.length > 0 && !error.includes('válido') ? error : ''
       }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+      
+      // Limpiar error cuando el usuario empiece a escribir
+      if (errors[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: ''
+        }));
+      }
     }
   };
 
@@ -103,18 +117,17 @@ const Login = () => {
       const response = await validarDocumento(cleanDoc, tipoUsuario);
       
       if (response.success) {
-        // Guardar datos del usuario
+        // Guardar datos del usuario y pasar al paso 2 (contraseña)
         setUsuarioData(response.data);
         
-        // Enviar código
-        const codigoResponse = await enviarCodigo(response.data.idus, response.data.numeroCelular);
-        
-        if (codigoResponse.success) {
-          setStep(2);
-          setCountdown(60); // 1 minuto
+        // Verificar si necesita establecer contraseña
+        if (!response.data.tienePassword) {
+          setNeedsPasswordSetup(true);
         } else {
-          setErrors({ documento: 'Error enviando código' });
+          setNeedsPasswordSetup(false);
         }
+        
+        setStep(2);
       } else {
         setErrors({ documento: response.message });
       }
@@ -140,15 +153,16 @@ const Login = () => {
     }
   };
 
-  const handleVerifyCode = async (e) => {
+  const handleVerifyPassword = async (e) => {
     e.preventDefault();
-    if (formData.codigo.length !== 6) {
-      setErrors({ codigo: 'El código debe tener 6 dígitos' });
+    
+    if (!formData.password) {
+      setErrors({ password: 'Contraseña es requerida' });
       return;
     }
 
     if (!usuarioData) {
-      setErrors({ codigo: 'Error: datos de usuario no encontrados' });
+      setErrors({ password: 'Error: datos de usuario no encontrados' });
       return;
     }
 
@@ -156,45 +170,76 @@ const Login = () => {
     setErrors({});
 
     try {
-      // Verificar código en el backend
-      const response = await verificarCodigo(usuarioData.idus, formData.codigo, rememberSession);
+      // Obtener IP y dispositivo
+      const ipAcceso = await fetch('https://api.ipify.org?format=json')
+        .then(res => res.json())
+        .then(data => data.ip)
+        .catch(() => '127.0.0.1');
       
+      const dispositivo = navigator.userAgent;
+
+      let response;
+
+      if (needsPasswordSetup) {
+        // Si necesita establecer contraseña, usar el endpoint de establecer contraseña
+        response = await establecerPassword({
+          idus: usuarioData.idus,
+          password: formData.password
+        });
+
+        if (response.success) {
+          // Después de establecer la contraseña, hacer login automáticamente
+          response = await loginWithPassword({
+            dni: formData.documento,
+            password: formData.password,
+            mantenerSesion: rememberSession,
+            ipAcceso,
+            dispositivo
+          });
+        }
+      } else {
+        // Si ya tiene contraseña, hacer login normal
+        response = await loginWithPassword({
+          dni: formData.documento,
+          password: formData.password,
+          mantenerSesion: rememberSession,
+          ipAcceso,
+          dispositivo
+        });
+      }
+
       if (response.success) {
         // Usar el hook de autenticación para guardar la sesión con el token JWT
         login(response.data.usuario, response.data.sesion, response.data.token);
         
-        
+        // Mostrar mensaje de éxito
+        console.log('✅ Login exitoso:', {
+          usuario: response.data.usuario.nombres,
+          tipoUsuario: response.data.usuario.tipoUsuario,
+          tokenExpiry: response.data.sesion.tokenExpiry,
+          mantenerSesion: response.data.sesion.mantenerSesion
+        });
+
         // Redirigir a la página que intentaba acceder o al home
         const from = location.state?.from?.pathname || '/';
         navigate(from, { replace: true });
-      } else {
-        setErrors({ codigo: response.message });
       }
     } catch (error) {
-      console.error('Error verificando código:', error);
-      setErrors({ 
-        codigo: error.response?.data?.message || 'Error de conexión' 
-      });
+      console.error('❌ Error en verificación:', error);
+      
+      // Manejar diferentes tipos de errores
+      if (error.response?.data?.message) {
+        setErrors({ password: error.response.data.message });
+      } else if (error.message) {
+        setErrors({ password: error.message });
+      } else {
+        setErrors({ password: 'Error interno del servidor' });
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendCode = async () => {
-    if (countdown > 0 || !usuarioData) return;
-    
-    setLoading(true);
-    try {
-      const response = await enviarCodigo(usuarioData.idus, usuarioData.numeroCelular);
-      if (response.success) {
-        setCountdown(60);
-      }
-    } catch (error) {
-      console.error('Error reenviando código:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex">
@@ -411,89 +456,95 @@ const Login = () => {
                      }
                    }}
                  >
-                   {loading ? 'Validando...' : 'Enviar Código'}
+                   {loading ? 'Validando...' : 'Validar Documento'}
                  </button>
                </form>
              ) : (
-               <form onSubmit={handleVerifyCode} className="space-y-5">
+               <form onSubmit={handleVerifyPassword} className="space-y-5">
                  <div className="text-center mb-4">
-                   <p className="text-sm text-gray-600 mb-2">
-                     Hemos enviado un código de verificación a tu WhatsApp
-                   </p>
+                   {needsPasswordSetup ? (
+                     <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                       <p className="text-sm text-blue-800 mb-2">
+                         <strong>⚠️ Este documento no tiene una contraseña configurada</strong>
+                       </p>
+                       <p className="text-xs text-blue-700">
+                         Ingresa una contraseña que puedas recordar para establecer tu acceso al sistema.
+                       </p>
+                     </div>
+                   ) : (
+                     <p className="text-sm text-gray-600 mb-2">
+                       Ingresa tu contraseña para continuar
+                     </p>
+                   )}
                    <p className="text-xs text-gray-500">
                      Documento: {usuarioData?.dniRuc || formData.documento}
                    </p>
                  </div>
 
                  <div>
-                   <label htmlFor="codigo" className="block text-xs font-medium text-gray-700 mb-2">
-                     Código de Verificación
+                   <label htmlFor="password" className="block text-xs font-medium text-gray-700 mb-2">
+                     Contraseña
                    </label>
                    <input
-                     type="text"
-                     id="codigo"
-                     name="codigo"
-                     value={formData.codigo}
+                     type="password"
+                     id="password"
+                     name="password"
+                     value={formData.password}
                      onChange={handleInputChange}
-                     className={`w-full px-4 py-3 border rounded-lg bg-white shadow-sm focus:ring-0 focus:outline-none transition-all duration-200 hover:border-gray-400 text-center text-lg tracking-widest ${
-                       errors.codigo ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+                     className={`w-full px-4 py-3 border rounded-lg bg-white shadow-sm focus:ring-0 focus:outline-none transition-all duration-200 hover:border-gray-400 ${
+                       errors.password ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
                      }`}
-                     placeholder="000000"
-                     maxLength={6}
+                     placeholder={needsPasswordSetup ? "Establece tu contraseña" : "Ingresa tu contraseña"}
                      required
                    />
-                   {errors.codigo && (
-                     <p className="mt-1 text-xs text-red-600">{errors.codigo}</p>
+                   {errors.password && (
+                     <p className="mt-1 text-xs text-red-600">{errors.password}</p>
                    )}
                  </div>
 
-                 <div className="flex items-center justify-between">
+                 <div className="text-center">
                    <button
                      type="button"
-                     onClick={() => setStep(1)}
+                     onClick={() => {
+                       setStep(1);
+                       setFormData(prev => ({ ...prev, password: '' }));
+                       setErrors({});
+                       setNeedsPasswordSetup(false);
+                       setUsuarioData(null);
+                     }}
                      className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
                    >
                      ← Cambiar documento
-                   </button>
-                   
-                   <button
-                     type="button"
-                     onClick={handleResendCode}
-                     disabled={countdown > 0 || loading}
-                     className={`text-sm transition-colors ${
-                       countdown > 0 || loading
-                         ? 'text-gray-400 cursor-not-allowed' 
-                         : 'text-blue-600 hover:text-blue-800'
-                     }`}
-                   >
-                     {loading ? 'Enviando...' : countdown > 0 ? `Reenviar en ${countdown}s` : 'Reenviar código'}
                    </button>
                  </div>
 
                  <button
                    type="submit"
-                   disabled={loading}
+                   disabled={!formData.password || loading}
                    className={`w-full py-3 px-4 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${
-                     loading
-                       ? 'text-gray-400 bg-gray-200 cursor-not-allowed'
-                       : 'text-white'
+                     formData.password && !loading
+                       ? 'text-white'
+                       : 'text-gray-400 bg-gray-200 cursor-not-allowed'
                    }`}
-                   style={!loading ? {
+                   style={formData.password && !loading ? {
                      backgroundColor: 'var(--color-primary)',
                      '--tw-ring-color': 'var(--color-primary)'
                    } : {}}
                    onMouseEnter={(e) => {
-                     if (!loading) {
+                     if (formData.password && !loading) {
                        e.target.style.backgroundColor = 'var(--color-primary-dark)';
                      }
                    }}
                    onMouseLeave={(e) => {
-                     if (!loading) {
+                     if (formData.password && !loading) {
                        e.target.style.backgroundColor = 'var(--color-primary)';
                      }
                    }}
                  >
-                   {loading ? 'Verificando...' : 'Verificar Código'}
+                   {loading ? 
+                     (needsPasswordSetup ? 'Estableciendo contraseña...' : 'Iniciando sesión...') : 
+                     (needsPasswordSetup ? 'Establecer Contraseña' : 'Iniciar Sesión')
+                   }
                  </button>
                </form>
              )}
