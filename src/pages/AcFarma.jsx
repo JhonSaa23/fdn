@@ -49,16 +49,52 @@ const AcFarma = () => {
     cargarDatos();
   }, []);
 
-  // Generar columnas dinámicamente basado en los datos
+  // Generar columnas con campos específicos y ordenados
   const generarColumnas = () => {
     if (datosMostrados.length === 0) return [];
     
     const primeraFila = datosMostrados[0];
-    return Object.keys(primeraFila).map(campo => ({
-      key: campo,
-      header: campo,
-      accessor: campo
-    }));
+    const camposDisponibles = Object.keys(primeraFila);
+    
+    // Definir el orden específico de los campos
+    const ordenCampos = [
+      'TipoDoc',
+      'NroPedido',
+      'Fecha',
+      'RUC',
+      'Cliente',
+      'CodPro',
+      'Producto'
+    ];
+    
+    // Crear columnas en el orden especificado
+    const columnasOrdenadas = [];
+    
+    // Agregar campos en el orden específico si existen
+    ordenCampos.forEach(campo => {
+      if (camposDisponibles.includes(campo)) {
+        columnasOrdenadas.push({
+          key: campo,
+          header: campo === 'TipoDoc' ? 'Tipo Doc.' : 
+                  campo === 'NroPedido' ? 'Nro Pedido' :
+                  campo === 'CodPro' ? 'Código' : campo,
+          accessor: campo
+        });
+      }
+    });
+    
+    // Agregar campos restantes que no están en el orden específico
+    camposDisponibles.forEach(campo => {
+      if (!ordenCampos.includes(campo)) {
+        columnasOrdenadas.push({
+          key: campo,
+          header: campo,
+          accessor: campo
+        });
+      }
+    });
+    
+    return columnasOrdenadas;
   };
 
   const columnas = generarColumnas();
@@ -91,7 +127,7 @@ const AcFarma = () => {
                 {columnas.map((columna, index) => (
                   <th
                     key={index}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-3 py-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0"
                   >
                     {columna.header}
                   </th>
@@ -117,7 +153,7 @@ const AcFarma = () => {
                     {columnas.map((columna, colIndex) => (
                       <td
                         key={colIndex}
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-100 last:border-r-0"
                       >
                         {fila[columna.accessor]}
                       </td>
