@@ -266,6 +266,7 @@ const VentasAcFarma = () => {
                     <th className="px-3 py-2 text-right text-xs font-medium text-gray-700 uppercase">Total</th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Línea</th>
                     <th className="px-3 py-2 text-center text-xs font-medium text-gray-700 uppercase">Tipo</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Nro Pedido</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -294,12 +295,13 @@ const VentasAcFarma = () => {
                       <td className="px-3 py-2 text-xs text-center">
                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                           item.TipoDoc === 'Fa' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-green-100 text-green-800'
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
                         }`}>
                           {item.TipoDoc}
                         </span>
                       </td>
+                      <td className="px-3 py-2 text-xs text-gray-900">{item.NroPedido || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -337,6 +339,14 @@ const VentasAcFarma = () => {
                       <div>
                         <span className="text-gray-600">Número:</span>
                         <span className="ml-1 text-gray-900 font-medium">{item.Numero}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Nro Pedido:</span>
+                        <span className="ml-1 text-gray-900 font-medium">{item.NroPedido || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Tipo Doc.:</span>
+                        <span className="ml-1 text-gray-900 font-medium">{item.TipoDoc || '-'}</span>
                       </div>
                       <div className="col-span-2">
                         <span className="text-gray-600">Vendedor:</span>
