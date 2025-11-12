@@ -37,6 +37,7 @@ import HistorialCliente from './pages/HistorialCliente';
 import LetrasPage from './pages/LetrasPage';
 import AcFarma from './pages/AcFarma';
 import VentasAcFarma from './pages/VentasAcFarma';
+import BuscarProductos from './pages/BuscarProductos';
 import Login from './pages/Login';
 import AccessDenied from './components/AccessDenied';
 
@@ -183,6 +184,7 @@ function App() {
                       <Route path="/historial-cliente" element={<HistorialCliente />} />
                       <Route path="/letras" element={<LetrasPage />} />
                       <Route path="/rupero/ac-farma" element={<AcFarma />} />
+                      <Route path="/buscar-productos" element={<BuscarProductos />} />
                     </Routes>
                   </div>
                 </main>

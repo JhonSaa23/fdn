@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.0.18",
+    "@zxing/browser": "^0.1.5",
     "axios": "^1.6.2",
     "clsx": "^2.0.0",
+    "html5-qrcode": "^2.3.8",
+    "quagga": "^0.12.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.0",
