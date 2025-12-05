@@ -142,8 +142,42 @@ const Pedidos = () => {
 
       if (data.success) {
         showNotification('success', data.message);
-        // Recargar la lista de pedidos
-        buscarPedidos();
+        
+        // Si hay un filtro de estado activo y el nuevo estado no coincide, remover el pedido de la lista
+        const filtroEstadoActivo = filtros.estado && filtros.estado !== '';
+        const estadoFiltro = filtroEstadoActivo ? parseInt(filtros.estado) : null;
+        const estadoNuevo = data.estadoFinal;
+        
+        // Si el filtro está activo y el nuevo estado no coincide con el filtro, remover el pedido
+        if (filtroEstadoActivo && estadoFiltro !== estadoNuevo) {
+          // El pedido ya no cumple con el filtro, removerlo de la lista
+          setPedidos(prevPedidos => 
+            prevPedidos.filter(pedido => {
+              // Comparar números normalizados (trim y case-insensitive)
+              const numeroPedido = String(pedido.Numero || '').trim();
+              const numeroComparar = String(numeroLimpio).trim();
+              return numeroPedido !== numeroComparar;
+            })
+          );
+        } else {
+          // Actualizar solo el pedido específico en el estado sin recargar toda la lista
+          setPedidos(prevPedidos => 
+            prevPedidos.map(pedido => {
+              // Comparar números normalizados
+              const numeroPedido = String(pedido.Numero || '').trim();
+              const numeroComparar = String(numeroLimpio).trim();
+              
+              if (numeroPedido === numeroComparar) {
+                return {
+                  ...pedido,
+                  Estado: data.estadoFinal,
+                  EstadoDescripcion: data.estadoFinalDescripcion
+                };
+              }
+              return pedido;
+            })
+          );
+        }
       } else {
         showNotification('danger', data.error || 'Error al autorizar el pedido');
       }
@@ -482,29 +516,31 @@ const Pedidos = () => {
                             </button>
                           )}
                           
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm(`¿Estás seguro de que deseas eliminar el pedido ${pedido.Numero}?`)) {
-                                eliminarPedido(pedido.Numero);
-                              }
-                            }}
-                            disabled={eliminandoPedido === pedido.Numero}
-                            className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
-                            title="Eliminar pedido"
-                          >
-                            {eliminandoPedido === pedido.Numero ? (
-                              <>
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                Eliminando...
-                              </>
-                            ) : (
-                              <>
-                                <TrashIcon className="w-3 h-3" />
-                                Eliminar
-                              </>
-                            )}
-                          </button>
+                          {(pedido.Estado === 1 || pedido.Estado === 2 || pedido.Estado === 3) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`¿Estás seguro de que deseas eliminar el pedido ${pedido.Numero}?`)) {
+                                  eliminarPedido(pedido.Numero);
+                                }
+                              }}
+                              disabled={eliminandoPedido === pedido.Numero}
+                              className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                              title="Eliminar pedido"
+                            >
+                              {eliminandoPedido === pedido.Numero ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                  Eliminando...
+                                </>
+                              ) : (
+                                <>
+                                  <TrashIcon className="w-3 h-3" />
+                                  Eliminar
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -594,29 +630,31 @@ const Pedidos = () => {
                         </button>
                       )}
                       
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`¿Estás seguro de que deseas eliminar el pedido ${pedido.Numero}?`)) {
-                            eliminarPedido(pedido.Numero);
-                          }
-                        }}
-                        disabled={eliminandoPedido === pedido.Numero}
-                        className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
-                        title="Eliminar pedido"
-                      >
-                        {eliminandoPedido === pedido.Numero ? (
-                          <>
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                            Eliminando...
-                          </>
-                        ) : (
-                          <>
-                            <TrashIcon className="w-3 h-3" />
-                            Eliminar
-                          </>
-                        )}
-                      </button>
+                      {(pedido.Estado === 1 || pedido.Estado === 2 || pedido.Estado === 3) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`¿Estás seguro de que deseas eliminar el pedido ${pedido.Numero}?`)) {
+                              eliminarPedido(pedido.Numero);
+                            }
+                          }}
+                          disabled={eliminandoPedido === pedido.Numero}
+                          className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                          title="Eliminar pedido"
+                        >
+                          {eliminandoPedido === pedido.Numero ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              Eliminando...
+                            </>
+                          ) : (
+                            <>
+                              <TrashIcon className="w-3 h-3" />
+                              Eliminar
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

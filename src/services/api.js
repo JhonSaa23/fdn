@@ -357,6 +357,20 @@ export const downloadDbf = async (params) => {
   }
 };
 
+// Ejecutar stored procedure sp_Ventas_MINSA
+export const ejecutarSpMinsa = async (fec1, fec2) => {
+  try {
+    const response = await axiosClient.post('/export/ejecutar-sp-minsa', {
+      fec1,
+      fec2
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error ejecutando sp_Ventas_MINSA:', error);
+    throw error;
+  }
+};
+
 // Consultas
 export const consultarMovimientos = async (filtros) => {
   try {

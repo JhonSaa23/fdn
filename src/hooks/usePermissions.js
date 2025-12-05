@@ -114,7 +114,7 @@ export const usePermissions = () => {
       '/kardex-tabla', '/guias', '/multi-accion', '/consulta-productos', 
       '/devolucion-canje', '/historial-cliente', '/letras', '/reportes/picking-procter',
       '/reportes/concurso', '/reportes/loreal-notas', '/reportes/compras-laboratorio',
-      '/reportes/ventas-ac-farma', '/rupero/ac-farma', '/buscar-productos'
+      '/reportes/ventas-ac-farma', '/rupero/ac-farma', '/buscar-productos', '/facturacion'
     ];
     
     return rutasValidas.includes(route);
