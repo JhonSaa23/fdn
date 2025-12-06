@@ -778,6 +778,9 @@ const Saldos = () => {
                       Nombre
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Precio
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Almacén
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -820,6 +823,9 @@ const Saldos = () => {
                         <div className="text-sm text-gray-900 max-w-xs truncate" title={saldo.NombreProducto}>
                           {saldo.NombreProducto || 'Sin nombre'}
                         </div>
+                      </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {saldo.Precio ? formatearNumero(saldo.Precio) : '-'}
                       </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                         {saldo.almacen || '-'}
@@ -1103,6 +1109,9 @@ const Saldos = () => {
                   
                   <div className="mb-2">
                     <div className="text-sm text-gray-900">{saldo.NombreProducto || 'Sin nombre'}</div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      Precio: {saldo.Precio ? formatearNumero(saldo.Precio) : '-'}
+                    </div>
                   </div>
                   
                   {/* Controles de selección */}
