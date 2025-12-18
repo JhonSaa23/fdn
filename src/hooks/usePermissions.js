@@ -35,7 +35,7 @@ export const usePermissions = () => {
   const cargarVistas = async () => {
     try {
       setLoading(true);
-      
+
       // Verificar nuevamente que el usuario y token existan antes de hacer las peticiones
       const token = localStorage.getItem('authToken');
       if (!token || !usuario) {
@@ -45,7 +45,7 @@ export const usePermissions = () => {
         setVistasCargadas(true);
         return;
       }
-      
+
       // Solo cargar vistas del sistema si el usuario es administrador
       if (usuario.tipoUsuario === 'Admin') {
         try {
@@ -87,46 +87,47 @@ export const usePermissions = () => {
     if (!usuario) {
       return false;
     }
-    
+
     // Si estamos cargando, permitir acceso temporalmente
     if (loading) {
       return true;
     }
-    
+
     // Si no hay vistas cargadas después del loading, solo permitir dashboard
     if (vistasUsuario.length === 0) {
       // Solo permitir acceso al dashboard si no hay vistas asignadas
       return route === '/' || route === '/login';
     }
-    
+
     // Verificar si el usuario tiene acceso a esta ruta específica
     const tieneAcceso = vistasUsuario.some(vista => vista.Ruta === route);
-    
+
     return tieneAcceso;
   };
 
   const isRouteValid = (route) => {
     const rutasValidas = [
-      '/', '/importar/medifarma', '/importar/bcp', '/exportaciones', 
-      '/consulta-movimientos', '/reportes/reporte-codpro', '/promociones', 
-      '/bonificaciones', '/pedidos', '/saldos', '/movimientos', '/clientes', 
-      '/infocorp', '/clie-vend', '/usersbot', '/gestion-usuarios', '/escalas', 
-      '/kardex-tabla', '/guias', '/multi-accion', '/consulta-productos', 
+      '/', '/importar/medifarma', '/importar/bcp', '/exportaciones',
+      '/consulta-movimientos', '/reportes/reporte-codpro', '/promociones',
+      '/bonificaciones', '/pedidos', '/saldos', '/movimientos', '/clientes',
+      '/infocorp', '/clie-vend', '/usersbot', '/gestion-usuarios', '/escalas',
+      '/kardex-tabla', '/guias', '/multi-accion', '/consulta-productos',
       '/devolucion-canje', '/historial-cliente', '/letras', '/reportes/picking-procter',
       '/reportes/concurso', '/reportes/loreal-notas', '/reportes/compras-laboratorio',
-      '/reportes/ventas-ac-farma', '/rupero/ac-farma', '/buscar-productos', '/facturacion'
+      '/reportes/ventas-ac-farma', '/rupero/ac-farma', '/buscar-productos', '/facturacion',
+      '/inventario-anual', '/guias-remision'
     ];
-    
+
     return rutasValidas.includes(route);
   };
 
   const getMenuItems = useCallback(() => {
     if (!usuario) return [];
-    
+
     // Agrupar vistas por subrutas
     const menuItems = [];
     const subrutas = {};
-    
+
     vistasUsuario.forEach(vista => {
       // Detectar si es una subruta (ej: /reportes/picking-procter)
       const pathParts = vista.Ruta.split('/');
@@ -134,7 +135,7 @@ export const usePermissions = () => {
         // Es una subruta, agrupar bajo el padre
         const parentPath = `/${pathParts[1]}`; // ej: /reportes
         const parentName = pathParts[1].charAt(0).toUpperCase() + pathParts[1].slice(1); // ej: Reportes
-        
+
         if (!subrutas[parentPath]) {
           subrutas[parentPath] = {
             path: parentPath,
@@ -145,7 +146,7 @@ export const usePermissions = () => {
             orden: vista.Orden // Agregar el orden del primer elemento
           };
         }
-        
+
         subrutas[parentPath].submenu.push({
           path: vista.Ruta,
           name: vista.Nombre,
@@ -164,12 +165,12 @@ export const usePermissions = () => {
         });
       }
     });
-    
+
     // Agregar los menús con subrutas en la posición correcta
     Object.values(subrutas).forEach(subruta => {
       // Ordenar submenús por orden
       subruta.submenu.sort((a, b) => a.orden - b.orden);
-      
+
       // Insertar en la posición correcta según el orden
       const insertIndex = menuItems.findIndex(item => item.orden > subruta.orden);
       if (insertIndex === -1) {
@@ -178,10 +179,10 @@ export const usePermissions = () => {
         menuItems.splice(insertIndex, 0, subruta);
       }
     });
-    
+
     // Ordenar todos los elementos por orden
     menuItems.sort((a, b) => a.orden - b.orden);
-    
+
     return menuItems;
   }, [usuario, vistasUsuario]);
 

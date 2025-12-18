@@ -39,6 +39,8 @@ import AcFarma from './pages/AcFarma';
 import VentasAcFarma from './pages/VentasAcFarma';
 import BuscarProductos from './pages/BuscarProductos';
 import Facturacion from './pages/Facturacion';
+import GuiasRemision from './pages/GuiasRemision';
+import InventarioAnual from './pages/InventarioAnual';
 import Login from './pages/Login';
 import AccessDenied from './components/AccessDenied';
 
@@ -163,6 +165,7 @@ function App() {
                       <Route path="/bonificaciones" element={<Bonificaciones />} />
                       <Route path="/pedidos" element={<Pedidos />} />
                       <Route path="/facturacion" element={<Facturacion />} />
+                      <Route path="/guias-remision" element={<GuiasRemision />} />
                       <Route path="/saldos" element={<Saldos />} />
                       <Route path="/clientes" element={<Clientes />} />
                       <Route path="/infocorp" element={<Infocorp />} />
@@ -187,6 +190,7 @@ function App() {
                       <Route path="/letras" element={<LetrasPage />} />
                       <Route path="/rupero/ac-farma" element={<AcFarma />} />
                       <Route path="/buscar-productos" element={<BuscarProductos />} />
+                      <Route path="/inventario-anual" element={<InventarioAnual />} />
                     </Routes>
                   </div>
                 </main>
