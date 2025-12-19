@@ -293,7 +293,17 @@ function Home() {
         {/* Tabla de Actividad Reciente en Tiempo Real */}
         <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-white/50 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-slate-800">Actividad Reciente</h2>
+            <div>
+              <h2 className="text-xl font-semibold text-slate-800">Actividad del Día</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                {new Date().toLocaleDateString('es-ES', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <span className="text-sm text-slate-600">
