@@ -278,9 +278,10 @@ const GuiasRemision = () => {
     const formatearFecha = (fecha) => {
         if (!fecha) return { fecha: '-', hora: '' };
         const date = new Date(fecha);
+        // Usar UTC para evitar que el timezone reste 5 horas y cambie el día
         return {
-            fecha: date.toLocaleDateString('es-PE'),
-            hora: date.toLocaleTimeString('es-PE')
+            fecha: date.toLocaleDateString('es-PE', { timeZone: 'UTC' }),
+            hora: date.toLocaleTimeString('es-PE', { timeZone: 'UTC' }) // Opcional: si la hora también importa ser "00:00"
         };
     };
 
